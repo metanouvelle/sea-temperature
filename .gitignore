@@ -16,7 +16,7 @@ sst.sqlite
 
 # Jupyter
 .ipynb_checkpoints/
-.ipynb
+*.ipynb
 
 # Deprecated
 .deprecated/
