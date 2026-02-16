@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Sea Temperature Explorer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system;
+            background: #f6fbff;
+            color: #0b1220;
+        }
+
+        .wrap {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 48px 18px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 36px;
+        }
+
+        p {
+            margin: 0 0 18px;
+            color: #334155;
+            line-height: 1.5;
+        }
+
+        .btns {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        a.btn {
+            display: inline-block;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .primary {
+            background: #0ea5e9;
+            color: white;
+        }
+
+        .ghost {
+            background: #e2f3ff;
+            color: #075985;
+        }
+
+        .mini {
+            margin-top: 14px;
+            font-size: 12px;
+            color: #64748b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="card">
+            <h1>🌊 Sea Temperature Explorer</h1>
+            <p>
+                Weather apps often show air temperature from stations inland or at altitude.
+                This tool helps you check <strong>sea surface temperature</strong> near where you want to swim.
+            </p>
+            <div class="btns">
+                <a class="btn primary" href="/map">Explore the map</a>
+                <a class="btn ghost" href="/about">Why I built this</a>
+            </div>
+            <div class="mini">
+                Data: Copernicus Marine (satellite-derived SST). Click any point on the ocean to estimate temperature
+                nearby.
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
