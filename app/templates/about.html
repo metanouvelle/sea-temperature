@@ -5,62 +5,187 @@
     <meta charset="utf-8" />
     <title>About • Sea Temperature Explorer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <style>
         body {
             margin: 0;
-            font-family: system-ui, -apple-system;
+            font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
             background: #f8fafc;
-            color: #0b1220;
+            color: #0f172a;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #0ea5e9, #22d3ee);
+            color: white;
+            padding: 70px 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: 40px;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            margin-top: 12px;
+            font-size: 18px;
+            opacity: 0.9;
         }
 
         .wrap {
-            max-width: 920px;
+            max-width: 860px;
             margin: 0 auto;
-            padding: 42px 18px;
+            padding: 60px 20px;
         }
 
         .card {
-            background: #fff;
-            border-radius: 18px;
-            padding: 26px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+            background: white;
+            border-radius: 22px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
         }
 
-        h1 {
-            margin: 0 0 12px;
+        h2 {
+            margin-top: 0;
+            font-size: 26px;
+            letter-spacing: -0.5px;
         }
 
         p {
+            font-size: 16px;
+            line-height: 1.75;
             color: #334155;
-            line-height: 1.6;
+            margin-bottom: 20px;
         }
 
-        a {
-            color: #0284c7;
+        .highlight {
+            background: #f1f5f9;
+            padding: 16px;
+            border-radius: 14px;
+            margin: 30px 0;
+            font-weight: 500;
+        }
+
+        .cta {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 14px 20px;
+            border-radius: 16px;
+            background: #0ea5e9;
+            color: white;
             text-decoration: none;
             font-weight: 700;
+            transition: all 0.2s ease;
+        }
+
+        .cta:hover {
+            background: #0284c7;
+        }
+
+        .footer-note {
+            margin-top: 40px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        @media (max-width: 640px) {
+            .hero h1 {
+                font-size: 30px;
+            }
+
+            .card {
+                padding: 26px;
+            }
         }
     </style>
 </head>
 
 <body>
+
+    <div class="hero">
+        <h1>🌊 Why This App Exists</h1>
+        <p>Because the sea temperature you see in weather apps is often wrong.</p>
+    </div>
+
     <div class="wrap">
         <div class="card">
-            <h1>Why I built this</h1>
+
+            <h2>☀️ It Started in Tenerife</h2>
+
             <p>
-                I built this after visiting Tenerife. People often check “temperature” on their phone,
-                but those readings can come from stations inland or at elevation — not the sea.
+                We were planning a trip to Tenerife. Like most beach lovers,
+                we checked the weather app before booking, just wanna check if we could swim.
             </p>
+
             <p>
-                This app estimates <strong>sea surface temperature</strong> near where you want to swim
-                using Copernicus Marine satellite-derived datasets.
+                The app said <strong>17°C</strong>. That is chilly in the water!
+                But when we looked at photos of the beaches, people were swimming!
             </p>
-            <p><a href="/map">Open the map →</a></p>
-            <p style="font-size:12px;color:#64748b;">
-                Note: Sea surface temperature is not exactly the same as water temperature at depth.
+
+            <div class="highlight">
+                Something didn’t add up...
+            </div>
+
+            <p>
+                During the hiking trip in Agana, our guide Alex demystified the secret:
+                the official weather station is located at high elevation.
+                And in Tenerife, <strong>roughly every 100 meters higher means about 1°C lower</strong>.
             </p>
+
+            <p>
+                Suddenly everything made sense. 😂
+            </p>
+
+            <h2>🌍 The Problem</h2>
+
+            <p>
+                Most weather apps show air temperature measured inland or at altitude.
+                They do <em>not</em> show real sea surface temperature near the beach
+                where you actually want to swim.
+            </p>
+
+            <p>
+                That means travelers often underestimate how warm (or cold)
+                the ocean really is.
+            </p>
+
+            <h2>🛰️ The Solution</h2>
+
+            <p>
+                This tool estimates real sea surface temperature using
+                satellite-derived data from Copernicus Marine.
+            </p>
+
+            <p>
+                Instead of guessing, you can click directly on the coastline
+                and see what the water is likely like near that exact spot.
+            </p>
+
+            <h2>🏖️ The Goal</h2>
+
+            <p>
+                Let us help the travelers plan better beach days,
+
+                and swimmers avoid surprises.
+
+                Let us answer <strong>one simple question</strong>:
+            </p>
+
+            <div class="highlight">
+                “Is the sea warm enough to swim here?”
+            </div>
+
+            <a href="/map" class="cta">🌊 Explore the Map</a>
+
+            <div class="footer-note">
+                Note: Sea surface temperature is measured at the top layer of the ocean.
+                Actual temperature may vary slightly depending on depth and local conditions.
+            </div>
+
         </div>
     </div>
+
 </body>
 
 </html>

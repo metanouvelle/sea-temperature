@@ -3,25 +3,39 @@
 from __future__ import annotations
 
 import math
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Iterable
 
 import copernicusmarine
 import numpy as np
-
+import os
 from app.database import connect
-from app.services.geo import bbox_for_radius_km, haversine_km
-
+from app.services.geo import bbox_for_radius_km, haversine_km, wrap_lon_360, wrap_lon_180
+from dotenv import load_dotenv
+load_dotenv()
 
 DATASET_ID = "METOFFICE-GLO-SST-L4-NRT-OBS-SST-V2"
-TILE_DEG = 5.0  # 5° x 5° tiles (small enough to fetch fast)
+TILE_DEG = 2.0  # 2° x 2° tiles (small enough to fetch fast)
+
+def login_copernicus():
+    username = os.getenv("COPERNICUSMARINE_USERNAME")
+    password = os.getenv("COPERNICUSMARINE_PASSWORD")
+
+    if not username or not password:
+        raise RuntimeError("Copernicus credentials not set")
+
+    copernicusmarine.login(
+        username=username,
+        password=password
+    )
 
 
 def today_utc() -> str:
     """
     get today utc
     """
-    return datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(timezone.utc).date()
+    return (today - timedelta(days=1)).isoformat()
 
 
 def tile_origin(value: float, step: float) -> float:
@@ -121,19 +135,41 @@ def store_tile(
     return n
 
 
-def fetch_tile_from_copernicus(tile_id: str):
+def fetch_tile_from_copernicus(tile_id: str, date:str):
     """
     fetch tile
     """
     bbox = tile_bbox(tile_id)
+    min_lon=wrap_lon_360(bbox["min_lon"])
+    max_lon=wrap_lon_360(bbox["max_lon"])
 
-    ds = copernicusmarine.open_dataset(
+
+    try:
+        preload_ds = copernicusmarine.open_dataset(
         dataset_id=DATASET_ID,
-        minimum_longitude=bbox["min_lon"],
-        maximum_longitude=bbox["max_lon"],
+        minimum_longitude=min_lon,
+        maximum_longitude=max_lon,
         minimum_latitude=bbox["min_lat"],
         maximum_latitude=bbox["max_lat"],
-    ).load()
+        start_datetime=f"{date}T00:00:00Z",
+        end_datetime=f"{date}T00:00:00Z"
+    )
+    except Exception:
+        fallback_date = (datetime.fromisoformat(date) - timedelta(days=1)).date().isoformat()
+        preload_ds = copernicusmarine.open_dataset(
+            dataset_id=DATASET_ID,
+            minimum_longitude=min_lon,
+            maximum_longitude=max_lon,
+            minimum_latitude=bbox["min_lat"],
+            maximum_latitude=bbox["max_lat"],
+            start_datetime=f"{fallback_date}T00:00:00Z",
+            end_datetime=f"{fallback_date}T00:00:00Z"
+        )
+
+
+    if preload_ds is None:
+        raise RuntimeError("failed to download SST database")
+    ds = preload_ds.load()
 
     var = _pick_sst_var(ds)
     sst = ds[var].isel(time=0)
@@ -150,7 +186,7 @@ def fetch_tile_from_copernicus(tile_id: str):
     # [values[i, j] for i in range(len(lats)) for j ]
     for (i, j), v in np.ndenumerate(values):
         if not np.isnan(v):
-            points.append((float(lats[i]), float(lons[j]), float(v)))
+            points.append((float(lats[i]), wrap_lon_180(float(lons[j])), float(v)))
     return points
 
 
@@ -160,44 +196,110 @@ def ensure_tile(date: str, tile_id: str) -> int:
     """
     if tile_exists(date, tile_id):
         return 0
-    points = fetch_tile_from_copernicus(tile_id)
+    points = fetch_tile_from_copernicus(tile_id, date)
     return store_tile(date, tile_id, points)
 
 
 def query_points_in_bbox(date: str, bbox: dict) -> list[tuple[float, float, float]]:
     """
-    fetch bbox
+    Fetch SST points inside bounding box.
+    Handles dateline crossing correctly.
     """
+
     conn = connect()
     cur = conn.cursor()
-    rows = cur.execute(
-        """
-        SELECT lat, lon, temp_c
-        FROM sst_grid
-        WHERE date=?
-          AND lat BETWEEN ? AND ?
-          AND lon BETWEEN ? AND ?
-        """,
-        (date, bbox["min_lat"], bbox["max_lat"], bbox["min_lon"], bbox["max_lon"]),
-    ).fetchall()
+
+    min_lat = bbox["min_lat"]
+    max_lat = bbox["max_lat"]
+    min_lon = bbox["min_lon"]
+    max_lon = bbox["max_lon"]
+
+    # Normal case (no dateline crossing)
+    if min_lon <= max_lon:
+        rows = cur.execute(
+            """
+            SELECT lat, lon, temp_c
+            FROM sst_grid
+            WHERE date=?
+              AND lat BETWEEN ? AND ?
+              AND lon BETWEEN ? AND ?
+            """,
+            (date, min_lat, max_lat, min_lon, max_lon),
+        ).fetchall()
+
+    # Dateline crossing case
+    else:
+        rows = cur.execute(
+            """
+            SELECT lat, lon, temp_c
+            FROM sst_grid
+            WHERE date=?
+              AND lat BETWEEN ? AND ?
+              AND (
+                    lon BETWEEN ? AND 180
+                 OR lon BETWEEN -180 AND ?
+              )
+            """,
+            (date, min_lat, max_lat, min_lon, max_lon),
+        ).fetchall()
+
     conn.close()
+
     return [(float(a), float(b), float(c)) for a, b, c in rows]
 
 
 def point_temperature(date: str, lat: float, lon: float, radius_km: float) -> dict:
-    """
-    get point temperature
-    """
-    # Ensure current tile exists
+
+    lon = wrap_lon_180(lon)
+
     t_id = tile_id_for(lat, lon)
     fetched = ensure_tile(date, t_id)
 
-    # Query locally within radius bbox
     bb = bbox_for_radius_km(lat, lon, radius_km)
-    candidates = query_points_in_bbox(date, bb)
+
+    bb["min_lon"] = wrap_lon_180(bb["min_lon"])
+    bb["max_lon"] = wrap_lon_180(bb["max_lon"])
+
+    conn = connect()
+    cur = conn.cursor()
+
+    # Normal case
+    if bb["min_lon"] <= bb["max_lon"]:
+        rows = cur.execute("""
+            SELECT lat, lon, temp_c
+            FROM sst_grid
+            WHERE date=?
+              AND lat BETWEEN ? AND ?
+              AND lon BETWEEN ? AND ?
+        """, (
+            date,
+            bb["min_lat"], bb["max_lat"],
+            bb["min_lon"], bb["max_lon"]
+        )).fetchall()
+
+    # Dateline crossing case
+    else:
+        rows = cur.execute("""
+            SELECT lat, lon, temp_c
+            FROM sst_grid
+            WHERE date=?
+              AND lat BETWEEN ? AND ?
+              AND (
+                    lon BETWEEN ? AND 180
+                 OR lon BETWEEN -180 AND ?
+              )
+        """, (
+            date,
+            bb["min_lat"], bb["max_lat"],
+            bb["min_lon"],
+            bb["max_lon"]
+        )).fetchall()
+
+    conn.close()
 
     temps = []
-    for la, lo, tc in candidates:
+
+    for la, lo, tc in rows:
         if haversine_km(lat, lon, la, lo) <= radius_km:
             temps.append(tc)
 
@@ -224,84 +326,3 @@ def point_temperature(date: str, lat: float, lon: float, radius_km: float) -> di
         "debug": {"tile_id": t_id, "tile_fetched_now": fetched},
     }
 
-def download_subset(bbox: dict, date: str):
-    """
-    Download SST subset for bounding box and date.
-    Returns xarray Dataset.
-    """
-    ds = copernicusmarine.open_dataset(
-        dataset_id=DATASET_ID,
-        minimum_longitude=bbox["min_lon"],
-        maximum_longitude=bbox["max_lon"],
-        minimum_latitude=bbox["min_lat"],
-        maximum_latitude=bbox["max_lat"],
-        start_datetime=date,
-        end_datetime=date,
-    )
-    return ds
-
-
-def iterate_dataset(ds):
-    """
-    Yield (lat, lon, temp_c) from dataset.
-    """
-    sst = ds["analysed_sst"]  # check variable name if needed
-
-    lats = sst.latitude.values
-    lons = sst.longitude.values
-    values = sst.values  # shape: [time, lat, lon]
-
-    # assuming single time index
-    for i, lat in enumerate(lats):
-        for j, lon in enumerate(lons):
-            temp_kelvin = values[0][i][j]
-            temp_c = temp_kelvin - 273.15
-            yield float(lat), float(lon), float(temp_c)
-
-
-def preload_tile(lat_deg: int, lon_deg: int, date: str):
-    tile_id = f"{lat_deg}_{lon_deg}"
-
-    # Check if already exists
-    conn = connect()
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT 1 FROM sst_tile WHERE date = ? AND tile_id = ?",
-        (date, tile_id),
-    )
-    if cur.fetchone():
-        conn.close()
-        return
-
-    # Download bbox
-    bbox = {
-        "min_lat": lat_deg,
-        "max_lat": lat_deg + 1,
-        "min_lon": lon_deg,
-        "max_lon": lon_deg + 1,
-    }
-
-    ds = download_subset(bbox)  # your copernicus call
-
-    # Save grid points
-    for lat, lon, temp_c in iterate_dataset(ds):
-        cur.execute(
-            """
-            INSERT OR IGNORE INTO sst_grid
-            (date, tile_id, lat, lon, temp_c)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (date, tile_id, lat, lon, temp_c),
-        )
-
-    cur.execute(
-        """
-        INSERT OR REPLACE INTO sst_tile
-        (date, tile_id, fetched_at)
-        VALUES (?, ?, ?)
-        """,
-        (date, tile_id, datetime.utcnow().isoformat()),
-    )
-
-    conn.commit()
-    conn.close()
