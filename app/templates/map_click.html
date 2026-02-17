@@ -10,213 +10,303 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
+        * { box-sizing: border-box; }
+
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
             background: #0b1c2d;
-            color: white;
         }
 
-        #map {
-            height: 100vh;
-            width: 100vw;
-        }
+        #map { height: 100vh; width: 100vw; }
 
+        /* ── Shared panel chrome ────────────────────────────────────────── */
         .panel {
             position: absolute;
-            top: 24px;
-            left: 24px;
             z-index: 1000;
-
-            background: rgba(255, 255, 255, 0.98);
-            padding: 26px;
-            border-radius: 22px;
-            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
-
-            min-width: 340px;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14);
             color: #1e293b;
         }
 
-        .title {
-            font-size: 20px;
-            font-weight: 800;
-            margin-bottom: 6px;
-        }
+        .panel-title { font-size: 15px; font-weight: 800; }
+        .muted { font-size: 13px; color: #64748b; line-height: 1.5; }
 
-        .sub {
-            font-size: 14px;
-            color: #64748b;
-        }
+        /* ── Info panel (left) ──────────────────────────────────────────── */
+        #info-panel { top: 24px; left: 24px; width: 300px; padding: 22px; }
 
-        .big {
-            font-size: 48px;
+        .temp-big {
+            font-size: 52px;
             font-weight: 900;
+            letter-spacing: -2px;
+            line-height: 1;
             margin: 16px 0 6px;
-            letter-spacing: -1px;
-
         }
 
         .badge {
             display: inline-block;
-            padding: 6px 10px;
-            border-radius: 14px;
+            padding: 5px 12px;
+            border-radius: 999px;
             font-size: 12px;
             font-weight: 700;
-            margin-top: 6px;
-        }
-
-        .btn {
-            display: inline-block;
-            margin-top: 18px;
-            padding: 12px 16px;
-            border-radius: 16px;
-            background: #0ea5e9;
             color: white;
-            text-decoration: none;
-            font-weight: 700;
-            transition: all 0.2s ease;
         }
 
-        .btn:hover {
-            background: #0284c7;
+        .meta { font-size: 12px; color: #94a3b8; margin-top: 8px; }
+
+        .panel-links { margin-top: 18px; display: flex; gap: 8px; }
+        .panel-links a {
+            padding: 9px 16px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
         }
+        .btn-primary { background: #0ea5e9; color: white; }
+        .btn-primary:hover { background: #0284c7; }
+        .btn-secondary { background: #f1f5f9; color: #475569; }
+        .btn-secondary:hover { background: #e2e8f0; }
 
         .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            border-top: 3px solid #4FC3F7;
+            width: 22px; height: 22px;
+            margin-top: 16px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #0ea5e9;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-top: 12px;
+            animation: spin 0.8s linear infinite;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
+        /* ── Legend panel (right) ───────────────────────────────────────── */
+        #legend-panel { top: 24px; right: 24px; width: 215px; padding: 18px 16px; }
 
-            100% {
-                transform: rotate(360deg);
-            }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 8px;
+            border-radius: 10px;
+            cursor: default;
+            transition: background 0.15s;
+            user-select: none;
         }
+        .legend-item:hover { background: #f1f5f9; }
 
-        .topbar {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            font-weight: 700;
+        .legend-dot {
+            width: 13px; height: 13px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: transform 0.15s;
         }
+        .legend-item:hover .legend-dot { transform: scale(1.4); }
 
-        .topbar a {
-            color: white;
-            padding: 8px 12px;
-            border-radius: 12px;
-            text-decoration: none;
-            margin-left: 10px;
-            color: #0f172a;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 1);
-            opacity: 0.7;
-        }
+        .legend-label { font-size: 13px; font-weight: 700; flex: 1; }
+        .legend-range { font-size: 11px; color: #94a3b8; }
 
-        .topbar a:hover {
-            background: #f1f5f9;
+        #legend-status {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 11px;
+            color: #94a3b8;
+            min-height: 16px;
         }
     </style>
 </head>
 
 <body>
 
-    <div id="map"></div>
+<div id="map"></div>
 
-    <div class="panel">
-        <div class="title">🌊 Sea Temperature Explorer</div>
-        <div class="sub">Click anywhere on the ocean to check if it's swim-ready.</div>
-
-        <div id="info" style="margin-top:14px;" class="sub">
-            Planning a beach day? Let’s find the perfect water temperature.
-        </div>
-
-        <a class="btn" href="/">Home</a>
+<!-- Left: click-to-inspect result -->
+<div class="panel" id="info-panel">
+    <div class="panel-title">🌊 Sea Temperature</div>
+    <div id="info" class="muted" style="margin-top: 10px;">
+        Click anywhere on the ocean to check the water temperature.
     </div>
-
-    <div class="topbar">
-        <a href="/">Home</a>
-        <a href="/about">About</a>
+    <div class="panel-links">
+        <a href="/" class="btn-primary">Home</a>
+        <a href="/about" class="btn-secondary">About</a>
     </div>
+</div>
 
-    <script>
-        const map = L.map('map').setView([36, 18], 5);
+<!-- Right: interactive legend -->
+<div class="panel" id="legend-panel">
+    <div class="panel-title" style="margin-bottom: 12px;">Temperature Guide</div>
+    <div id="legend-items"></div>
+    <div id="legend-status">Loading data…</div>
+</div>
 
-        L.tileLayer(
-            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            { maxZoom: 10 }
-        ).addTo(map);
+<script>
+    // ── Temperature band definitions ─────────────────────────────────────────
+    const BANDS = [
+        { label: "Cold",      range: "< 17°C",   color: "#2563eb" },
+        { label: "Brave",     range: "17–20°C",  color: "#0ea5e9" },
+        { label: "Nice",      range: "20–23°C",  color: "#22c55e" },
+        { label: "Perfect",   range: "23–26°C",  color: "#f59e0b" },
+        { label: "Very Warm", range: "> 26°C",   color: "#ef4444" },
+    ];
 
-        let marker = null;
+    function bandIndex(t) {
+        if (t < 17) return 0;
+        if (t < 20) return 1;
+        if (t < 23) return 2;
+        if (t < 26) return 3;
+        return 4;
+    }
 
-        function comfortLabel(t) {
-            if (t < 17) return ["Cold", "#2563eb"];
-            if (t < 20) return ["Brave", "#0ea5e9"];
-            if (t < 23) return ["Nice", "#22c55e"];
-            if (t < 26) return ["Perfect", "#f59e0b"];
-            return ["Very warm", "#ef4444"];
+    // ── Map initialisation ───────────────────────────────────────────────────
+    const map = L.map("map").setView([36, 18], 5);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 12,
+        attribution: "© OpenStreetMap contributors",
+    }).addTo(map);
+
+    // ── Temperature overlay: one canvas pane per band ────────────────────────
+    //
+    // Each band gets its own Leaflet pane containing a single <canvas>.
+    // Setting pane.style.opacity is a GPU-composited operation — it gives
+    // smooth transitions without touching JS or re-drawing any canvas.
+    //
+    const bandLayers = BANDS.map((def, i) => {
+        const paneName = `sst-band-${i}`;
+        const pane     = map.createPane(paneName);
+        pane.style.zIndex = String(400 + i);
+        const renderer = L.canvas({ pane: paneName, padding: 0.5 });
+        const layer    = L.layerGroup().addTo(map);
+        return { ...def, pane, renderer, layer };
+    });
+
+    // ── Legend ───────────────────────────────────────────────────────────────
+    const legendContainer = document.getElementById("legend-items");
+
+    bandLayers.forEach((b, i) => {
+        const item = document.createElement("div");
+        item.className = "legend-item";
+        item.innerHTML = `
+            <div class="legend-dot" style="background:${b.color}"></div>
+            <span class="legend-label">${b.label}</span>
+            <span class="legend-range">${b.range}</span>
+        `;
+        // Hover: dim all other bands, keep this one full brightness
+        item.addEventListener("mouseenter", () => {
+            bandLayers.forEach((bl, j) => {
+                bl.pane.style.transition = "opacity 0.2s ease";
+                bl.pane.style.opacity    = j === i ? "1" : "0.06";
+            });
+        });
+        item.addEventListener("mouseleave", () => {
+            bandLayers.forEach(bl => {
+                bl.pane.style.transition = "opacity 0.2s ease";
+                bl.pane.style.opacity    = "1";
+            });
+        });
+        legendContainer.appendChild(item);
+    });
+
+    // ── Overlay loader ───────────────────────────────────────────────────────
+    let overlayTimer = null;
+
+    async function loadOverlay() {
+        const bounds = map.getBounds();
+        // Clamp to [-180, 180] to handle overflow after heavy panning
+        const minLon = Math.max(-180, bounds.getWest());
+        const maxLon = Math.min( 180, bounds.getEast());
+        const url = `/api/area`
+            + `?min_lat=${bounds.getSouth().toFixed(3)}`
+            + `&max_lat=${bounds.getNorth().toFixed(3)}`
+            + `&min_lon=${minLon.toFixed(3)}`
+            + `&max_lon=${maxLon.toFixed(3)}`;
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) return;
+            const { points } = await res.json();
+
+            // Clear then re-draw all bands
+            bandLayers.forEach(b => b.layer.clearLayers());
+            points.forEach(({ lat, lon, temp_c }) => {
+                const { renderer, layer, color } = bandLayers[bandIndex(temp_c)];
+                L.circleMarker([lat, lon], {
+                    renderer,
+                    radius:      3,
+                    weight:      0,
+                    fillColor:   color,
+                    fillOpacity: 0.72,
+                }).addTo(layer);
+            });
+
+            const status = document.getElementById("legend-status");
+            status.textContent = points.length === 0
+                ? "No cached data here — click to load"
+                : `${points.length.toLocaleString()} points · hover to highlight`;
+        } catch (_) {
+            // Overlay is best-effort; never block the user
         }
+    }
 
-        async function onMapClick(e) {
-            const ll = map.wrapLatLng(e.latlng);
-            const lat = ll.lat;
-            const lon = ll.lng;
+    map.on("moveend", () => {
+        clearTimeout(overlayTimer);
+        overlayTimer = setTimeout(loadOverlay, 500);
+    });
 
+    loadOverlay();  // Paint on first render
 
-            if (marker) map.removeLayer(marker);
+    // ── Click-to-inspect ─────────────────────────────────────────────────────
+    let clickMarker = null;
 
-            marker = L.circleMarker([lat, lon], {
-                radius: 8,
-                weight: 2,
-                color: "#fff",
-                fillColor: "#4FC3F7",
-                fillOpacity: 1
-            }).addTo(map);
+    async function onMapClick(e) {
+        const { lat, lng: lon } = map.wrapLatLng(e.latlng);
 
+        if (clickMarker) map.removeLayer(clickMarker);
+        clickMarker = L.circleMarker([lat, lon], {
+            radius:      10,
+            weight:      2.5,
+            color:       "#fff",
+            fillColor:   "#0ea5e9",
+            fillOpacity: 1,
+        }).addTo(map);
+
+        document.getElementById("info").innerHTML = `<div class="spinner"></div>`;
+
+        let data;
+        try {
+            const res = await fetch(`/api/point?lat=${lat}&lon=${lon}&radius_km=10`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            data = await res.json();
+        } catch (_) {
             document.getElementById("info").innerHTML =
-                `<div class="spinner"></div>`;
-
-            let data;
-            try {
-                const res = await fetch(`/api/point?lat=${lat}&lon=${lon}&radius_km=10`);
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}`);
-                }
-                data = await res.json();
-            } catch (err) {
-                document.getElementById("info").innerHTML =
-                    `<div class="sub">Could not fetch data — please try again.</div>`;
-                return;
-            }
-
-            if (data.status !== "ok") {
-                document.getElementById("info").innerHTML =
-                    `<div class="sub">No ocean data here.</div>`;
-                return;
-            }
-
-            const [label, color] = comfortLabel(data.mean_c);
-
-            document.getElementById("info").innerHTML = `
-                <div class="sub">Updated ${data.date}</div>
-                <div class="big">${data.mean_c.toFixed(1)} °C</div>
-                <div class="badge" style="background:${color}">${label}</div>
-                <div class="sub" style="margin-top:8px;">
-                    Radius ${data.radius_km} km • ${data.cells_used} cells
-                </div>
-            `;
+                `<span class="muted">Could not fetch data — please try again.</span>`;
+            return;
         }
 
-        map.on("click", onMapClick);
-    </script>
+        if (data.status !== "ok") {
+            document.getElementById("info").innerHTML =
+                `<span class="muted">No ocean data at this location.</span>`;
+            return;
+        }
+
+        const { label, color } = (() => {
+            const b = BANDS[bandIndex(data.mean_c)];
+            return { label: b.label, color: b.color };
+        })();
+
+        document.getElementById("info").innerHTML = `
+            <div class="muted">Updated ${data.date}</div>
+            <div class="temp-big">
+                ${data.mean_c.toFixed(1)}<span style="font-size:22px;font-weight:500"> °C</span>
+            </div>
+            <div class="badge" style="background:${color}">${label}</div>
+            <div class="meta">${data.radius_km} km radius · ${data.cells_used} cells</div>
+        `;
+
+        // Refresh overlay if this click fetched a previously uncached tile
+        loadOverlay();
+    }
+
+    map.on("click", onMapClick);
+</script>
 
 </body>
-
 </html>
