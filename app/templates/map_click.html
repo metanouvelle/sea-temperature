@@ -163,25 +163,144 @@
         attribution: "© OpenStreetMap contributors",
     }).addTo(map);
 
-    // ── Temperature overlay: one canvas pane per band ────────────────────────
+    // ── Temperature boundary canvas ──────────────────────────────────────────
     //
-    // Each band gets its own Leaflet pane containing a single <canvas>.
-    // Setting pane.style.opacity is a GPU-composited operation — it gives
-    // smooth transitions without touching JS or re-drawing any canvas.
+    // Instead of filled circles (which merge into opaque blobs at low zoom),
+    // we detect edges between adjacent 0.05° cells and draw a thin coloured
+    // line wherever the temperature band changes — leaving the ocean interior
+    // fully transparent and the map clean.
     //
-    const bandLayers = BANDS.map((def, i) => {
-        const paneName = `sst-band-${i}`;
-        const pane     = map.createPane(paneName);
-        pane.style.zIndex = String(400 + i);
-        const renderer = L.canvas({ pane: paneName, padding: 0.5 });
-        const layer    = L.layerGroup().addTo(map);
-        return { ...def, pane, renderer, layer };
-    });
+    const canvas = document.createElement("canvas");
+    canvas.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;z-index:450;";
+    map.getContainer().appendChild(canvas);
+
+    let boundaries = [];   // pre-computed boundary line segments
+    let activeBand = null; // index of hovered legend item, or null = show all
+    let clickPos   = null; // last clicked { lat, lon } — drawn as a dot on canvas
+
+    const STEP = 0.05;   // dataset grid resolution in degrees
+    const HALF = STEP / 2;
+
+    // ── Boundary computation ─────────────────────────────────────────────────
+    //
+    // For each grid cell, check its four neighbours. Where the temperature band
+    // changes (or the neighbour is missing = land/edge), record one line segment
+    // along the shared cell wall.
+    //
+    // Keys use Math.round(coord * 20) so floating-point noise in the API values
+    // never causes a missed lookup, and so shared-wall deduplication is exact
+    // (the key identifies the *western* cell for vertical walls, the *southern*
+    // cell for horizontal walls).
+    //
+    function computeBoundaries(points) {
+        const lookup = new Map();
+        for (const { lat, lon, temp_c } of points) {
+            lookup.set(`${Math.round(lat * 20)}_${Math.round(lon * 20)}`, bandIndex(temp_c));
+        }
+
+        const getBand = (lat, lon) => {
+            const v = lookup.get(`${Math.round(lat * 20)}_${Math.round(lon * 20)}`);
+            return v !== undefined ? v : -1;  // -1 = land or out-of-view
+        };
+
+        const segs = [];
+        const seen = new Set();
+
+        const addEdge = (key, lat1, lon1, lat2, lon2, b1, b2) => {
+            if (seen.has(key)) return;
+            seen.add(key);
+            segs.push({ lat1, lon1, lat2, lon2, b1, b2 });
+        };
+
+        for (const { lat, lon, temp_c } of points) {
+            const b    = bandIndex(temp_c);
+            const rLat = Math.round(lat * 20);
+            const rLon = Math.round(lon * 20);
+
+            // East wall — vertical segment at lon + HALF
+            // Canonical key: western cell = this cell
+            const bE = getBand(lat, lon + STEP);
+            if (b !== bE) addEdge(
+                `V_${rLat}_${rLon}`,
+                lat - HALF, lon + HALF, lat + HALF, lon + HALF, b, bE,
+            );
+
+            // West wall — vertical segment at lon − HALF
+            // Canonical key: western cell = left neighbour
+            const bW = getBand(lat, lon - STEP);
+            if (b !== bW) addEdge(
+                `V_${rLat}_${Math.round((lon - STEP) * 20)}`,
+                lat - HALF, lon - HALF, lat + HALF, lon - HALF, b, bW,
+            );
+
+            // North wall — horizontal segment at lat + HALF
+            // Canonical key: southern cell = this cell
+            const bN = getBand(lat + STEP, lon);
+            if (b !== bN) addEdge(
+                `H_${rLat}_${rLon}`,
+                lat + HALF, lon - HALF, lat + HALF, lon + HALF, b, bN,
+            );
+
+            // South wall — horizontal segment at lat − HALF
+            // Canonical key: southern cell = bottom neighbour
+            const bS = getBand(lat - STEP, lon);
+            if (b !== bS) addEdge(
+                `H_${Math.round((lat - STEP) * 20)}_${rLon}`,
+                lat - HALF, lon - HALF, lat - HALF, lon + HALF, b, bS,
+            );
+        }
+
+        return segs;
+    }
+
+    // ── Canvas draw ──────────────────────────────────────────────────────────
+    //
+    // Project every boundary segment to container pixels and stroke it.
+    // When `active` is set, all segments not touching that band are dimmed.
+    // The click marker is drawn last so it always appears on top.
+    //
+    function drawBoundaries(active = null) {
+        const size    = map.getSize();
+        canvas.width  = size.x;
+        canvas.height = size.y;
+
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth = 1.5;
+        ctx.lineCap   = "square";
+
+        for (const { lat1, lon1, lat2, lon2, b1, b2 } of boundaries) {
+            const isActive = active === null || b1 === active || b2 === active;
+            ctx.globalAlpha = isActive ? 0.82 : 0.05;
+            // Colour: warmer of the two adjacent bands; coast edges use the ocean band
+            ctx.strokeStyle = BANDS[b2 === -1 ? b1 : Math.max(b1, b2)].color;
+
+            const p1 = map.latLngToContainerPoint([lat1, lon1]);
+            const p2 = map.latLngToContainerPoint([lat2, lon2]);
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+        }
+
+        // Click marker — always on top of the boundary lines
+        if (clickPos) {
+            const p = map.latLngToContainerPoint([clickPos.lat, clickPos.lon]);
+            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+            ctx.fillStyle   = "#0ea5e9";
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth   = 3;
+            ctx.stroke();
+        }
+
+        ctx.globalAlpha = 1;
+    }
 
     // ── Legend ───────────────────────────────────────────────────────────────
-    const legendContainer = document.getElementById("legend-items");
-
-    bandLayers.forEach((b, i) => {
+    BANDS.forEach((b, i) => {
         const item = document.createElement("div");
         item.className = "legend-item";
         item.innerHTML = `
@@ -189,20 +308,9 @@
             <span class="legend-label">${b.label}</span>
             <span class="legend-range">${b.range}</span>
         `;
-        // Hover: dim all other bands, keep this one full brightness
-        item.addEventListener("mouseenter", () => {
-            bandLayers.forEach((bl, j) => {
-                bl.pane.style.transition = "opacity 0.2s ease";
-                bl.pane.style.opacity    = j === i ? "1" : "0.06";
-            });
-        });
-        item.addEventListener("mouseleave", () => {
-            bandLayers.forEach(bl => {
-                bl.pane.style.transition = "opacity 0.2s ease";
-                bl.pane.style.opacity    = "1";
-            });
-        });
-        legendContainer.appendChild(item);
+        item.addEventListener("mouseenter", () => { activeBand = i; drawBoundaries(i); });
+        item.addEventListener("mouseleave", () => { activeBand = null; drawBoundaries(null); });
+        document.getElementById("legend-items").appendChild(item);
     });
 
     // ── Overlay loader ───────────────────────────────────────────────────────
@@ -210,7 +318,6 @@
 
     async function loadOverlay() {
         const bounds = map.getBounds();
-        // Clamp to [-180, 180] to handle overflow after heavy panning
         const minLon = Math.max(-180, bounds.getWest());
         const maxLon = Math.min( 180, bounds.getEast());
         const url = `/api/area`
@@ -224,18 +331,8 @@
             if (!res.ok) return;
             const { points } = await res.json();
 
-            // Clear then re-draw all bands
-            bandLayers.forEach(b => b.layer.clearLayers());
-            points.forEach(({ lat, lon, temp_c }) => {
-                const { renderer, layer, color } = bandLayers[bandIndex(temp_c)];
-                L.circleMarker([lat, lon], {
-                    renderer,
-                    radius:      3,
-                    weight:      0,
-                    fillColor:   color,
-                    fillOpacity: 0.72,
-                }).addTo(layer);
-            });
+            boundaries = computeBoundaries(points);
+            drawBoundaries(activeBand);
 
             const status = document.getElementById("legend-status");
             status.textContent = points.length === 0
@@ -246,27 +343,26 @@
         }
     }
 
-    map.on("moveend", () => {
+    // Hide canvas during pan for a clean UX; redraw with correct projection on settle
+    map.on("movestart", () => { canvas.style.display = "none"; });
+    map.on("moveend",   () => {
+        canvas.style.display = "";
+        drawBoundaries(activeBand);
         clearTimeout(overlayTimer);
         overlayTimer = setTimeout(loadOverlay, 500);
     });
 
+    window.addEventListener("resize", () => drawBoundaries(activeBand));
+
     loadOverlay();  // Paint on first render
 
     // ── Click-to-inspect ─────────────────────────────────────────────────────
-    let clickMarker = null;
-
     async function onMapClick(e) {
         const { lat, lng: lon } = map.wrapLatLng(e.latlng);
 
-        if (clickMarker) map.removeLayer(clickMarker);
-        clickMarker = L.circleMarker([lat, lon], {
-            radius:      10,
-            weight:      2.5,
-            color:       "#fff",
-            fillColor:   "#0ea5e9",
-            fillOpacity: 1,
-        }).addTo(map);
+        // Show the click position immediately while we fetch
+        clickPos = { lat, lon };
+        drawBoundaries(activeBand);
 
         document.getElementById("info").innerHTML = `<div class="spinner"></div>`;
 
@@ -287,21 +383,17 @@
             return;
         }
 
-        const { label, color } = (() => {
-            const b = BANDS[bandIndex(data.mean_c)];
-            return { label: b.label, color: b.color };
-        })();
-
+        const band = BANDS[bandIndex(data.mean_c)];
         document.getElementById("info").innerHTML = `
             <div class="muted">Updated ${data.date}</div>
             <div class="temp-big">
                 ${data.mean_c.toFixed(1)}<span style="font-size:22px;font-weight:500"> °C</span>
             </div>
-            <div class="badge" style="background:${color}">${label}</div>
+            <div class="badge" style="background:${band.color}">${band.label}</div>
             <div class="meta">${data.radius_km} km radius · ${data.cells_used} cells</div>
         `;
 
-        // Refresh overlay if this click fetched a previously uncached tile
+        // Refresh overlay — this click may have fetched and cached a new tile
         loadOverlay();
     }
 
