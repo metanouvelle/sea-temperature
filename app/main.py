@@ -1,11 +1,15 @@
 """this is the main entry point for the sea temperature project"""
 
-from fastapi import FastAPI, Request
+import logging
+
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.database import init_db
-from app.services.sst_cache import point_temperature, today_utc, login_copernicus
+from app.services.sst_cache import login_copernicus, point_temperature, yesterday_utc
+
+log = logging.getLogger(__name__)
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
@@ -45,9 +49,19 @@ def about(request: Request):
 
 
 @app.get("/api/point")
-def api_point(lat: float, lon: float, radius_km: float = 3.0):
+def api_point(
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    radius_km: float = Query(10.0, gt=0, le=50),
+):
     """
     get temperature by coordinates
     """
-    d = today_utc()
-    return point_temperature(d, lat, lon, radius_km)
+    d = yesterday_utc()
+    try:
+        return point_temperature(d, lat, lon, radius_km)
+    except Exception as exc:
+        log.error("api_point error lat=%s lon=%s: %s", lat, lon, exc)
+        raise HTTPException(
+            status_code=503, detail="Service temporarily unavailable"
+        ) from exc

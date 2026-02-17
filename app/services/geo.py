@@ -37,6 +37,7 @@ def wrap_lon_180(lon: float) -> float:
     """Return longitude in [-180, 180)."""
     return ((lon + 180) % 360) - 180
 
+
 def wrap_lon_360(lon: float) -> float:
     """Return longitude in [0, 360)."""
     return lon % 360

@@ -2,40 +2,54 @@
 
 from __future__ import annotations
 
+import logging
 import math
-from datetime import datetime, timezone, timedelta
+import os
+import threading
+from datetime import datetime, timedelta, timezone
 from typing import Iterable
 
 import copernicusmarine
 import numpy as np
-import os
-from app.database import connect
-from app.services.geo import bbox_for_radius_km, haversine_km, wrap_lon_360, wrap_lon_180
 from dotenv import load_dotenv
+
+from app.database import connect
+from app.services.geo import (
+    bbox_for_radius_km,
+    haversine_km,
+    wrap_lon_180,
+    wrap_lon_360,
+)
+
 load_dotenv()
+
+log = logging.getLogger(__name__)
 
 DATASET_ID = "METOFFICE-GLO-SST-L4-NRT-OBS-SST-V2"
 TILE_DEG = 2.0  # 2° x 2° tiles (small enough to fetch fast)
 
+
 def login_copernicus():
+    """Validate that Copernicus credentials are present.
+
+    The SDK reads COPERNICUSMARINE_USERNAME / COPERNICUSMARINE_PASSWORD from
+    the environment automatically on each API call, so no explicit login() is
+    needed — we just fail fast here if the vars are missing.
+    """
     username = os.getenv("COPERNICUSMARINE_USERNAME")
     password = os.getenv("COPERNICUSMARINE_PASSWORD")
 
     if not username or not password:
         raise RuntimeError("Copernicus credentials not set")
 
-    copernicusmarine.login(
-        username=username,
-        password=password
-    )
 
+def yesterday_utc() -> str:
+    """Return yesterday's UTC date (ISO string).
 
-def today_utc() -> str:
+    Copernicus SST data has ~1 day latency, so yesterday is the most
+    recent date that is reliably available.
     """
-    get today utc
-    """
-    today = datetime.now(timezone.utc).date()
-    return (today - timedelta(days=1)).isoformat()
+    return (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
 
 
 def tile_origin(value: float, step: float) -> float:
@@ -135,69 +149,91 @@ def store_tile(
     return n
 
 
-def fetch_tile_from_copernicus(tile_id: str, date:str):
-    """
-    fetch tile
-    """
-    bbox = tile_bbox(tile_id)
-    min_lon=wrap_lon_360(bbox["min_lon"])
-    max_lon=wrap_lon_360(bbox["max_lon"])
-
-
+def _open_sst_dataset(
+    tile_id: str, date: str, min_lon: float, max_lon: float, bbox: dict
+):
+    """Open a Copernicus SST dataset, falling back to the previous day on any error."""
     try:
-        preload_ds = copernicusmarine.open_dataset(
-        dataset_id=DATASET_ID,
-        minimum_longitude=min_lon,
-        maximum_longitude=max_lon,
-        minimum_latitude=bbox["min_lat"],
-        maximum_latitude=bbox["max_lat"],
-        start_datetime=f"{date}T00:00:00Z",
-        end_datetime=f"{date}T00:00:00Z"
-    )
-    except Exception:
-        fallback_date = (datetime.fromisoformat(date) - timedelta(days=1)).date().isoformat()
-        preload_ds = copernicusmarine.open_dataset(
+        return copernicusmarine.open_dataset(
+            dataset_id=DATASET_ID,
+            minimum_longitude=min_lon,
+            maximum_longitude=max_lon,
+            minimum_latitude=bbox["min_lat"],
+            maximum_latitude=bbox["max_lat"],
+            start_datetime=f"{date}T00:00:00Z",
+            end_datetime=f"{date}T00:00:00Z",
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        fallback_date = (
+            (datetime.fromisoformat(date) - timedelta(days=1)).date().isoformat()
+        )
+        log.warning(
+            "Copernicus fetch failed for tile=%s date=%s (%s); retrying with %s",
+            tile_id,
+            date,
+            exc,
+            fallback_date,
+        )
+        return copernicusmarine.open_dataset(
             dataset_id=DATASET_ID,
             minimum_longitude=min_lon,
             maximum_longitude=max_lon,
             minimum_latitude=bbox["min_lat"],
             maximum_latitude=bbox["max_lat"],
             start_datetime=f"{fallback_date}T00:00:00Z",
-            end_datetime=f"{fallback_date}T00:00:00Z"
+            end_datetime=f"{fallback_date}T00:00:00Z",
         )
 
 
-    if preload_ds is None:
-        raise RuntimeError("failed to download SST database")
-    ds = preload_ds.load()
+def fetch_tile_from_copernicus(tile_id: str, date: str):
+    """Fetch all SST grid points for a 2°×2° tile from Copernicus."""
+    bbox = tile_bbox(tile_id)
+    min_lon = wrap_lon_360(bbox["min_lon"])
+    max_lon = wrap_lon_360(bbox["max_lon"])
+    # Tiles straddling the 0°/360° boundary need max extended to avoid an
+    # empty range (e.g. lon -2→0 becomes 358→0 in [0,360] space).
+    if max_lon < min_lon:
+        max_lon += 360
 
-    var = _pick_sst_var(ds)
-    sst = ds[var].isel(time=0)
+    ds = _open_sst_dataset(tile_id, date, min_lon, max_lon, bbox)
+    if ds is None:
+        raise RuntimeError("failed to download SST data")
+    ds = ds.load()
 
-    units = sst.attrs.get("units")
-    values = np.array(sst.values)
-    values = _to_celsius(values, units)
-
+    sst = ds[_pick_sst_var(ds)].isel(time=0)
+    values = _to_celsius(np.array(sst.values), sst.attrs.get("units"))
     lats = np.array(sst.latitude.values)
     lons = np.array(sst.longitude.values)
 
-    # values shape: [lat, lon]
+    # values shape: [lat, lon]; NaN = land / masked cells
     points = []
-    # [values[i, j] for i in range(len(lats)) for j ]
     for (i, j), v in np.ndenumerate(values):
         if not np.isnan(v):
             points.append((float(lats[i]), wrap_lon_180(float(lons[j])), float(v)))
     return points
 
 
+_TILE_LOCKS: dict[str, threading.Lock] = {}
+_TILE_LOCKS_GUARD = threading.Lock()
+
+
+def _tile_lock(key: str) -> threading.Lock:
+    with _TILE_LOCKS_GUARD:
+        if key not in _TILE_LOCKS:
+            _TILE_LOCKS[key] = threading.Lock()
+        return _TILE_LOCKS[key]
+
+
 def ensure_tile(date: str, tile_id: str) -> int:
     """
-    validate tile
+    validate tile, fetching from Copernicus if not cached.
+    Per-tile lock prevents duplicate concurrent fetches.
     """
-    if tile_exists(date, tile_id):
-        return 0
-    points = fetch_tile_from_copernicus(tile_id, date)
-    return store_tile(date, tile_id, points)
+    with _tile_lock(f"{date}:{tile_id}"):
+        if tile_exists(date, tile_id):
+            return 0
+        points = fetch_tile_from_copernicus(tile_id, date)
+        return store_tile(date, tile_id, points)
 
 
 def query_points_in_bbox(date: str, bbox: dict) -> list[tuple[float, float, float]]:
@@ -265,21 +301,21 @@ def point_temperature(date: str, lat: float, lon: float, radius_km: float) -> di
 
     # Normal case
     if bb["min_lon"] <= bb["max_lon"]:
-        rows = cur.execute("""
+        rows = cur.execute(
+            """
             SELECT lat, lon, temp_c
             FROM sst_grid
             WHERE date=?
               AND lat BETWEEN ? AND ?
               AND lon BETWEEN ? AND ?
-        """, (
-            date,
-            bb["min_lat"], bb["max_lat"],
-            bb["min_lon"], bb["max_lon"]
-        )).fetchall()
+        """,
+            (date, bb["min_lat"], bb["max_lat"], bb["min_lon"], bb["max_lon"]),
+        ).fetchall()
 
     # Dateline crossing case
     else:
-        rows = cur.execute("""
+        rows = cur.execute(
+            """
             SELECT lat, lon, temp_c
             FROM sst_grid
             WHERE date=?
@@ -288,12 +324,9 @@ def point_temperature(date: str, lat: float, lon: float, radius_km: float) -> di
                     lon BETWEEN ? AND 180
                  OR lon BETWEEN -180 AND ?
               )
-        """, (
-            date,
-            bb["min_lat"], bb["max_lat"],
-            bb["min_lon"],
-            bb["max_lon"]
-        )).fetchall()
+        """,
+            (date, bb["min_lat"], bb["max_lat"], bb["min_lon"], bb["max_lon"]),
+        ).fetchall()
 
     conn.close()
 
@@ -325,4 +358,3 @@ def point_temperature(date: str, lat: float, lon: float, radius_km: float) -> di
         "cells_used": len(temps),
         "debug": {"tile_id": t_id, "tile_fetched_now": fetched},
     }
-

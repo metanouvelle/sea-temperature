@@ -1,101 +1,61 @@
-from datetime import datetime, timezone
+"""Daily refresh – preloads recently-used SST tiles for yesterday's date.
 
-from app.data.beaches import BEACHES
-from app.data.regions import REGIONS
+Run once a day (e.g. via cron or a Fly.io scheduled machine) to keep the
+cache warm so the first user request of the day isn't slow.
+
+Usage:
+    python -m scripts.daily_refresh
+"""
+
+import logging
+import sys
+
 from app.database import connect, init_db
-from app.services.mur_erddap import bbox_for_radius_km, haversine_km, stream_bbox_points
+from app.services.sst_cache import ensure_tile, yesterday_utc
 
-RADIUS_KM = 3.0
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
+log = logging.getLogger(__name__)
 
 
-def utc_day() -> str:
-    return datetime.now(timezone.utc).date().isoformat()
-
-
-def upsert_region_grid(date_str: str, region_id: str, bbox: dict, stride: int) -> int:
+def all_known_tile_ids() -> list[str]:
+    """Return every distinct tile_id that has ever been cached."""
     conn = connect()
     cur = conn.cursor()
-
-    # Delete existing (idempotent daily refresh)
-    cur.execute("DELETE FROM sst_grid WHERE date=? AND region_id=?", (date_str, region_id))
-
-    n = 0
-    for lat, lon, temp_c in stream_bbox_points(bbox=bbox, stride=stride):
-        cur.execute(
-            "INSERT OR REPLACE INTO sst_grid(date, region_id, lat, lon, temp_c) VALUES (?,?,?,?,?)",
-            (date_str, region_id, lat, lon, temp_c),
-        )
-        n += 1
-
-    conn.commit()
+    rows = cur.execute("SELECT DISTINCT tile_id FROM sst_tile").fetchall()
     conn.close()
-    return n
+    return [r[0] for r in rows]
 
 
-def compute_beach_daily(
-    date_str: str, beach_id: str, lat0: float, lon0: float, radius_km: float
-) -> dict:
-    bbox = bbox_for_radius_km(lat0, lon0, radius_km)
-
-    temps = []
-    # stride=1 for max resolution around a beach
-    for lat, lon, temp_c in stream_bbox_points(bbox=bbox, stride=1):
-        if haversine_km(lat0, lon0, lat, lon) <= radius_km:
-            temps.append(temp_c)
-
-    if not temps:
-        raise RuntimeError(
-            f"No SST cells found for beach={beach_id} (likely land contamination / nearshore gap)."
-        )
-
-    return {
-        "mean_c": sum(temps) / len(temps),
-        "min_c": min(temps),
-        "max_c": max(temps),
-        "cells_used": len(temps),
-    }
-
-
-def upsert_beaches(date_str: str) -> int:
-    conn = connect()
-    cur = conn.cursor()
-
-    n = 0
-    for beach_id, b in BEACHES.items():
-        stats = compute_beach_daily(date_str, beach_id, b["lat"], b["lon"], RADIUS_KM)
-        cur.execute(
-            """
-            INSERT OR REPLACE INTO beach_daily(date, beach_id, radius_km, mean_c, min_c, max_c, cells_used)
-            VALUES (?,?,?,?,?,?,?)
-            """,
-            (
-                date_str,
-                beach_id,
-                RADIUS_KM,
-                round(stats["mean_c"], 2),
-                round(stats["min_c"], 2),
-                round(stats["max_c"], 2),
-                stats["cells_used"],
-            ),
-        )
-        n += 1
-
-    conn.commit()
-    conn.close()
-    return n
-
-
-def main():
+def main() -> None:
     init_db()
-    d = utc_day()
+    date = yesterday_utc()
+    tile_ids = all_known_tile_ids()
 
-    # Regions: downsample for map (stride=2 => ~2 km). Tweak later per performance.
-    for region_id, r in REGIONS.items():
-        count = upsert_region_grid(d, region_id, r["bbox"], stride=2)
-        print(f"[{d}] region={region_id} grid_points={count}")
+    if not tile_ids:
+        log.info("No tiles to refresh.")
+        return
 
-    bcount = upsert_beaches(d)
-    print(f"[{d}] beaches_updated={bcount}")
+    log.info("Refreshing %d tile(s) for %s", len(tile_ids), date)
+    errors = 0
+    for tile_id in tile_ids:
+        try:
+            n = ensure_tile(date, tile_id)
+            if n:
+                log.info("  fetched  tile=%s  points=%d", tile_id, n)
+            else:
+                log.info("  cached   tile=%s", tile_id)
+        except Exception as exc:
+            log.error("  FAILED   tile=%s  error=%s", tile_id, exc)
+            errors += 1
+
+    if errors:
+        log.error("Refresh completed with %d error(s).", errors)
+        sys.exit(1)
+
+    log.info("Refresh complete – all tiles up to date.")
 
 
 if __name__ == "__main__":

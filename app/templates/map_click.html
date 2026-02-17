@@ -183,8 +183,18 @@
             document.getElementById("info").innerHTML =
                 `<div class="spinner"></div>`;
 
-            const res = await fetch(`/api/point?lat=${lat}&lon=${lon}&radius_km=3`);
-            const data = await res.json();
+            let data;
+            try {
+                const res = await fetch(`/api/point?lat=${lat}&lon=${lon}&radius_km=10`);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                data = await res.json();
+            } catch (err) {
+                document.getElementById("info").innerHTML =
+                    `<div class="sub">Could not fetch data — please try again.</div>`;
+                return;
+            }
 
             if (data.status !== "ok") {
                 document.getElementById("info").innerHTML =

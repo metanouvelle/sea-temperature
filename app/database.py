@@ -2,8 +2,11 @@ import os
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path(os.getenv("SST_DB_PATH", "/data/sst.sqlite")).resolve()
+from dotenv import load_dotenv
 
+load_dotenv()
+
+DB_PATH = Path(os.getenv("SST_DB_PATH", "sst.sqlite")).resolve()
 
 
 def connect() -> sqlite3.Connection:
