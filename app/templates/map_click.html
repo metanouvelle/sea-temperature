@@ -183,9 +183,10 @@
 
     // ── Boundary computation ─────────────────────────────────────────────────
     //
-    // For each grid cell, check its four neighbours. Where the temperature band
-    // changes (or the neighbour is missing = land/edge), record one line segment
-    // along the shared cell wall.
+    // For each grid cell, check its four neighbours. We only draw a segment
+    // where the neighbour is missing (land or outside the loaded area), i.e.
+    // the ocean-to-shore edge. Interior ocean cells produce no lines at all,
+    // so the map stays clean and only the coastline is coloured.
     //
     // Keys use Math.round(coord * 20) so floating-point noise in the API values
     // never causes a missed lookup, and so shared-wall deduplication is exact
@@ -217,34 +218,30 @@
             const rLat = Math.round(lat * 20);
             const rLon = Math.round(lon * 20);
 
-            // East wall — vertical segment at lon + HALF
-            // Canonical key: western cell = this cell
+            // East wall — only when east neighbour is land/missing
             const bE = getBand(lat, lon + STEP);
-            if (b !== bE) addEdge(
+            if (bE === -1) addEdge(
                 `V_${rLat}_${rLon}`,
                 lat - HALF, lon + HALF, lat + HALF, lon + HALF, b, bE,
             );
 
-            // West wall — vertical segment at lon − HALF
-            // Canonical key: western cell = left neighbour
+            // West wall — only when west neighbour is land/missing
             const bW = getBand(lat, lon - STEP);
-            if (b !== bW) addEdge(
+            if (bW === -1) addEdge(
                 `V_${rLat}_${Math.round((lon - STEP) * 20)}`,
                 lat - HALF, lon - HALF, lat + HALF, lon - HALF, b, bW,
             );
 
-            // North wall — horizontal segment at lat + HALF
-            // Canonical key: southern cell = this cell
+            // North wall — only when north neighbour is land/missing
             const bN = getBand(lat + STEP, lon);
-            if (b !== bN) addEdge(
+            if (bN === -1) addEdge(
                 `H_${rLat}_${rLon}`,
                 lat + HALF, lon - HALF, lat + HALF, lon + HALF, b, bN,
             );
 
-            // South wall — horizontal segment at lat − HALF
-            // Canonical key: southern cell = bottom neighbour
+            // South wall — only when south neighbour is land/missing
             const bS = getBand(lat - STEP, lon);
-            if (b !== bS) addEdge(
+            if (bS === -1) addEdge(
                 `H_${Math.round((lat - STEP) * 20)}_${rLon}`,
                 lat - HALF, lon - HALF, lat - HALF, lon + HALF, b, bS,
             );
@@ -266,14 +263,13 @@
 
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.lineWidth = 1.5;
-        ctx.lineCap   = "square";
+        ctx.lineWidth = 3;
+        ctx.lineCap   = "round";
 
         for (const { lat1, lon1, lat2, lon2, b1, b2 } of boundaries) {
             const isActive = active === null || b1 === active || b2 === active;
-            ctx.globalAlpha = isActive ? 0.82 : 0.05;
-            // Colour: warmer of the two adjacent bands; coast edges use the ocean band
-            ctx.strokeStyle = BANDS[b2 === -1 ? b1 : Math.max(b1, b2)].color;
+            ctx.globalAlpha = isActive ? 0.9 : 0.06;
+            ctx.strokeStyle = BANDS[b1].color;  // b2 is always -1 (land), colour by ocean band
 
             const p1 = map.latLngToContainerPoint([lat1, lon1]);
             const p2 = map.latLngToContainerPoint([lat2, lon2]);
