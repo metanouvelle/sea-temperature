@@ -96,40 +96,23 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ── Legend panel (right) ───────────────────────────────────────── */
-        #legend-panel { top: 24px; right: 24px; width: 215px; padding: 18px 16px; }
+        #legend-panel { top: 24px; right: 24px; width: 200px; padding: 18px 16px; }
 
         .legend-item {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 7px 8px;
-            border-radius: 10px;
-            cursor: default;
-            transition: background 0.15s;
-            user-select: none;
+            padding: 6px 4px;
         }
-        .legend-item:hover { background: rgba(0, 0, 0, 0.05); }
 
         .legend-dot {
             width: 11px; height: 11px;
             border-radius: 50%;
             flex-shrink: 0;
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 8px currentColor;
-            transition: transform 0.15s;
         }
-        .legend-item:hover .legend-dot { transform: scale(1.4); }
 
         .legend-label { font-size: 13px; font-weight: 700; flex: 1; }
         .legend-range { font-size: 11px; color: #94a3b8; }
-
-        #legend-status {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid rgba(0, 0, 0, 0.07);
-            font-size: 11px;
-            color: #94a3b8;
-            min-height: 16px;
-        }
     </style>
 </head>
 
@@ -152,11 +135,10 @@
     </div>
 </div>
 
-<!-- Right: interactive legend -->
+<!-- Right: static colour reference -->
 <div class="panel" id="legend-panel">
     <div class="panel-title" style="margin-bottom: 12px;">Temperature Guide</div>
     <div id="legend-items"></div>
-    <div id="legend-status">Loading data…</div>
 </div>
 
 <script>
@@ -177,12 +159,7 @@
         return 4;
     }
 
-    // ── Map initialisation ───────────────────────────────────────────────────
-    //
-    // CartoDB Positron: pale-gray minimal tiles that strip OSM's visual noise
-    // (parks, building outlines, sea labels). The temperature band colors then
-    // become the only color on the map — they pop instead of competing.
-    //
+    // ── Map ──────────────────────────────────────────────────────────────────
     const map = L.map("map").setView([36, 18], 5);
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
         maxZoom: 19,
@@ -190,209 +167,33 @@
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
     }).addTo(map);
 
-    // ── Temperature boundary canvas ──────────────────────────────────────────
-    //
-    // We detect the ocean-to-shore edge (cells whose neighbour is missing/land)
-    // and draw those segments onto a canvas with ctx.filter = 'blur(7px)'.
-    // The Gaussian blur dissolves the right-angle grid edges into a smooth glow
-    // that follows the coastline's natural shape — no more rectangular artifacts.
-    //
-    const canvas = document.createElement("canvas");
-    canvas.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;z-index:450;";
-    map.getContainer().appendChild(canvas);
-
-    let boundaries = [];   // pre-computed boundary line segments
-    let activeBand = null; // index of hovered legend item, or null = show all
-    let clickPos   = null; // last clicked { lat, lon } — drawn as a dot on canvas
-
-    const STEP = 0.05;   // dataset grid resolution in degrees
-    const HALF = STEP / 2;
-
-    // ── Boundary computation ─────────────────────────────────────────────────
-    //
-    // For each grid cell, emit a segment only when the neighbour is missing
-    // (land or outside the loaded area) — the ocean-to-shore edge only.
-    // Interior ocean cells produce no lines at all.
-    //
-    // Keys use Math.round(coord * 20) so floating-point noise in the API values
-    // never causes a missed lookup, and so shared-wall deduplication is exact
-    // (the key identifies the *western* cell for vertical walls, the *southern*
-    // cell for horizontal walls).
-    //
-    function computeBoundaries(points) {
-        const lookup = new Map();
-        for (const { lat, lon, temp_c } of points) {
-            lookup.set(`${Math.round(lat * 20)}_${Math.round(lon * 20)}`, bandIndex(temp_c));
-        }
-
-        const getBand = (lat, lon) => {
-            const v = lookup.get(`${Math.round(lat * 20)}_${Math.round(lon * 20)}`);
-            return v !== undefined ? v : -1;  // -1 = land or out-of-view
-        };
-
-        const segs = [];
-        const seen = new Set();
-
-        const addEdge = (key, lat1, lon1, lat2, lon2, b1, b2) => {
-            if (seen.has(key)) return;
-            seen.add(key);
-            segs.push({ lat1, lon1, lat2, lon2, b1, b2 });
-        };
-
-        for (const { lat, lon, temp_c } of points) {
-            const b    = bandIndex(temp_c);
-            const rLat = Math.round(lat * 20);
-            const rLon = Math.round(lon * 20);
-
-            // East wall — only when east neighbour is land/missing
-            const bE = getBand(lat, lon + STEP);
-            if (bE === -1) addEdge(
-                `V_${rLat}_${rLon}`,
-                lat - HALF, lon + HALF, lat + HALF, lon + HALF, b, bE,
-            );
-
-            // West wall — only when west neighbour is land/missing
-            const bW = getBand(lat, lon - STEP);
-            if (bW === -1) addEdge(
-                `V_${rLat}_${Math.round((lon - STEP) * 20)}`,
-                lat - HALF, lon - HALF, lat + HALF, lon - HALF, b, bW,
-            );
-
-            // North wall — only when north neighbour is land/missing
-            const bN = getBand(lat + STEP, lon);
-            if (bN === -1) addEdge(
-                `H_${rLat}_${rLon}`,
-                lat + HALF, lon - HALF, lat + HALF, lon + HALF, b, bN,
-            );
-
-            // South wall — only when south neighbour is land/missing
-            const bS = getBand(lat - STEP, lon);
-            if (bS === -1) addEdge(
-                `H_${Math.round((lat - STEP) * 20)}_${rLon}`,
-                lat - HALF, lon - HALF, lat - HALF, lon + HALF, b, bS,
-            );
-        }
-
-        return segs;
-    }
-
-    // ── Canvas draw ──────────────────────────────────────────────────────────
-    //
-    // Project each coastal boundary segment to container pixels and stroke it.
-    // When `active` is a band index, all other bands are dimmed to near-invisible
-    // so only the matching coastal temperature zone stands out — legend hover uses this.
-    // The click marker is drawn last so it always appears on top.
-    //
-    function drawBoundaries(active = null) {
-        const size    = map.getSize();
-        canvas.width  = size.x;
-        canvas.height = size.y;
-
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.lineWidth = 3;
-        ctx.lineCap   = "round";
-
-        for (const { lat1, lon1, lat2, lon2, b1 } of boundaries) {
-            const isActive  = active === null || b1 === active;
-            ctx.globalAlpha = isActive ? 0.9 : 0.06;
-            ctx.strokeStyle = BANDS[b1].color;
-
-            const p1 = map.latLngToContainerPoint([lat1, lon1]);
-            const p2 = map.latLngToContainerPoint([lat2, lon2]);
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-        }
-
-        // Click marker — always on top of boundary lines
-        if (clickPos) {
-            const p = map.latLngToContainerPoint([clickPos.lat, clickPos.lon]);
-            ctx.globalAlpha = 1;
-            // Outer ring
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
-            ctx.strokeStyle = "rgba(14, 165, 233, 0.35)";
-            ctx.lineWidth   = 2;
-            ctx.stroke();
-            // Solid centre dot
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
-            ctx.fillStyle   = "#ffffff";
-            ctx.fill();
-            ctx.strokeStyle = "#0ea5e9";
-            ctx.lineWidth   = 3;
-            ctx.stroke();
-        }
-
-        ctx.globalAlpha = 1;
-    }
-
-    // ── Legend ───────────────────────────────────────────────────────────────
-    BANDS.forEach((b, i) => {
+    // ── Static legend ────────────────────────────────────────────────────────
+    BANDS.forEach((b) => {
         const item = document.createElement("div");
         item.className = "legend-item";
         item.innerHTML = `
-            <div class="legend-dot" style="background:${b.color};color:${b.color}"></div>
+            <div class="legend-dot" style="background:${b.color}"></div>
             <span class="legend-label">${b.label}</span>
             <span class="legend-range">${b.range}</span>
         `;
-        item.addEventListener("mouseenter", () => { activeBand = i; drawBoundaries(i); });
-        item.addEventListener("mouseleave", () => { activeBand = null; drawBoundaries(null); });
         document.getElementById("legend-items").appendChild(item);
     });
 
-    // ── Overlay loader ───────────────────────────────────────────────────────
-    let overlayTimer = null;
-
-    async function loadOverlay() {
-        const bounds = map.getBounds();
-        const minLon = Math.max(-180, bounds.getWest());
-        const maxLon = Math.min( 180, bounds.getEast());
-        const url = `/api/area`
-            + `?min_lat=${bounds.getSouth().toFixed(3)}`
-            + `&max_lat=${bounds.getNorth().toFixed(3)}`
-            + `&min_lon=${minLon.toFixed(3)}`
-            + `&max_lon=${maxLon.toFixed(3)}`;
-
-        try {
-            const res = await fetch(url);
-            if (!res.ok) return;
-            const { points } = await res.json();
-
-            boundaries = computeBoundaries(points);
-            drawBoundaries(activeBand);
-
-            const status = document.getElementById("legend-status");
-            status.textContent = points.length === 0
-                ? "No cached data here — click to load"
-                : `${points.length.toLocaleString()} points · hover to highlight`;
-        } catch (_) {
-            // Overlay is best-effort; never block the user
-        }
-    }
-
-    // Hide canvas during pan for a clean UX; redraw with correct projection on settle
-    map.on("movestart", () => { canvas.style.display = "none"; });
-    map.on("moveend",   () => {
-        canvas.style.display = "";
-        drawBoundaries(activeBand);
-        clearTimeout(overlayTimer);
-        overlayTimer = setTimeout(loadOverlay, 500);
-    });
-
-    window.addEventListener("resize", () => drawBoundaries(activeBand));
-
-    loadOverlay();  // Paint on first render
-
     // ── Click-to-inspect ─────────────────────────────────────────────────────
+    let clickMarker = null;
+
     async function onMapClick(e) {
         const { lat, lng: lon } = map.wrapLatLng(e.latlng);
 
-        // Show the click position immediately while we fetch
-        clickPos = { lat, lon };
-        drawBoundaries(activeBand);
+        // Place a marker at the clicked position immediately
+        if (clickMarker) map.removeLayer(clickMarker);
+        clickMarker = L.circleMarker([lat, lon], {
+            radius:      8,
+            weight:      3,
+            color:       "#0ea5e9",
+            fillColor:   "#ffffff",
+            fillOpacity: 1,
+        }).addTo(map);
 
         document.getElementById("info").innerHTML = `<div class="spinner"></div>`;
 
@@ -416,6 +217,9 @@
         const band      = BANDS[bandIndex(data.mean_c)];
         const swimEmoji = data.mean_c >= 20 ? "🏊" : data.mean_c >= 17 ? "🤿" : "🥶";
 
+        // Update marker colour to match the temperature band
+        clickMarker.setStyle({ color: band.color });
+
         // Reveal colour bar at top of panel
         const bar = document.getElementById("info-color-bar");
         bar.style.display    = "block";
@@ -431,8 +235,6 @@
             <div class="badge" style="background:${band.color}">${swimEmoji} ${band.label}</div>
             <div class="meta">Averaged over ${data.radius_km} km · ${data.cells_used} cells</div>
         `;
-        // Overlay is intentionally NOT reloaded here — the panel result is enough.
-        // Coastal lines refresh naturally on the next pan/zoom.
     }
 
     map.on("click", onMapClick);
