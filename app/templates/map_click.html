@@ -15,7 +15,7 @@
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-            background: #0b1c2d;
+            background: #e8eaed;
         }
 
         #map { height: 100vh; width: 100vw; }
@@ -24,9 +24,12 @@
         .panel {
             position: absolute;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.97);
+            background: rgba(255, 255, 255, 0.72);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.9);
             border-radius: 20px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07), 0 16px 40px rgba(0, 0, 0, 0.11);
             color: #1e293b;
         }
 
@@ -34,26 +37,40 @@
         .muted { font-size: 13px; color: #64748b; line-height: 1.5; }
 
         /* ── Info panel (left) ──────────────────────────────────────────── */
-        #info-panel { top: 24px; left: 24px; width: 300px; padding: 22px; }
+        #info-panel { top: 24px; left: 24px; width: 300px; overflow: hidden; }
+
+        #info-color-bar {
+            height: 4px;
+            border-radius: 20px 20px 0 0;
+            display: none;
+            transition: background 0.4s ease;
+        }
+
+        #info-content { padding: 20px 22px; }
 
         .temp-big {
-            font-size: 52px;
+            font-size: 54px;
             font-weight: 900;
-            letter-spacing: -2px;
+            letter-spacing: -3px;
             line-height: 1;
-            margin: 16px 0 6px;
+            margin: 14px 0 8px;
         }
 
         .badge {
-            display: inline-block;
-            padding: 5px 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 14px;
             border-radius: 999px;
             font-size: 12px;
             font-weight: 700;
             color: white;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+            margin-bottom: 6px;
         }
 
-        .meta { font-size: 12px; color: #94a3b8; margin-top: 8px; }
+        .meta { font-size: 11px; color: #94a3b8; line-height: 1.7; }
 
         .panel-links { margin-top: 18px; display: flex; gap: 8px; }
         .panel-links a {
@@ -65,8 +82,8 @@
         }
         .btn-primary { background: #0ea5e9; color: white; }
         .btn-primary:hover { background: #0284c7; }
-        .btn-secondary { background: #f1f5f9; color: #475569; }
-        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-secondary { background: rgba(0, 0, 0, 0.06); color: #475569; }
+        .btn-secondary:hover { background: rgba(0, 0, 0, 0.1); }
 
         .spinner {
             width: 22px; height: 22px;
@@ -91,12 +108,13 @@
             transition: background 0.15s;
             user-select: none;
         }
-        .legend-item:hover { background: #f1f5f9; }
+        .legend-item:hover { background: rgba(0, 0, 0, 0.05); }
 
         .legend-dot {
-            width: 13px; height: 13px;
+            width: 11px; height: 11px;
             border-radius: 50%;
             flex-shrink: 0;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 8px currentColor;
             transition: transform 0.15s;
         }
         .legend-item:hover .legend-dot { transform: scale(1.4); }
@@ -107,7 +125,7 @@
         #legend-status {
             margin-top: 10px;
             padding-top: 10px;
-            border-top: 1px solid #f1f5f9;
+            border-top: 1px solid rgba(0, 0, 0, 0.07);
             font-size: 11px;
             color: #94a3b8;
             min-height: 16px;
@@ -121,13 +139,16 @@
 
 <!-- Left: click-to-inspect result -->
 <div class="panel" id="info-panel">
-    <div class="panel-title">🌊 Sea Temperature</div>
-    <div id="info" class="muted" style="margin-top: 10px;">
-        Click anywhere on the ocean to check the water temperature.
-    </div>
-    <div class="panel-links">
-        <a href="/" class="btn-primary">Home</a>
-        <a href="/about" class="btn-secondary">About</a>
+    <div id="info-color-bar"></div>
+    <div id="info-content">
+        <div class="panel-title">Sea Temperature</div>
+        <div id="info" class="muted" style="margin-top: 10px;">
+            Click anywhere on the ocean to check the water temperature.
+        </div>
+        <div class="panel-links">
+            <a href="/" class="btn-primary">Home</a>
+            <a href="/about" class="btn-secondary">About</a>
+        </div>
     </div>
 </div>
 
@@ -157,18 +178,24 @@
     }
 
     // ── Map initialisation ───────────────────────────────────────────────────
+    //
+    // CartoDB Positron: pale-gray minimal tiles that strip OSM's visual noise
+    // (parks, building outlines, sea labels). The temperature band colors then
+    // become the only color on the map — they pop instead of competing.
+    //
     const map = L.map("map").setView([36, 18], 5);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 12,
-        attribution: "© OpenStreetMap contributors",
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        maxZoom: 19,
+        subdomains: "abcd",
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
     }).addTo(map);
 
     // ── Temperature boundary canvas ──────────────────────────────────────────
     //
-    // Instead of filled circles (which merge into opaque blobs at low zoom),
-    // we detect edges between adjacent 0.05° cells and draw a thin coloured
-    // line wherever the temperature band changes — leaving the ocean interior
-    // fully transparent and the map clean.
+    // We detect the ocean-to-shore edge (cells whose neighbour is missing/land)
+    // and draw those segments onto a canvas with ctx.filter = 'blur(7px)'.
+    // The Gaussian blur dissolves the right-angle grid edges into a smooth glow
+    // that follows the coastline's natural shape — no more rectangular artifacts.
     //
     const canvas = document.createElement("canvas");
     canvas.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;z-index:450;";
@@ -183,10 +210,9 @@
 
     // ── Boundary computation ─────────────────────────────────────────────────
     //
-    // For each grid cell, check its four neighbours. We only draw a segment
-    // where the neighbour is missing (land or outside the loaded area), i.e.
-    // the ocean-to-shore edge. Interior ocean cells produce no lines at all,
-    // so the map stays clean and only the coastline is coloured.
+    // For each grid cell, emit a segment only when the neighbour is missing
+    // (land or outside the loaded area) — the ocean-to-shore edge only.
+    // Interior ocean cells produce no lines at all.
     //
     // Keys use Math.round(coord * 20) so floating-point noise in the API values
     // never causes a missed lookup, and so shared-wall deduplication is exact
@@ -252,8 +278,9 @@
 
     // ── Canvas draw ──────────────────────────────────────────────────────────
     //
-    // Project every boundary segment to container pixels and stroke it.
-    // When `active` is set, all segments not touching that band are dimmed.
+    // Project each coastal boundary segment to container pixels and stroke it.
+    // When `active` is a band index, all other bands are dimmed to near-invisible
+    // so only the matching coastal temperature zone stands out — legend hover uses this.
     // The click marker is drawn last so it always appears on top.
     //
     function drawBoundaries(active = null) {
@@ -266,10 +293,10 @@
         ctx.lineWidth = 3;
         ctx.lineCap   = "round";
 
-        for (const { lat1, lon1, lat2, lon2, b1, b2 } of boundaries) {
-            const isActive = active === null || b1 === active || b2 === active;
+        for (const { lat1, lon1, lat2, lon2, b1 } of boundaries) {
+            const isActive  = active === null || b1 === active;
             ctx.globalAlpha = isActive ? 0.9 : 0.06;
-            ctx.strokeStyle = BANDS[b1].color;  // b2 is always -1 (land), colour by ocean band
+            ctx.strokeStyle = BANDS[b1].color;
 
             const p1 = map.latLngToContainerPoint([lat1, lon1]);
             const p2 = map.latLngToContainerPoint([lat2, lon2]);
@@ -279,15 +306,22 @@
             ctx.stroke();
         }
 
-        // Click marker — always on top of the boundary lines
+        // Click marker — always on top of boundary lines
         if (clickPos) {
             const p = map.latLngToContainerPoint([clickPos.lat, clickPos.lon]);
             ctx.globalAlpha = 1;
+            // Outer ring
             ctx.beginPath();
-            ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
-            ctx.fillStyle   = "#0ea5e9";
+            ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(14, 165, 233, 0.35)";
+            ctx.lineWidth   = 2;
+            ctx.stroke();
+            // Solid centre dot
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+            ctx.fillStyle   = "#ffffff";
             ctx.fill();
-            ctx.strokeStyle = "#ffffff";
+            ctx.strokeStyle = "#0ea5e9";
             ctx.lineWidth   = 3;
             ctx.stroke();
         }
@@ -300,7 +334,7 @@
         const item = document.createElement("div");
         item.className = "legend-item";
         item.innerHTML = `
-            <div class="legend-dot" style="background:${b.color}"></div>
+            <div class="legend-dot" style="background:${b.color};color:${b.color}"></div>
             <span class="legend-label">${b.label}</span>
             <span class="legend-range">${b.range}</span>
         `;
@@ -379,18 +413,26 @@
             return;
         }
 
-        const band = BANDS[bandIndex(data.mean_c)];
-        document.getElementById("info").innerHTML = `
-            <div class="muted">Updated ${data.date}</div>
-            <div class="temp-big">
-                ${data.mean_c.toFixed(1)}<span style="font-size:22px;font-weight:500"> °C</span>
-            </div>
-            <div class="badge" style="background:${band.color}">${band.label}</div>
-            <div class="meta">${data.radius_km} km radius · ${data.cells_used} cells</div>
-        `;
+        const band      = BANDS[bandIndex(data.mean_c)];
+        const swimEmoji = data.mean_c >= 20 ? "🏊" : data.mean_c >= 17 ? "🤿" : "🥶";
 
-        // Refresh overlay — this click may have fetched and cached a new tile
-        loadOverlay();
+        // Reveal colour bar at top of panel
+        const bar = document.getElementById("info-color-bar");
+        bar.style.display    = "block";
+        bar.style.background = band.color;
+
+        document.getElementById("info").innerHTML = `
+            <div class="muted" style="font-size:11px;letter-spacing:0.5px;text-transform:uppercase;color:#94a3b8;">
+                ${data.date}
+            </div>
+            <div class="temp-big">
+                ${data.mean_c.toFixed(1)}<span style="font-size:22px;font-weight:400;color:#64748b"> °C</span>
+            </div>
+            <div class="badge" style="background:${band.color}">${swimEmoji} ${band.label}</div>
+            <div class="meta">Averaged over ${data.radius_km} km · ${data.cells_used} cells</div>
+        `;
+        // Overlay is intentionally NOT reloaded here — the panel result is enough.
+        // Coastal lines refresh naturally on the next pan/zoom.
     }
 
     map.on("click", onMapClick);

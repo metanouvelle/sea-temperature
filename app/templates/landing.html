@@ -36,25 +36,30 @@
         }
 
         .cta {
-            padding: 14px 28px;
-            background: linear-gradient(135deg, #00BFFF, #4FC3F7);
+            padding: 14px 32px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
             border-radius: 30px;
             text-decoration: none;
-            color: black;
-            font-weight: bold;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.25s ease;
         }
 
         .cta:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 191, 255, 0.4);
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
 
 <body>
     <div class="hero">
-        <h1>🌊 Sea Temperature</h1>
+        <h1>Sea Temperature</h1>
         <p>Satellite-based ocean data for swimmers and travelers worldwide.</p>
         <a href="/map" class="cta">Explore the Map</a>
     </div>
