@@ -423,7 +423,6 @@
 
             item.addEventListener('click', () => {
                 const alreadyActive = item.classList.contains('active');
-                // Toggle off if clicking the active band, otherwise switch to new band
                 const newBand = alreadyActive ? null : i;
                 tempOverlay.setHighlight(newBand);
                 document.querySelectorAll('.legend-item').forEach((el, j) => {
