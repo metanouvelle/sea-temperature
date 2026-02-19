@@ -44,12 +44,12 @@ def login_copernicus():
 
 
 def yesterday_utc() -> str:
-    """Return the most recently available Copernicus date (ISO string).
+    """Return yesterday's UTC date (ISO string).
 
-    Copernicus SST data has ~2 day latency in practice, so 2 days ago is
-    the most recent date that is reliably available.
+    Copernicus SST data has ~1-2 day latency; the fallback in
+    _open_sst_dataset handles the case where yesterday is not yet available.
     """
-    return (datetime.now(timezone.utc).date() - timedelta(days=2)).isoformat()
+    return (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
 
 
 def tile_origin(value: float, step: float) -> float:
@@ -174,15 +174,27 @@ def _open_sst_dataset(
             exc,
             fallback_date,
         )
-        return copernicusmarine.open_dataset(
-            dataset_id=DATASET_ID,
-            minimum_longitude=min_lon,
-            maximum_longitude=max_lon,
-            minimum_latitude=bbox["min_lat"],
-            maximum_latitude=bbox["max_lat"],
-            start_datetime=f"{fallback_date}T00:00:00Z",
-            end_datetime=f"{fallback_date}T00:00:00Z",
-        )
+        try:
+            ds = copernicusmarine.open_dataset(
+                dataset_id=DATASET_ID,
+                minimum_longitude=min_lon,
+                maximum_longitude=max_lon,
+                minimum_latitude=bbox["min_lat"],
+                maximum_latitude=bbox["max_lat"],
+                start_datetime=f"{fallback_date}T00:00:00Z",
+                end_datetime=f"{fallback_date}T00:00:00Z",
+            )
+            if ds is None:
+                raise RuntimeError("open_dataset returned None on fallback")
+            return ds
+        except Exception as exc2:  # pylint: disable=broad-exception-caught
+            log.error(
+                "Copernicus fallback also failed for tile=%s fallback_date=%s: %s",
+                tile_id,
+                fallback_date,
+                exc2,
+            )
+            raise
 
 
 def fetch_tile_from_copernicus(tile_id: str, date: str):
