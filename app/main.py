@@ -8,9 +8,11 @@ from fastapi.templating import Jinja2Templates
 
 from app.database import init_db
 from app.services.sst_cache import (
+    ensure_tile,
     login_copernicus,
     point_temperature,
     query_points_in_bbox,
+    tile_id_for,
     yesterday_utc,
 )
 
@@ -42,7 +44,7 @@ def map_page(request: Request):
     """
     render map main page
     """
-    return templates.TemplateResponse("map_click.html", {"request": request})
+    return templates.TemplateResponse("sea-temp-map.html", {"request": request})
 
 
 @app.get("/about", response_class=HTMLResponse)
@@ -103,3 +105,25 @@ def api_point(
         raise HTTPException(
             status_code=503, detail="Service temporarily unavailable"
         ) from exc
+
+
+@app.get("/api/grid")
+def get_grid(bbox: str):
+    """
+    Return SST grid points for a bounding box, fetching from Copernicus if needed.
+    bbox format: south,west,north,east
+    """
+    south, west, north, east = map(float, bbox.split(","))
+    date = yesterday_utc()
+    bounds = {"min_lat": south, "max_lat": north, "min_lon": west, "max_lon": east}
+    lat = south
+    while lat <= north:
+        lon = west
+        while lon <= east:
+            ensure_tile(date, tile_id_for(lat, lon))
+            lon += 2.0
+        lat += 2.0
+    points = query_points_in_bbox(date, bounds)
+    return {
+        "points": [{"lat": p[0], "lon": p[1], "temp_c": round(p[2], 2)} for p in points]
+    }

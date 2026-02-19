@@ -44,12 +44,12 @@ def login_copernicus():
 
 
 def yesterday_utc() -> str:
-    """Return yesterday's UTC date (ISO string).
+    """Return the most recently available Copernicus date (ISO string).
 
-    Copernicus SST data has ~1 day latency, so yesterday is the most
-    recent date that is reliably available.
+    Copernicus SST data has ~2 day latency in practice, so 2 days ago is
+    the most recent date that is reliably available.
     """
-    return (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
+    return (datetime.now(timezone.utc).date() - timedelta(days=2)).isoformat()
 
 
 def tile_origin(value: float, step: float) -> float:

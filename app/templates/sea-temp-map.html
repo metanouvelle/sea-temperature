@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Sea Temperature • Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,300;9..144,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Mono', monospace;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .leaflet-tile {
+            filter: saturate(0.78) brightness(1.02);
+        }
+
+        .panel {
+            position: absolute;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.92);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 16px 40px rgba(0, 0, 0, 0.10);
+            color: #1e293b;
+        }
+
+        /* ── Info panel ── */
+        #info-panel {
+            top: 24px;
+            left: 24px;
+            width: 280px;
+            overflow: hidden;
+        }
+
+        #info-color-bar {
+            height: 3px;
+            display: none;
+            transition: background 0.4s;
+        }
+
+        #info-content {
+            padding: 22px 24px 20px;
+        }
+
+        .panel-title {
+            font-family: 'Fraunces', serif;
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.3px;
+        }
+
+        .temp-big {
+            font-family: 'Fraunces', serif;
+            font-size: 56px;
+            font-weight: 300;
+            letter-spacing: -4px;
+            line-height: 1;
+            margin: 14px 0 10px;
+            color: #0f172a;
+        }
+
+        .temp-big span {
+            font-size: 18px;
+            font-weight: 300;
+            color: #94a3b8;
+            letter-spacing: 0;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .meta {
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+            line-height: 1.8;
+            margin-top: 4px;
+        }
+
+        .muted {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.7;
+            margin-top: 10px;
+        }
+
+        .panel-links {
+            margin-top: 20px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .panel-links a {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #0ea5e9;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #38bdf8;
+        }
+
+        .btn-secondary {
+            background: rgba(0, 0, 0, 0.06);
+            color: #475569;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            margin-top: 14px;
+            border: 2px solid #e2e8f0;
+            border-top-color: #0ea5e9;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── Legend panel ── */
+        #legend-panel {
+            top: 24px;
+            right: 24px;
+            width: 215px;
+            padding: 20px 18px;
+        }
+
+        .legend-title {
+            font-family: 'Fraunces', serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            margin-bottom: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s, opacity 0.25s;
+            margin: 2px 0;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .legend-item:hover {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.07);
+        }
+
+        .legend-item.active {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.09);
+        }
+
+        .legend-item.dimmed {
+            opacity: 0.28;
+        }
+
+        .legend-swatch {
+            width: 26px;
+            height: 7px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            transition: width 0.2s;
+        }
+
+        .legend-item:hover .legend-swatch,
+        .legend-item.active .legend-swatch {
+            width: 34px;
+        }
+
+        .legend-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #334155;
+            flex: 1;
+        }
+
+        .legend-range {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+
+        /* hover hint inside legend */
+        .legend-hint {
+            font-size: 9px;
+            color: #cbd5e1;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 14px;
+            text-align: center;
+        }
+
+        .leaflet-control-attribution {
+            background: rgba(255, 255, 255, 0.8) !important;
+            color: #94a3b8 !important;
+            font-size: 9px !important;
+        }
+
+        .leaflet-control-attribution a {
+            color: #64748b !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <div class="panel" id="info-panel">
+        <div id="info-color-bar"></div>
+        <div id="info-content">
+            <div class="panel-title">Sea Temperature</div>
+            <div id="info" class="muted">
+                Click anywhere on the ocean to check the water temperature.
+            </div>
+            <div class="panel-links">
+                <a href="/" class="btn-primary">Home</a>
+                <a href="/about" class="btn-secondary">About</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" id="legend-panel">
+        <div class="legend-title">Temperature</div>
+        <div id="legend-items"></div>
+        <div class="legend-hint">Hover to highlight ocean</div>
+    </div>
+
+    <script>
+        // ── Temperature bands ─────────────────────────────────────────────────────────
+        const BANDS = [
+            { label: "Cold", range: "< 17°C", color: "#2563eb" },
+            { label: "Brave", range: "17–20°C", color: "#0ea5e9" },
+            { label: "Nice", range: "20–23°C", color: "#22c55e" },
+            { label: "Perfect", range: "23–26°C", color: "#f59e0b" },
+            { label: "Very Warm", range: "> 26°C", color: "#ef4444" },
+        ];
+
+        function bandIndex(t) {
+            if (t < 17) return 0; if (t < 20) return 1;
+            if (t < 23) return 2; if (t < 26) return 3; return 4;
+        }
+
+        function hexToRgb(hex) {
+            return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+        }
+
+        // ── Map ───────────────────────────────────────────────────────────────────────
+        const map = L.map("map", { zoomControl: true }).setView([35.5, 12.5], 6);
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+            maxZoom: 19, subdomains: "abcd",
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
+        }).addTo(map);
+
+        // ── Canvas overlay for ocean temperature highlighting ─────────────────────────
+        // This is the ONLY visual for temperature zones.
+        // It renders SST grid points as colored squares on a canvas overlay.
+        // Legend hover controls which band is highlighted — completely independent of click.
+
+        const TemperatureOverlay = L.Layer.extend({
+            onAdd(map) {
+                this._map = map;
+                this._canvas = document.createElement('canvas');
+                this._canvas.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:250;';
+                map.getPanes().overlayPane.appendChild(this._canvas);
+                map.on('moveend zoomend', this._reposition, this);
+                this._reposition();
+            },
+            onRemove(map) {
+                map.getPanes().overlayPane.removeChild(this._canvas);
+                map.off('moveend zoomend', this._reposition, this);
+            },
+            _reposition() {
+                const size = this._map.getSize();
+                this._canvas.width = size.x;
+                this._canvas.height = size.y;
+                L.DomUtil.setPosition(this._canvas, this._map.containerPointToLayerPoint([0, 0]));
+                this._render();
+            },
+            setPoints(pts) {
+                this._points = pts;
+                this._render();
+            },
+            setHighlight(bandIdx) {
+                // bandIdx = 0-4 to highlight one band, null for default (all visible)
+                this._highlight = bandIdx;
+                this._render();
+            },
+            _render() {
+                const canvas = this._canvas;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const pts = this._points;
+                if (!pts || pts.length === 0) return;
+
+                const hl = this._highlight; // null = show all
+                const zoom = this._map.getZoom();
+
+                // Cell size: slightly larger than one 0.05° cell to avoid gaps
+                const cellDeg = 0.05;
+                const p0 = this._map.latLngToContainerPoint([0, 0]);
+                const p1 = this._map.latLngToContainerPoint([0, cellDeg]);
+                const cellPx = Math.max(2, Math.ceil(Math.abs(p1.x - p0.x)) + 1);
+
+                for (const pt of pts) {
+                    const bIdx = bandIndex(pt.temp_c);
+                    const [r, g, b] = hexToRgb(BANDS[bIdx].color);
+
+                    let alpha;
+                    if (hl === null || hl === undefined) {
+                        // Default: all bands subtly visible
+                        alpha = 0.30;
+                    } else if (bIdx === hl) {
+                        // This band is highlighted
+                        alpha = 0.75;
+                    } else {
+                        // Other bands fade almost out
+                        alpha = 0.04;
+                    }
+
+                    const px = this._map.latLngToContainerPoint([pt.lat, pt.lon]);
+                    ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+                    ctx.fillRect(
+                        Math.round(px.x - cellPx / 2),
+                        Math.round(px.y - cellPx / 2),
+                        cellPx, cellPx
+                    );
+                }
+            }
+        });
+
+        const tempOverlay = new TemperatureOverlay();
+        tempOverlay.addTo(map);
+
+        // ── Load SST grid from backend ────────────────────────────────────────────────
+        let loadTimer = null;
+
+        async function loadGrid() {
+            const b = map.getBounds();
+            const bbox = `${b.getSouth().toFixed(3)},${b.getWest().toFixed(3)},${b.getNorth().toFixed(3)},${b.getEast().toFixed(3)}`;
+            try {
+                const res = await fetch(`/api/grid?bbox=${bbox}`);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                tempOverlay.setPoints(data.points || []);
+            } catch {
+                tempOverlay.setPoints([]);
+            }
+        }
+
+        map.on('moveend zoomend', () => {
+            clearTimeout(loadTimer);
+            loadTimer = setTimeout(loadGrid, 350);
+        });
+        loadGrid();
+
+        // ── Legend — hover highlights ocean, completely independent of click ──────────
+        BANDS.forEach((b, i) => {
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            item.innerHTML = `
+        <div class="legend-swatch" style="background:${b.color};box-shadow:0 0 5px ${b.color}66"></div>
+        <span class="legend-label">${b.label}</span>
+        <span class="legend-range">${b.range}</span>
+    `;
+
+            item.addEventListener('click', () => {
+                const alreadyActive = item.classList.contains('active');
+                // Toggle off if clicking the active band, otherwise switch to new band
+                const newBand = alreadyActive ? null : i;
+                tempOverlay.setHighlight(newBand);
+                document.querySelectorAll('.legend-item').forEach((el, j) => {
+                    el.classList.toggle('active', j === i && !alreadyActive);
+                    el.classList.toggle('dimmed', newBand !== null && j !== i);
+                });
+            });
+
+            document.getElementById('legend-items').appendChild(item);
+        });
+
+        // ── Click to inspect temperature — completely independent of legend hover ─────
+        let clickMarker = null;
+
+        map.on('click', async (e) => {
+            const { lat, lng: lon } = map.wrapLatLng(e.latlng);
+
+            // Place marker immediately
+            if (clickMarker) map.removeLayer(clickMarker);
+            clickMarker = L.circleMarker([lat, lon], {
+                radius: 7, weight: 2.5,
+                color: '#fff', fillColor: '#0ea5e9', fillOpacity: 1,
+            }).addTo(map);
+
+            document.getElementById('info').innerHTML = `<div class="spinner"></div>`;
+
+            let data;
+            try {
+                const res = await fetch(`/api/point?lat=${lat}&lon=${lon}&radius_km=10`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                data = await res.json();
+            } catch {
+                document.getElementById('info').innerHTML =
+                    `<span class="muted">Could not fetch data — please try again.</span>`;
+                return;
+            }
+
+            if (data.status !== 'ok') {
+                document.getElementById('info').innerHTML =
+                    `<span class="muted">No ocean data here. Try clicking open water.</span>`;
+                return;
+            }
+
+            const band = BANDS[bandIndex(data.mean_c)];
+            const emoji = data.mean_c >= 20 ? '🏊' : data.mean_c >= 17 ? '🤿' : '🥶';
+
+            clickMarker.setStyle({ color: band.color, fillColor: band.color });
+
+            const bar = document.getElementById('info-color-bar');
+            bar.style.display = 'block';
+            bar.style.background = band.color;
+
+            document.getElementById('info').innerHTML = `
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-top:10px">
+            ${data.date}
+        </div>
+        <div class="temp-big">${data.mean_c.toFixed(1)}<span> °C</span></div>
+        <div class="badge" style="background:${band.color}18;color:${band.color};border:1px solid ${band.color}40">
+            ${emoji} ${band.label}
+        </div>
+        <div class="meta">
+            ${lat.toFixed(3)}°, ${lon.toFixed(3)}° &nbsp;·&nbsp;
+            ${data.cells_used} cells · ${data.radius_km} km radius
+        </div>
+    `;
+        });
+    </script>
+</body>
+
+</html>
