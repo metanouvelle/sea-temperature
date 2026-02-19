@@ -149,10 +149,28 @@ def store_tile(
     return n
 
 
+def _copernicus_kwargs() -> dict:
+    """Return username/password kwargs for Copernicus API calls.
+
+    Passes credentials explicitly so the SDK never falls back to an
+    interactive stdin prompt (which aborts in server environments).
+    Supports both v1 env var names (COPERNICUSMARINE_USERNAME) and
+    v2 names (COPERNICUSMARINE_SERVICE_USERNAME).
+    """
+    username = os.getenv("COPERNICUSMARINE_SERVICE_USERNAME") or os.getenv(
+        "COPERNICUSMARINE_USERNAME"
+    )
+    password = os.getenv("COPERNICUSMARINE_SERVICE_PASSWORD") or os.getenv(
+        "COPERNICUSMARINE_PASSWORD"
+    )
+    return {"username": username, "password": password}
+
+
 def _open_sst_dataset(
     tile_id: str, date: str, min_lon: float, max_lon: float, bbox: dict
 ):
     """Open a Copernicus SST dataset, falling back to the previous day on any error."""
+    kwargs = _copernicus_kwargs()
     try:
         return copernicusmarine.open_dataset(
             dataset_id=DATASET_ID,
@@ -162,6 +180,7 @@ def _open_sst_dataset(
             maximum_latitude=bbox["max_lat"],
             start_datetime=f"{date}T00:00:00Z",
             end_datetime=f"{date}T00:00:00Z",
+            **kwargs,
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
         fallback_date = (
@@ -183,6 +202,7 @@ def _open_sst_dataset(
                 maximum_latitude=bbox["max_lat"],
                 start_datetime=f"{fallback_date}T00:00:00Z",
                 end_datetime=f"{fallback_date}T00:00:00Z",
+                **kwargs,
             )
             if ds is None:
                 raise RuntimeError("open_dataset returned None on fallback")
