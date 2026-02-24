@@ -32,12 +32,15 @@ TILE_DEG = 2.0  # 2° x 2° tiles (small enough to fetch fast)
 def login_copernicus():
     """Validate that Copernicus credentials are present.
 
-    The SDK reads COPERNICUSMARINE_USERNAME / COPERNICUSMARINE_PASSWORD from
-    the environment automatically on each API call, so no explicit login() is
-    needed — we just fail fast here if the vars are missing.
+    Accepts both v1 names (COPERNICUSMARINE_USERNAME/PASSWORD) and
+    v2 names (COPERNICUSMARINE_SERVICE_USERNAME/PASSWORD).
     """
-    username = os.getenv("COPERNICUSMARINE_USERNAME")
-    password = os.getenv("COPERNICUSMARINE_PASSWORD")
+    username = os.getenv("COPERNICUSMARINE_SERVICE_USERNAME") or os.getenv(
+        "COPERNICUSMARINE_USERNAME"
+    )
+    password = os.getenv("COPERNICUSMARINE_SERVICE_PASSWORD") or os.getenv(
+        "COPERNICUSMARINE_PASSWORD"
+    )
 
     if not username or not password:
         raise RuntimeError("Copernicus credentials not set")

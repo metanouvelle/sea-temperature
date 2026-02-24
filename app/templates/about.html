@@ -1,101 +1,305 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <title>About • Sea Temperature Explorer</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+    <meta charset="UTF-8">
+    <title>About • Sea Temperature</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            --deep: #060f1a;
+            --navy: #0d1b2a;
+            --card: rgba(255, 255, 255, 0.04);
+            --text: #e8f4f8;
+            --muted: rgba(255, 255, 255, 0.38);
+            --soft: rgba(255, 255, 255, 0.55);
+            --accent: #38bdf8;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-            background: #f8fafc;
-            color: #0f172a;
+            font-family: 'DM Mono', monospace;
+            background: var(--deep);
+            color: var(--text);
+            min-height: 100vh;
         }
 
-        .hero {
-            background: linear-gradient(135deg, #0E2A47, #0ea5e9);
-            color: white;
-            padding: 70px 20px;
-            text-align: center;
+        /* ── Grain overlay ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.025;
         }
 
-        .hero h1 {
-            margin: 0;
-            font-size: 40px;
-            letter-spacing: -1px;
+        /* ── Nav ── */
+        nav {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 8vw;
+            border-bottom: 1px solid var(--border);
         }
 
-        .hero p {
-            margin-top: 12px;
-            font-size: 18px;
-            opacity: 0.9;
-        }
-
-        .wrap {
-            max-width: 860px;
-            margin: 0 auto;
-            padding: 60px 20px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 22px;
-            padding: 40px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
-        }
-
-        h2 {
-            margin-top: 0;
-            font-size: 26px;
-            letter-spacing: -0.5px;
-        }
-
-        p {
+        .nav-brand {
+            font-family: 'Fraunces', serif;
             font-size: 16px;
-            line-height: 1.75;
-            color: #334155;
-            margin-bottom: 20px;
+            font-weight: 300;
+            color: var(--text);
+            text-decoration: none;
+            letter-spacing: -0.3px;
         }
 
-        .highlight {
-            background: #f1f5f9;
-            padding: 16px;
-            border-radius: 14px;
-            margin: 30px 0;
+        .nav-link {
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+        }
+
+        /* ── Page layout ── */
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 80px 8vw 120px;
+        }
+
+        /* ── Header ── */
+        .page-eyebrow {
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.1s;
+        }
+
+        .page-title {
+            font-family: 'Fraunces', serif;
+            font-size: clamp(40px, 6vw, 64px);
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -2px;
+            color: var(--text);
+            margin-bottom: 16px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.2s;
+        }
+
+        .page-title em {
+            font-style: italic;
+            font-weight: 300;
+            color: var(--accent);
+        }
+
+        .page-lead {
+            font-size: 14px;
+            color: var(--soft);
+            line-height: 1.9;
+            max-width: 520px;
+            margin-bottom: 64px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.3s;
+        }
+
+        /* ── Story sections ── */
+        .section {
+            margin-bottom: 56px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards;
+        }
+
+        .section:nth-child(1) {
+            animation-delay: 0.4s;
+        }
+
+        .section:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .section:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        .section:nth-child(4) {
+            animation-delay: 0.7s;
+        }
+
+        .section-label {
+            font-size: 9px;
+            letter-spacing: 3.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .section-title {
+            font-family: 'Fraunces', serif;
+            font-size: 26px;
+            font-weight: 300;
+            letter-spacing: -0.5px;
+            color: var(--text);
+            margin-bottom: 18px;
+            line-height: 1.2;
+        }
+
+        .section p {
+            font-size: 13px;
+            line-height: 2;
+            color: var(--soft);
+            margin-bottom: 16px;
+            letter-spacing: 0.2px;
+        }
+
+        .section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .section p strong {
+            color: var(--text);
             font-weight: 500;
         }
 
-        .cta {
-            display: inline-block;
-            margin-top: 24px;
-            padding: 14px 20px;
-            border-radius: 16px;
-            background: #0ea5e9;
-            color: white;
+        .section p em {
+            color: var(--accent);
+            font-style: normal;
+        }
+
+        /* ── Pull quote ── */
+        .pullquote {
+            border-left: 2px solid var(--accent);
+            padding: 4px 0 4px 24px;
+            margin: 28px 0;
+        }
+
+        .pullquote p {
+            font-family: 'Fraunces', serif;
+            font-style: italic;
+            font-size: 18px !important;
+            font-weight: 300;
+            color: var(--text) !important;
+            line-height: 1.6 !important;
+            letter-spacing: -0.3px !important;
+        }
+
+        /* ── CTA ── */
+        .cta-block {
+            margin-top: 72px;
+            padding-top: 48px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 24px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.9s;
+        }
+
+        .cta-text {
+            font-family: 'Fraunces', serif;
+            font-size: 22px;
+            font-weight: 300;
+            font-style: italic;
+            color: var(--soft);
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            background: var(--accent);
+            color: var(--deep);
+            border-radius: 100px;
             text-decoration: none;
-            font-weight: 700;
-            transition: all 0.2s ease;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.25s;
+            white-space: nowrap;
+            box-shadow: 0 0 40px rgba(56, 189, 248, 0.2);
         }
 
-        .cta:hover {
-            background: #0284c7;
+        .cta-btn:hover {
+            background: #7dd3fc;
+            transform: translateY(-2px);
+            box-shadow: 0 0 60px rgba(56, 189, 248, 0.35);
         }
 
+        .cta-btn svg {
+            transition: transform 0.25s;
+        }
+
+        .cta-btn:hover svg {
+            transform: translateX(4px);
+        }
+
+        /* ── Footer note ── */
         .footer-note {
-            margin-top: 40px;
-            font-size: 13px;
-            color: #64748b;
+            margin-top: 48px;
+            font-size: 10px;
+            color: var(--muted);
+            line-height: 1.9;
+            letter-spacing: 0.3px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @media (max-width: 640px) {
-            .hero h1 {
-                font-size: 30px;
+            .page {
+                padding: 48px 6vw 80px;
             }
 
-            .card {
-                padding: 26px;
+            .cta-block {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
@@ -103,87 +307,103 @@
 
 <body>
 
-    <div class="hero">
-        <h1>Why This App Exists</h1>
-        <p>Because the sea temperature you see in weather apps is often wrong.</p>
-    </div>
+    <nav>
+        <a href="/" class="nav-brand">Sea Temperature</a>
+        <a href="/map" class="nav-link">Explore Map →</a>
+    </nav>
 
-    <div class="wrap">
-        <div class="card">
+    <div class="page">
 
-            <h2>☀️ It Started in Tenerife</h2>
+        <div class="page-eyebrow">Our story</div>
+        <h1 class="page-title">Why the sea temp<br>in weather apps is<br><em>often wrong.</em></h1>
+        <p class="page-lead">
+            A simple question in Tenerife led to building something better.
+        </p>
 
-            <p>
-                We were planning a trip to Tenerife. Like most beach lovers,
-                we checked the weather app before booking, just wanna check if we could swim.
-            </p>
+        <div class="sections">
 
-            <p>
-                The app said <strong>17°C</strong>. That is chilly in the water!
-                But when we looked at photos of the beaches, people were swimming!
-            </p>
-
-            <div class="highlight">
-                Something didn’t add up...
+            <div class="section">
+                <div class="section-label">The beginning</div>
+                <h2 class="section-title">It started in Tenerife</h2>
+                <p>
+                    We were planning a trip to Tenerife. Like most beach lovers,
+                    we checked the weather app before booking — just wanted to know if we could swim.
+                </p>
+                <p>
+                    The app said <strong>17°C</strong>. Chilly. But photos of the beaches showed
+                    people swimming everywhere.
+                </p>
+                <div class="pullquote">
+                    <p>Something didn't add up...</p>
+                </div>
+                <p>
+                    During the hiking trip in Agana, our guide Alex revealed the secret:
+                    the official weather station sits at <strong>high elevation</strong>.
+                    In Tenerife, roughly every 100 meters higher means about 1°C lower.
+                    Suddenly everything made sense.
+                </p>
             </div>
 
-            <p>
-                During the hiking trip in Agana, our guide Alex demystified the secret:
-                the official weather station is located at high elevation.
-                And in Tenerife, <strong>roughly every 100 meters higher means about 1°C lower</strong>.
-            </p>
-
-            <p>
-                Suddenly everything made sense. 😂
-            </p>
-
-            <h2>🌍 The Problem</h2>
-
-            <p>
-                Most weather apps show air temperature measured inland or at altitude.
-                They do <em>not</em> show real sea surface temperature near the beach
-                where you actually want to swim.
-            </p>
-
-            <p>
-                That means travelers often underestimate how warm (or cold)
-                the ocean really is.
-            </p>
-
-            <h2>🛰️ The Solution</h2>
-
-            <p>
-                This tool estimates real sea surface temperature using
-                satellite-derived data from Copernicus Marine.
-            </p>
-
-            <p>
-                Instead of guessing, you can click directly on the coastline
-                and see what the water is likely like near that exact spot.
-            </p>
-
-            <h2>🏖️ The Goal</h2>
-
-            <p>
-                Let us help the travelers plan better beach days,
-
-                and swimmers avoid surprises.
-
-                Let us answer <strong>one simple question</strong>:
-            </p>
-
-            <div class="highlight">
-                “Is the sea warm enough to swim here?”
+            <div class="section">
+                <div class="section-label">The problem</div>
+                <h2 class="section-title">Weather apps show the wrong temperature</h2>
+                <p>
+                    Most weather apps show air temperature measured inland or at altitude.
+                    They do <em>not</em> show real sea surface temperature near the beach
+                    where you actually want to swim.
+                </p>
+                <p>
+                    That means travelers routinely underestimate — or overestimate —
+                    how warm the ocean really is at their destination.
+                </p>
             </div>
 
-            <a href="/map" class="cta">🌊 Explore the Map</a>
+            <div class="section">
+                <div class="section-label">The solution</div>
+                <h2 class="section-title">Satellite data, right at the coast</h2>
+                <p>
+                    This tool uses satellite-derived sea surface temperature data
+                    from <strong>Copernicus Marine</strong> — the same data source used by
+                    oceanographers and climate researchers.
+                </p>
+                <p>
+                    Instead of guessing, you click directly on any coastline and see
+                    what the water is actually like near that exact spot, updated daily.
+                </p>
+            </div>
 
-            <div class="footer-note">
-                Note: Sea surface temperature is measured at the top layer of the ocean.
-                Actual temperature may vary slightly depending on depth and local conditions.
+            <div class="section">
+                <div class="section-label">The goal</div>
+                <h2 class="section-title">One simple question, answered.</h2>
+                <div class="pullquote">
+                    <p>"Is the sea warm enough to swim here?"</p>
+                </div>
+                <p>
+                    Help travelers plan better beach days.
+                    Help swimmers avoid surprises.
+                    That's it.
+                </p>
             </div>
 
         </div>
+
+        <div class="cta-block">
+            <span class="cta-text">Ready to explore?</span>
+            <a href="/map" class="cta-btn">
+                Open the Map
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </a>
+        </div>
+
+        <div class="footer-note">
+            Sea surface temperature is measured at the top layer of the ocean.
+            Actual temperature may vary slightly depending on depth and local conditions.
+            Data source: Copernicus Marine Environment Monitoring Service.
+        </div>
+
     </div>
 
 </body>

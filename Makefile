@@ -40,3 +40,12 @@ check:
 	$(POETRY_BIN) run isort $(SRC) -c
 	$(POETRY_BIN) run black $(SRC) --check
 	$(POETRY_BIN) run pylint $(SRC)
+
+
+create-cron:
+	fly machine run . \
+	--app sea-temperature \
+	--schedule daily \
+	--entrypoint "python -m app.scripts.prewarm_tiles" \
+	--vm-size shared-cpu-1x \
+	--volume vol_vx2qxjw0dlqnz6wr:/data

@@ -3,66 +3,632 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Sea Temperature</title>
+    <title>Sea Temperature — Real-time ocean data for swimmers & travelers</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <meta name="description"
+        content="Satellite-based sea temperature data for every ocean. Find where the water is perfect.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
+        rel="stylesheet">
     <style>
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: radial-gradient(circle at 30% 20%, #0E2A47, #081421);
-            color: white;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        :root {
+            --deep: #060f1a;
+            --ocean: #0a1f35;
+            --mid: #0e2d4a;
+            --foam: rgba(255, 255, 255, 0.06);
+            --text: #e8f4f8;
+            --muted: rgba(255, 255, 255, 0.38);
+            --accent: #38bdf8;
         }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'DM Mono', monospace;
+            background: var(--deep);
+            color: var(--text);
+            cursor: default;
+        }
+
+        /* ── Canvas ocean background ─────────────────────────────────── */
+        #ocean-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* ── Grain overlay ───────────────────────────────────────────── */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.028;
+        }
+
+        /* ── Layout ──────────────────────────────────────────────────── */
+        .page {
+            position: relative;
+            z-index: 2;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr auto;
+        }
+
+        /* ── Left: hero text ─────────────────────────────────────────── */
         .hero {
-            text-align: center;
-            max-width: 600px;
+            grid-column: 1;
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 0 0 8vw;
+        }
+
+        .eyebrow {
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 28px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.2s;
         }
 
         h1 {
-            font-size: 48px;
-            margin-bottom: 16px;
-            letter-spacing: 1px;
+            font-family: 'Fraunces', serif;
+            font-size: clamp(52px, 6vw, 88px);
+            font-weight: 700;
+            line-height: 1.0;
+            letter-spacing: -2px;
+            color: var(--text);
+            margin-bottom: 8px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.35s;
         }
 
-        p {
-            font-size: 18px;
-            opacity: 0.7;
-            margin-bottom: 32px;
+        h1 em {
+            font-style: italic;
+            font-weight: 300;
+            color: var(--accent);
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 380px;
+            margin-top: 20px;
+            letter-spacing: 0.3px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.5s;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-top: 44px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.65s;
         }
 
         .cta {
-            padding: 14px 32px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            -webkit-backdrop-filter: blur(12px);
-            backdrop-filter: blur(12px);
-            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 32px;
+            background: var(--accent);
+            color: var(--deep);
+            border-radius: 100px;
             text-decoration: none;
-            color: white;
-            font-weight: 700;
-            font-size: 16px;
+            font-size: 12px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             transition: all 0.25s ease;
+            box-shadow: 0 0 40px rgba(56, 189, 248, 0.25);
         }
 
         .cta:hover {
-            background: rgba(255, 255, 255, 0.25);
+            background: #7dd3fc;
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 60px rgba(56, 189, 248, 0.4);
+        }
+
+        .cta svg {
+            transition: transform 0.25s;
+        }
+
+        .cta:hover svg {
+            transform: translateX(4px);
+        }
+
+        .about-link {
+            font-size: 11px;
+            color: var(--muted);
+            text-decoration: none;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        .about-link:hover {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* ── Right: live temperature card ────────────────────────────── */
+        .temp-showcase {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            animation: fadeIn 1.2s ease forwards 0.9s;
+        }
+
+        .temp-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px 44px;
+            width: 300px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 64px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .card-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .card-location {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .card-temp {
+            font-family: 'Fraunces', serif;
+            font-size: 86px;
+            font-weight: 300;
+            letter-spacing: -6px;
+            line-height: 1;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .card-temp span {
+            font-size: 22px;
+            font-weight: 300;
+            letter-spacing: 0;
+            color: var(--muted);
+            vertical-align: super;
+            margin-left: 2px;
+        }
+
+        .card-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 16px;
+            border-radius: 100px;
+            font-family: 'Fraunces', serif;
+            font-style: italic;
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            margin-bottom: 24px;
+        }
+
+        .card-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.07);
+            margin-bottom: 20px;
+        }
+
+        .card-samples {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card-sample {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 0.5px;
+        }
+
+        .sample-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .sample-name {
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .sample-temp {
+            font-family: 'Fraunces', serif;
+            font-size: 14px;
+            font-weight: 300;
+            color: var(--text);
+        }
+
+        /* pulse dot on card */
+        .live-dot {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .live-dot::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 8px #4ade80;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
+        }
+
+        /* ── Footer strip ────────────────────────────────────────────── */
+        .footer {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            padding: 0 8vw 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 1.2s;
+        }
+
+        .footer-stat {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .stat-value {
+            font-family: 'Fraunces', serif;
+            font-size: 22px;
+            font-weight: 300;
+            color: var(--text);
+        }
+
+        .stat-label {
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .footer-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ── Animations ──────────────────────────────────────────────── */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* ── Responsive ──────────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            .page {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                overflow-y: auto;
+            }
+
+            html,
+            body {
+                overflow: auto;
+            }
+
+            .hero {
+                padding: 80px 8vw 40px;
+                grid-column: 1;
+                grid-row: 1;
+            }
+
+            .temp-showcase {
+                grid-column: 1;
+                grid-row: 2;
+                padding: 0 8vw 40px;
+                justify-content: flex-start;
+            }
+
+            .footer {
+                grid-row: 3;
+                flex-wrap: wrap;
+                gap: 20px;
+            }
+
+            .footer-divider {
+                display: none;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="hero">
-        <h1>Sea Temperature</h1>
-        <p>Satellite-based ocean data for swimmers and travelers worldwide.</p>
-        <a href="/map" class="cta">Explore the Map</a>
+
+    <canvas id="ocean-canvas"></canvas>
+
+    <div class="page">
+        <!-- Left: hero -->
+        <div class="hero">
+            <div class="eyebrow">Satellite · Real-time · Global</div>
+            <h1>Find your<br><em>perfect</em><br>ocean.</h1>
+            <p class="subtitle">
+                Sea temperature data updated daily from satellite observations.
+                Every coast. Every swim.
+            </p>
+            <div class="actions">
+                <a href="/map" class="cta">
+                    Explore the Map
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </a>
+                <a href="/about" class="about-link">About</a>
+            </div>
+        </div>
+
+        <!-- Right: temperature showcase card -->
+        <div class="temp-showcase">
+            <div class="temp-card">
+                <div class="live-dot">Live</div>
+                <div class="card-label">Featured location</div>
+                <div class="card-location" id="card-location">Mediterranean Sea</div>
+                <div class="card-temp" id="card-temp">—<span>°C</span></div>
+                <div class="card-badge" id="card-badge">🌊 Loading...</div>
+                <div class="card-divider"></div>
+                <div class="card-samples" id="card-samples">
+                    <div class="card-sample">
+                        <div class="sample-dot" style="background:#0ea5e9"></div>
+                        <span class="sample-name">Adriatic Sea</span>
+                        <span class="sample-temp">—</span>
+                    </div>
+                    <div class="card-sample">
+                        <div class="sample-dot" style="background:#22c55e"></div>
+                        <span class="sample-name">Aegean Sea</span>
+                        <span class="sample-temp">—</span>
+                    </div>
+                    <div class="card-sample">
+                        <div class="sample-dot" style="background:#f59e0b"></div>
+                        <span class="sample-name">Red Sea</span>
+                        <span class="sample-temp">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer stats -->
+        <div class="footer">
+            <div class="footer-stat">
+                <span class="stat-value">0.05°</span>
+                <span class="stat-label">Grid resolution</span>
+            </div>
+            <div class="footer-divider"></div>
+            <div class="footer-stat">
+                <span class="stat-value">Daily</span>
+                <span class="stat-label">Data refresh</span>
+            </div>
+            <div class="footer-divider"></div>
+            <div class="footer-stat">
+                <span class="stat-value">Global</span>
+                <span class="stat-label">Coverage</span>
+            </div>
+            <div class="footer-divider"></div>
+            <div class="footer-stat">
+                <span class="stat-value" id="stat-tiles">—</span>
+                <span class="stat-label">Coastal regions</span>
+            </div>
+        </div>
     </div>
+
+    <script>
+        // ── Animated ocean canvas ─────────────────────────────────────────────────────
+        const canvas = document.getElementById('ocean-canvas');
+        const ctx = canvas.getContext('2d');
+        let W, H, t = 0;
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // Generate wave layers
+        const WAVES = [
+            { freq: 0.008, amp: 38, speed: 0.0008, phase: 0, alpha: 0.06, color: '#1a6a9a' },
+            { freq: 0.012, amp: 22, speed: 0.0012, phase: 1.2, alpha: 0.05, color: '#0e4d7a' },
+            { freq: 0.006, amp: 55, speed: 0.0005, phase: 2.4, alpha: 0.04, color: '#0a3d62' },
+            { freq: 0.018, amp: 14, speed: 0.002, phase: 0.8, alpha: 0.07, color: '#1e7db8' },
+            { freq: 0.005, amp: 70, speed: 0.0003, phase: 3.6, alpha: 0.03, color: '#082d4a' },
+        ];
+
+        function drawOcean(timestamp) {
+            t = timestamp * 0.001;
+            ctx.clearRect(0, 0, W, H);
+
+            // Deep background gradient
+            const bg = ctx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, '#04111f');
+            bg.addColorStop(0.4, '#071828');
+            bg.addColorStop(1, '#02080f');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+
+            // Draw each wave layer
+            WAVES.forEach(wave => {
+                ctx.beginPath();
+                const yBase = H * 0.55 + wave.amp;
+                ctx.moveTo(0, yBase);
+
+                for (let x = 0; x <= W; x += 4) {
+                    const y = yBase
+                        + Math.sin(x * wave.freq + t * wave.speed * 1000 + wave.phase) * wave.amp
+                        + Math.sin(x * wave.freq * 0.5 + t * wave.speed * 700 + wave.phase * 1.3) * wave.amp * 0.4;
+                    ctx.lineTo(x, y);
+                }
+
+                ctx.lineTo(W, H);
+                ctx.lineTo(0, H);
+                ctx.closePath();
+
+                const grad = ctx.createLinearGradient(0, yBase - wave.amp, 0, H);
+                grad.addColorStop(0, wave.color + Math.round(wave.alpha * 255).toString(16).padStart(2, '0'));
+                grad.addColorStop(1, wave.color + '08');
+                ctx.fillStyle = grad;
+                ctx.fill();
+            });
+
+            // Subtle light shimmer on top portion
+            const shimmer = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+            shimmer.addColorStop(0, 'rgba(56,189,248,0.03)');
+            shimmer.addColorStop(1, 'rgba(56,189,248,0)');
+            ctx.fillStyle = shimmer;
+            ctx.fillRect(0, 0, W, H * 0.5);
+
+            requestAnimationFrame(drawOcean);
+        }
+        requestAnimationFrame(drawOcean);
+
+        // ── Fetch live temperatures for the card ──────────────────────────────────────
+        const SAMPLES = [
+            { name: 'Mediterranean Sea', lat: 37.5, lon: 13.5, color: '#38bdf8' },
+            { name: 'Adriatic Sea', lat: 43.5, lon: 14.5, color: '#0ea5e9' },
+            { name: 'Aegean Sea', lat: 37.5, lon: 25.0, color: '#22c55e' },
+            { name: 'Red Sea', lat: 22.0, lon: 38.0, color: '#f59e0b' },
+        ];
+
+        const BANDS = [
+            { label: 'Cold', emoji: '🥶', min: -99, max: 17, color: '#2563eb' },
+            { label: 'Brave', emoji: '🤿', min: 17, max: 20, color: '#0ea5e9' },
+            { label: 'Nice', emoji: '😊', min: 20, max: 23, color: '#22c55e' },
+            { label: 'Perfect', emoji: '🏊', min: 23, max: 26, color: '#f59e0b' },
+            { label: 'Very Warm', emoji: '🔥', min: 26, max: 999, color: '#ef4444' },
+        ];
+
+        function getBand(t) { return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1]; }
+
+        async function fetchTemp(lat, lon) {
+            try {
+                const res = await fetch(`/api/point?lat=${lat}&lon=${lon}&radius_km=25`);
+                if (!res.ok) return null;
+                const d = await res.json();
+                return d.status === 'ok' ? d.mean_c : null;
+            } catch { return null; }
+        }
+
+        async function loadTemperatures() {
+            // Fetch all in parallel
+            const temps = await Promise.all(SAMPLES.map(s => fetchTemp(s.lat, s.lon)));
+
+            // Update main card with first sample
+            if (temps[0] !== null) {
+                const band = getBand(temps[0]);
+                document.getElementById('card-location').textContent = SAMPLES[0].name;
+                document.getElementById('card-temp').innerHTML = `${temps[0].toFixed(1)}<span>°C</span>`;
+                document.getElementById('card-badge').style.background = band.color + '20';
+                document.getElementById('card-badge').style.color = band.color;
+                document.getElementById('card-badge').style.borderColor = band.color + '35';
+                document.getElementById('card-badge').textContent = `${band.emoji} ${band.label}`;
+            }
+
+            // Update the three sample rows
+            const rows = document.querySelectorAll('.card-sample');
+            [1, 2, 3].forEach((i, idx) => {
+                if (temps[i] !== null) {
+                    rows[idx].querySelector('.sample-dot').style.background = getBand(temps[i]).color;
+                    rows[idx].querySelector('.sample-name').textContent = SAMPLES[i].name;
+                    rows[idx].querySelector('.sample-temp').textContent = temps[i].toFixed(1) + '°';
+                }
+            });
+
+            // Update stats counter
+            document.getElementById('stat-tiles').textContent = '35';
+        }
+
+        loadTemperatures();
+    </script>
 </body>
 
 </html>

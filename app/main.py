@@ -1,6 +1,7 @@
 """this is the main entry point for the sea temperature project"""
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
@@ -12,9 +13,12 @@ from app.services.sst_cache import (
     login_copernicus,
     point_temperature,
     query_points_in_bbox,
+    tile_exists,
     tile_id_for,
     yesterday_utc,
 )
+
+_tile_executor = ThreadPoolExecutor(max_workers=8)
 
 log = logging.getLogger(__name__)
 
@@ -110,20 +114,38 @@ def api_point(
 @app.get("/api/grid")
 def get_grid(bbox: str):
     """
-    Return SST grid points for a bounding box, fetching from Copernicus if needed.
+    Return cached SST grid points for a bounding box.
+    Uncached tiles are submitted to a background thread pool; cached data is
+    returned immediately so the frontend can show what it has and poll for more.
     bbox format: south,west,north,east
     """
     south, west, north, east = map(float, bbox.split(","))
     date = yesterday_utc()
     bounds = {"min_lat": south, "max_lat": north, "min_lon": west, "max_lon": east}
+    pending = 0
     lat = south
     while lat <= north:
         lon = west
         while lon <= east:
-            ensure_tile(date, tile_id_for(lat, lon))
+            tid = tile_id_for(lat, lon)
+            if not tile_exists(date, tid):
+                f = _tile_executor.submit(ensure_tile, date, tid)
+                f.add_done_callback(
+                    lambda fut, d=date, t=tid: (
+                        log.error(
+                            "bg tile fetch %s:%s failed: %s", d, t, fut.exception()
+                        )
+                        if fut.exception()
+                        else None
+                    )
+                )
+                pending += 1
             lon += 2.0
         lat += 2.0
     points = query_points_in_bbox(date, bounds)
     return {
-        "points": [{"lat": p[0], "lon": p[1], "temp_c": round(p[2], 2)} for p in points]
+        "points": [
+            {"lat": p[0], "lon": p[1], "temp_c": round(p[2], 2)} for p in points
+        ],
+        "pending": pending,
     }

@@ -14,10 +14,7 @@
     <style>
         :root {
             --navy: #0d1b2a;
-            --ocean: #1a3a5c;
-            --sky: #e8f4f8;
             --glass: rgba(255, 255, 255, 0.92);
-            --border: rgba(255, 255, 255, 0.95);
             --muted: #64748b;
             --soft: #94a3b8;
         }
@@ -39,38 +36,34 @@
             inset: 0;
         }
 
-        /* ── Panels ───────────────────────────────────────────────────── */
         .panel {
             position: fixed;
             z-index: 10;
             background: var(--glass);
             backdrop-filter: blur(24px) saturate(180%);
             -webkit-backdrop-filter: blur(24px) saturate(180%);
-            border: 1px solid var(--border);
+            border: 1px solid rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            box-shadow:
-                0 1px 0 rgba(255, 255, 255, 0.8) inset,
-                0 4px 6px rgba(0, 0, 0, 0.04),
-                0 20px 50px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 4px 6px rgba(0, 0, 0, 0.04), 0 20px 50px rgba(0, 0, 0, 0.12);
         }
 
-        /* ── Info panel (left) ────────────────────────────────────────── */
+        /* ── Info panel ── */
         #info-panel {
             top: 24px;
             left: 24px;
-            width: 290px;
+            width: 272px;
             overflow: hidden;
         }
 
         #info-color-bar {
             height: 3px;
             display: none;
-            transition: background 0.5s ease;
+            transition: background 0.5s;
             border-radius: 20px 20px 0 0;
         }
 
         #info-content {
-            padding: 24px 26px 22px;
+            padding: 22px 24px 22px;
         }
 
         .panel-eyebrow {
@@ -79,28 +72,47 @@
             letter-spacing: 3px;
             text-transform: uppercase;
             color: var(--soft);
-            margin-bottom: 6px;
+            margin-bottom: 5px;
         }
 
         .panel-title {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 22px;
+            font-size: 21px;
             font-weight: 600;
             color: var(--navy);
             letter-spacing: -0.3px;
             line-height: 1.1;
         }
 
+        .info-placeholder {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.9;
+            margin-top: 12px;
+            letter-spacing: 0.2px;
+        }
+
+        .temp-place {
+            font-size: 10px;
+            color: var(--soft);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 16px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .temp-display {
-            margin: 20px 0 12px;
             display: flex;
             align-items: baseline;
-            gap: 4px;
+            gap: 3px;
+            margin: 4px 0 10px;
         }
 
         .temp-value {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 72px;
+            font-size: 70px;
             font-weight: 300;
             letter-spacing: -5px;
             line-height: 1;
@@ -108,24 +120,22 @@
         }
 
         .temp-unit {
-            font-family: 'DM Mono', monospace;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 300;
             color: var(--soft);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .temp-badge {
             display: inline-flex;
             align-items: center;
-            gap: 7px;
-            padding: 5px 14px 5px 10px;
+            gap: 6px;
+            padding: 4px 13px 4px 9px;
             border-radius: 100px;
             font-size: 11px;
             font-weight: 500;
             letter-spacing: 1px;
             text-transform: uppercase;
-            margin-bottom: 10px;
         }
 
         .temp-meta {
@@ -135,65 +145,13 @@
             line-height: 2;
             border-top: 1px solid rgba(0, 0, 0, 0.06);
             padding-top: 10px;
-            margin-top: 6px;
-        }
-
-        .temp-meta span {
-            display: block;
+            margin-top: 10px;
             text-transform: uppercase;
         }
 
-        .info-placeholder {
-            font-size: 12px;
-            color: var(--muted);
-            line-height: 1.8;
-            margin-top: 12px;
-            letter-spacing: 0.2px;
-        }
-
-        .panel-actions {
-            margin-top: 20px;
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn {
-            padding: 9px 18px;
-            border-radius: 10px;
-            font-family: 'DM Mono', monospace;
-            font-size: 10px;
-            font-weight: 500;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            text-decoration: none;
-            transition: all 0.2s;
-            cursor: pointer;
-            border: none;
-        }
-
-        .btn-primary {
-            background: var(--navy);
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background: var(--ocean);
-        }
-
-        .btn-secondary {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--muted);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(0, 0, 0, 0.09);
-        }
-
-        /* ── Loading spinner ──────────────────────────────────────────── */
         .spinner {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             margin: 18px 0 4px;
             border: 2px solid rgba(0, 0, 0, 0.08);
             border-top-color: #0ea5e9;
@@ -207,12 +165,12 @@
             }
         }
 
-        /* ── Legend panel (right) ─────────────────────────────────────── */
+        /* ── Legend panel ── */
         #legend-panel {
             top: 24px;
             right: 24px;
-            width: 220px;
-            padding: 22px 20px 18px;
+            width: 212px;
+            padding: 20px 18px 16px;
         }
 
         .legend-eyebrow {
@@ -221,14 +179,14 @@
             letter-spacing: 3px;
             text-transform: uppercase;
             color: var(--soft);
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 9px 10px;
+            gap: 11px;
+            padding: 8px 10px;
             border-radius: 10px;
             cursor: pointer;
             transition: background 0.15s, opacity 0.25s, transform 0.15s;
@@ -250,20 +208,20 @@
         }
 
         .legend-item.is-dimmed {
-            opacity: 0.28;
+            opacity: 0.25;
         }
 
         .legend-swatch {
-            width: 28px;
-            height: 7px;
-            border-radius: 4px;
+            width: 26px;
+            height: 6px;
+            border-radius: 3px;
             flex-shrink: 0;
-            transition: width 0.2s, box-shadow 0.2s;
+            transition: width 0.2s;
         }
 
         .legend-item:hover .legend-swatch,
         .legend-item.is-active .legend-swatch {
-            width: 36px;
+            width: 34px;
         }
 
         .legend-name {
@@ -271,28 +229,25 @@
             font-weight: 500;
             color: #1e293b;
             flex: 1;
-            letter-spacing: 0.2px;
         }
 
         .legend-range {
             font-size: 10px;
             color: var(--soft);
-            letter-spacing: 0.3px;
         }
 
         .legend-footer {
-            margin-top: 14px;
-            padding-top: 12px;
+            margin-top: 12px;
+            padding-top: 11px;
             border-top: 1px solid rgba(0, 0, 0, 0.07);
             font-size: 9px;
             color: var(--soft);
             letter-spacing: 1.5px;
             text-transform: uppercase;
             text-align: center;
-            transition: opacity 0.3s;
         }
 
-        /* ── Zoom notice ──────────────────────────────────────────────── */
+        /* ── Zoom notice ── */
         #zoom-notice {
             position: fixed;
             bottom: 32px;
@@ -317,7 +272,6 @@
             opacity: 0;
         }
 
-        /* ── MapLibre overrides ───────────────────────────────────────── */
         .maplibregl-ctrl-attrib {
             background: rgba(255, 255, 255, 0.75) !important;
             font-size: 9px !important;
@@ -334,25 +288,17 @@
 
     <div id="map"></div>
 
-    <!-- Left: temperature readout -->
     <div class="panel" id="info-panel">
         <div id="info-color-bar"></div>
         <div id="info-content">
             <div class="panel-eyebrow">Ocean conditions</div>
             <div class="panel-title">Sea Temperature</div>
             <div id="info-body">
-                <div class="info-placeholder">
-                    Click anywhere on the ocean to read the water temperature.
-                </div>
-            </div>
-            <div class="panel-actions">
-                <a href="/" class="btn btn-primary">Home</a>
-                <a href="/about" class="btn btn-secondary">About</a>
+                <div class="info-placeholder">Click anywhere on the ocean to check the water temperature.</div>
             </div>
         </div>
     </div>
 
-    <!-- Right: legend -->
     <div class="panel" id="legend-panel">
         <div class="legend-eyebrow">Water temperature</div>
         <div id="legend-items"></div>
@@ -362,7 +308,6 @@
     <div id="zoom-notice">Zoom in to see temperature data</div>
 
     <script>
-        // ── Temperature bands ─────────────────────────────────────────────────────────
         const BANDS = [
             { id: 'cold', label: 'Cold', range: '< 17°C', color: '#2563eb', emoji: '🥶', min: -99, max: 17 },
             { id: 'brave', label: 'Brave', range: '17–20°C', color: '#0ea5e9', emoji: '🤿', min: 17, max: 20 },
@@ -371,56 +316,63 @@
             { id: 'very_warm', label: 'Very Warm', range: '> 26°C', color: '#ef4444', emoji: '🔥', min: 26, max: 999 },
         ];
 
-        function getBand(temp) {
-            return BANDS.find(b => temp >= b.min && temp < b.max) || BANDS[BANDS.length - 1];
+        function getBand(t) { return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1]; }
+        function getBandId(t) { return getBand(t).id; }
+
+        // ── Reverse geocoding (Nominatim — free, no API key) ──────────────────────────
+        async function getPlaceName(lat, lon) {
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=8`,
+                    { headers: { 'Accept-Language': 'en' } }
+                );
+                if (!res.ok) return null;
+                const d = await res.json();
+                const a = d.address || {};
+                // If nominatim returns a sea/ocean name, use it directly
+                if (a.sea) return a.sea;
+                if (a.ocean) return a.ocean;
+                // Otherwise build "City, Country" style
+                const place = a.city || a.town || a.village || a.county || a.state || '';
+                const country = a.country || '';
+                if (place && country) return `${place}, ${country}`;
+                if (country) return country;
+                return null;
+            } catch { return null; }
         }
 
-        function getBandId(temp) {
-            return getBand(temp).id;
-        }
-
-        // ── MapLibre GL map ───────────────────────────────────────────────────────────
+        // ── Map ───────────────────────────────────────────────────────────────────────
         const map = new maplibregl.Map({
             container: 'map',
-            style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
-            center: [14, 36],
-            zoom: 5.5,
-            minZoom: 3,
-            maxZoom: 18,
+            style: 'https://tiles.openfreemap.org/styles/liberty',
+            center: [14, 36], zoom: 5.5, minZoom: 3, maxZoom: 18,
             attributionControl: false,
         });
-
         map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
-        // ── Add SST layer once map is ready ──────────────────────────────────────────
-        const MIN_ZOOM = 6;
+        const MIN_ZOOM = 4;
         let activeBand = null;
         let loadTimer = null;
 
+        map.on('error', e => console.error('MapLibre error:', e.error));
+
         map.on('load', () => {
-            // SST point source — will be updated as map moves
+            console.log('Map loaded OK');
+
             map.addSource('sst', {
                 type: 'geojson',
                 data: { type: 'FeatureCollection', features: [] },
             });
 
-            // Temperature fill layer — square cells colored by band
-            // MapLibre renders these as circles; we use circle-radius scaled to zoom
-            // so cells tile together without gaps and land masking from basemap works naturally
             map.addLayer({
                 id: 'sst-fill',
                 type: 'circle',
                 source: 'sst',
                 paint: {
-                    // Radius scales with zoom so 0.05° cells cover their area
                     'circle-radius': [
                         'interpolate', ['exponential', 2], ['zoom'],
-                        5, 3,
-                        7, 7,
-                        9, 14,
-                        11, 28,
-                        13, 56,
+                        5, 3, 7, 7, 9, 14, 11, 28, 13, 56,
                     ],
                     'circle-color': [
                         'match', ['get', 'band'],
@@ -431,53 +383,38 @@
                         'very_warm', '#ef4444',
                         '#cccccc'
                     ],
-                    'circle-opacity': 0,        // invisible by default — only shown on legend click
-                    'circle-blur': 0.6,         // slight blur softens the cell edges beautifully
+                    'circle-opacity': 0,
+                    'circle-blur': 0.6,
                     'circle-pitch-alignment': 'map',
                 },
-            }, findLabelLayer()); // insert BELOW map labels so text stays readable
+            }, findLabelLayer());
 
             loadGrid();
         });
 
-        // Find the first label/symbol layer to insert SST layer beneath it
         function findLabelLayer() {
-            const layers = map.getStyle().layers;
-            for (const layer of layers) {
-                if (layer.type === 'symbol') return layer.id;
-            }
+            for (const l of map.getStyle().layers) { if (l.type === 'symbol') return l.id; }
             return undefined;
         }
 
-        // ── Load grid data from backend ───────────────────────────────────────────────
+        // ── Load SST grid ─────────────────────────────────────────────────────────────
         async function loadGrid() {
             const zoom = map.getZoom();
             const notice = document.getElementById('zoom-notice');
-
-            if (zoom < MIN_ZOOM) {
-                notice.classList.remove('hidden');
-                return;
-            }
+            if (zoom < MIN_ZOOM) { notice.classList.remove('hidden'); return; }
             notice.classList.add('hidden');
 
-            const bounds = map.getBounds();
-            const bbox = [
-                bounds.getSouth().toFixed(3),
-                bounds.getWest().toFixed(3),
-                bounds.getNorth().toFixed(3),
-                bounds.getEast().toFixed(3),
-            ].join(',');
+            const b = map.getBounds();
+            const bbox = [b.getSouth().toFixed(3), b.getWest().toFixed(3), b.getNorth().toFixed(3), b.getEast().toFixed(3)].join(',');
 
             try {
-                const [south, west, north, east] = bbox.split(',');
-                const res = await fetch(
-                    `/api/area?min_lat=${south}&max_lat=${north}&min_lon=${west}&max_lon=${east}`
-                );
+                const res = await fetch(`/api/grid?bbox=${bbox}`);
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 updateSSTSource(data.points || []);
-            } catch {
-                updateSSTSource([]);
+                if (data.pending > 0) setTimeout(loadGrid, 3000);
+            } catch (err) {
+                console.error('loadGrid error:', err);
             }
         }
 
@@ -488,29 +425,20 @@
                 properties: { band: getBandId(p.temp_c), temp: p.temp_c },
             }));
             map.getSource('sst').setData({ type: 'FeatureCollection', features });
-            // Re-apply active highlight if one is set
             if (activeBand !== null) applyHighlight(activeBand);
         }
 
-        map.on('moveend', () => {
-            clearTimeout(loadTimer);
-            loadTimer = setTimeout(loadGrid, 400);
-        });
+        map.on('moveend', () => { clearTimeout(loadTimer); loadTimer = setTimeout(loadGrid, 400); });
 
-        // ── Legend — click to highlight, click again or click map to clear ─────────
+        // ── Legend ────────────────────────────────────────────────────────────────────
         function applyHighlight(bandId) {
             if (!map.getLayer('sst-fill')) return;
             activeBand = bandId;
-
             if (bandId === null) {
-                // Clear: hide all
                 map.setPaintProperty('sst-fill', 'circle-opacity', 0);
             } else {
-                // Show only matching band at full opacity, hide others
                 map.setPaintProperty('sst-fill', 'circle-opacity', [
-                    'case',
-                    ['==', ['get', 'band'], bandId], 0.72,
-                    0
+                    'case', ['==', ['get', 'band'], bandId], 0.85, 0
                 ]);
             }
         }
@@ -524,38 +452,28 @@
         <span class="legend-name">${band.label}</span>
         <span class="legend-range">${band.range}</span>
     `;
-
             item.addEventListener('click', e => {
                 e.stopPropagation();
                 const alreadyActive = activeBand === band.id;
                 const newBand = alreadyActive ? null : band.id;
-
                 applyHighlight(newBand);
-
-                // Update legend UI
                 document.querySelectorAll('.legend-item').forEach(el => {
                     const isThis = el.dataset.bandId === band.id;
                     el.classList.toggle('is-active', isThis && !alreadyActive);
                     el.classList.toggle('is-dimmed', newBand !== null && !isThis);
                 });
-
-                const footer = document.getElementById('legend-footer');
-                footer.textContent = newBand ? 'Click again or map to clear' : 'Click a band to highlight';
+                document.getElementById('legend-footer').textContent =
+                    newBand ? 'Click again or map to clear' : 'Click a band to highlight';
             });
-
             document.getElementById('legend-items').appendChild(item);
         });
 
-        // Clicking the map clears the highlight
+        // Map click: clear highlight OR fetch temperature
         map.on('click', e => {
-            // Check if click was on a panel — if so, ignore
             if (e.originalEvent.target.closest('.panel')) return;
-
             if (activeBand !== null) {
                 applyHighlight(null);
-                document.querySelectorAll('.legend-item').forEach(el => {
-                    el.classList.remove('is-active', 'is-dimmed');
-                });
+                document.querySelectorAll('.legend-item').forEach(el => el.classList.remove('is-active', 'is-dimmed'));
                 document.getElementById('legend-footer').textContent = 'Click a band to highlight';
             }
         });
@@ -572,49 +490,39 @@
             if (marker) marker.remove();
             const el = document.createElement('div');
             el.style.cssText = `
-        width: 14px; height: 14px;
-        border-radius: 50%;
-        background: #fff;
-        border: 3px solid #0ea5e9;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        transition: border-color 0.4s;
+        width:14px;height:14px;border-radius:50%;
+        background:#fff;border:3px solid #0ea5e9;
+        box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;
     `;
-            marker = new maplibregl.Marker({ element: el, anchor: 'center' })
-                .setLngLat([lon, lat])
-                .addTo(map);
+            marker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lon, lat]).addTo(map);
 
             document.getElementById('info-body').innerHTML = `<div class="spinner"></div>`;
 
-            let data;
-            try {
-                const res = await fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=10`);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                data = await res.json();
-            } catch {
-                document.getElementById('info-body').innerHTML =
-                    `<div class="info-placeholder">Could not fetch data — please try again.</div>`;
-                return;
-            }
+            // Fire both requests in parallel — temperature + place name
+            const [tempResult, placeName] = await Promise.all([
+                fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=10`)
+                    .then(r => r.ok ? r.json() : null)
+                    .catch(() => null),
+                getPlaceName(lat, lon),
+            ]);
 
-            if (data.status !== 'ok') {
+            if (!tempResult || tempResult.status !== 'ok') {
                 document.getElementById('info-body').innerHTML =
                     `<div class="info-placeholder">No ocean data here. Try clicking open water.</div>`;
                 return;
             }
 
-            const band = getBand(data.mean_c);
-
-            // Update marker color
+            const band = getBand(tempResult.mean_c);
             el.style.borderColor = band.color;
 
-            // Update color bar
             const bar = document.getElementById('info-color-bar');
             bar.style.display = 'block';
             bar.style.background = `linear-gradient(90deg, ${band.color}, ${band.color}99)`;
 
             document.getElementById('info-body').innerHTML = `
+        <div class="temp-place">${placeName || 'Open Ocean'}</div>
         <div class="temp-display">
-            <span class="temp-value">${data.mean_c.toFixed(1)}</span>
+            <span class="temp-value">${tempResult.mean_c.toFixed(1)}</span>
             <span class="temp-unit">°C</span>
         </div>
         <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
@@ -622,9 +530,7 @@
             <span>${band.label}</span>
         </div>
         <div class="temp-meta">
-            <span>${data.date}</span>
-            <span>${lat.toFixed(3)}°N, ${lon.toFixed(3)}°E</span>
-            <span>${data.cells_used} cells · ${data.radius_km} km radius</span>
+            ${tempResult.date}
         </div>
     `;
         });

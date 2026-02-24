@@ -28,3 +28,11 @@ primary_region = 'fra'
 [mounts]
   source="data"
   destination="/data"
+
+
+[processes]
+  app = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+[[crons]]
+  schedule = "0 3 * * *"
+  command = "python -m app.scripts.prewarm_tiles"
