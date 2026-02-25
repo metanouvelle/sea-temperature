@@ -400,6 +400,7 @@
         // ── Load SST grid ─────────────────────────────────────────────────────────────
         async function loadGrid() {
             const zoom = map.getZoom();
+            const res = await fetch(`/api/grid?bbox=${bbox}&zoom=${zoom.toFixed(1)}`);
             const notice = document.getElementById('zoom-notice');
             if (zoom < MIN_ZOOM) { notice.classList.remove('hidden'); return; }
             notice.classList.add('hidden');

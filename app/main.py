@@ -8,6 +8,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.database import init_db
+from app.middleware import TimingMiddleware
+from app.services.optimized_query import query_points_in_bbox_optimized
 from app.services.sst_cache import (
     ensure_tile,
     login_copernicus,
@@ -24,6 +26,9 @@ log = logging.getLogger(__name__)
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
+
+
+app.add_middleware(TimingMiddleware)
 
 
 @app.on_event("startup")
@@ -112,7 +117,7 @@ def api_point(
 
 
 @app.get("/api/grid")
-def get_grid(bbox: str):
+def get_grid(bbox: str, zoom: float = Query(8.0)):  # add zoom param
     """
     Return cached SST grid points for a bounding box.
     Uncached tiles are submitted to a background thread pool; cached data is
@@ -142,7 +147,7 @@ def get_grid(bbox: str):
                 pending += 1
             lon += 2.0
         lat += 2.0
-    points = query_points_in_bbox(date, bounds)
+    points = query_points_in_bbox_optimized(date, bounds, zoom=zoom)  # swap this
     return {
         "points": [
             {"lat": p[0], "lon": p[1], "temp_c": round(p[2], 2)} for p in points

@@ -25,7 +25,6 @@ from __future__ import annotations
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta, timezone
 
 from app.database import init_db
 from app.services.sst_cache import (
