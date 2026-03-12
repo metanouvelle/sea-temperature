@@ -14,6 +14,28 @@ jobs:
       - name: Install flyctl
         run: curl -L https://fly.io/install.sh | sh
 
+      - name: Wake up the machine
+        run: |
+          echo "Pinging app to wake machine..."
+          curl -sf https://sea-temperature.fly.dev/ --max-time 30 --retry 5 --retry-delay 5 || true
+          echo "Waiting 10s for machine to fully start..."
+          sleep 10
+
+      - name: Wait for machine to be started
+        run: |
+          for i in {1..12}; do
+            STATUS=$(~/.fly/bin/flyctl status --app sea-temperature --json 2>/dev/null | python3 -c "import sys,json; machines=json.load(sys.stdin).get('Machines',[]); print(machines[0]['state'] if machines else 'unknown')" 2>/dev/null || echo "unknown")
+            echo "Machine state: $STATUS"
+            if [ "$STATUS" = "started" ]; then
+              echo "Machine is up!"
+              break
+            fi
+            echo "Waiting 10s..."
+            sleep 10
+          done
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
       - name: Run prewarm on Fly machine
         run: |
           ~/.fly/bin/flyctl ssh console \
