@@ -19,6 +19,11 @@ from app.services.sst_cache import (
     tile_id_for,
     yesterday_utc,
 )
+import secrets
+import os
+
+PREWARM_SECRET = os.getenv("PREWARM_SECRET", "")
+
 
 _tile_executor = ThreadPoolExecutor(max_workers=8)
 
@@ -154,3 +159,12 @@ def get_grid(bbox: str, zoom: float = Query(8.0)):  # add zoom param
         ],
         "pending": pending,
     }
+
+
+
+@app.post("/api/admin/prewarm")
+def trigger_prewarm(authorization: str = Header(None)):
+    if not PREWARM_SECRET or authorization != f"Bearer {PREWARM_SECRET}":
+        raise HTTPException(status_code=401)
+    threading.Thread(target=_background_prewarm, daemon=True).start()
+    return {"status": "started"}
