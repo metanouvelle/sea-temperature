@@ -10,6 +10,8 @@ __pycache__/
 
 # Database
 sst.sqlite
+sst.sqlite-shm
+sst.sqlite-wal
 
 # OS
 .DS_Store

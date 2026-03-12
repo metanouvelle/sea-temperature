@@ -19,10 +19,16 @@ from app.services.sst_cache import (
     tile_id_for,
     yesterday_utc,
 )
-import secrets
 import os
+import threading
+import time
+from fastapi import FastAPI, Query, Header, HTTPException
+import json
+from pathlib import Path
+from app.scripts.prewarm_tiles import prewarm, yesterday_utc
 
 PREWARM_SECRET = os.getenv("PREWARM_SECRET", "")
+
 
 
 _tile_executor = ThreadPoolExecutor(max_workers=8)
@@ -160,11 +166,33 @@ def get_grid(bbox: str, zoom: float = Query(8.0)):  # add zoom param
         "pending": pending,
     }
 
+def _background_prewarm():
+    log.info("Background prewarm starting...")
+    try:
+        date = yesterday_utc()
+        start = time.time()
+        results = prewarm(date)
+        elapsed = round((time.time() - start) / 60, 1)
 
+        Path("/data/prewarm_status.json").write_text(json.dumps({
+            "last_run": date,
+            "elapsed_minutes": elapsed,
+            "fetched":  results.get("ok", 0),
+            "skipped":  results.get("skipped", 0),
+            "failed":   results.get("failed", 0),
+            "total":    results.get("total", 0),
+            "success":  True,
+        }, indent=2))
+
+        log.info("Prewarm complete — %s fetched, %s skipped, %.1f min",
+                 results.get("ok", 0), results.get("skipped", 0), elapsed)
+
+    except Exception as e:
+        log.error("Background prewarm failed: %s", e)
 
 @app.post("/api/admin/prewarm")
 def trigger_prewarm(authorization: str = Header(None)):
     if not PREWARM_SECRET or authorization != f"Bearer {PREWARM_SECRET}":
-        raise HTTPException(status_code=401)
+        raise HTTPException(status_code=401, detail="Unauthorized")
     threading.Thread(target=_background_prewarm, daemon=True).start()
     return {"status": "started"}

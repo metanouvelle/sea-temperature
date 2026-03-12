@@ -8,46 +8,36 @@ on:
 jobs:
   prewarm:
     runs-on: ubuntu-latest
-    timeout-minutes: 90   # prewarm takes ~40min worst case
+    timeout-minutes: 90
 
     steps:
-      - name: Install flyctl
-        run: curl -L https://fly.io/install.sh | sh
-
-      - name: Wake up the machine
+      - name: Wake machine and trigger prewarm
         run: |
-          echo "Pinging app to wake machine..."
-          curl -sf https://sea-temperature.fly.dev/ --max-time 30 --retry 5 --retry-delay 5 || true
-          echo "Waiting 10s for machine to fully start..."
-          sleep 10
+          echo "Waking machine..."
+          curl -sf https://sea-temperature.fly.dev/ \
+            --max-time 30 --retry 10 --retry-delay 6 || true
+          sleep 15
 
-      - name: Wait for machine to be started
+          echo "Triggering prewarm..."
+          curl -X POST https://sea-temperature.fly.dev/api/admin/prewarm \
+            -H "Authorization: Bearer ${{ secrets.PREWARM_SECRET }}" \
+            -f
+          echo "Prewarm triggered OK"
+
+      - name: Wait for prewarm to complete
         run: |
-          for i in {1..12}; do
-            STATUS=$(~/.fly/bin/flyctl status --app sea-temperature --json 2>/dev/null | python3 -c "import sys,json; machines=json.load(sys.stdin).get('Machines',[]); print(machines[0]['state'] if machines else 'unknown')" 2>/dev/null || echo "unknown")
-            echo "Machine state: $STATUS"
-            if [ "$STATUS" = "started" ]; then
-              echo "Machine is up!"
-              break
+          echo "Waiting for prewarm to finish (checking every 2 min)..."
+          for i in {1..45}; do
+            sleep 120
+            RESPONSE=$(curl -sf https://sea-temperature.fly.dev/api/status || echo '{}')
+            LAST_RUN=$(echo $RESPONSE | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('prewarm',{}).get('last_run','unknown'))" 2>/dev/null || echo "unknown")
+            SUCCESS=$(echo $RESPONSE | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('prewarm',{}).get('success','false'))" 2>/dev/null || echo "false")
+            echo "[$i/45] last_run=$LAST_RUN success=$SUCCESS"
+            if [ "$SUCCESS" = "True" ] || [ "$SUCCESS" = "true" ]; then
+              echo "Prewarm completed successfully!"
+              echo "$RESPONSE" | python3 -m json.tool
+              exit 0
             fi
-            echo "Waiting 10s..."
-            sleep 10
           done
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-      - name: Run prewarm on Fly machine
-        run: |
-          ~/.fly/bin/flyctl ssh console \
-            --app sea-temperature \
-            --command "python -m app.scripts.prewarm_tiles"
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-      - name: Confirm status
-        run: |
-          ~/.fly/bin/flyctl ssh console \
-            --app sea-temperature \
-            --command "cat /data/prewarm_status.json"
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          echo "Timed out waiting for prewarm"
+          exit 1
