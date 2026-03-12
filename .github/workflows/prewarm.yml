@@ -1,0 +1,31 @@
+name: Daily prewarm
+
+on:
+  schedule:
+    - cron: '0 4 * * *'  # 4am UTC every day
+  workflow_dispatch:      # allows manual trigger from GitHub UI
+
+jobs:
+  prewarm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90   # prewarm takes ~40min worst case
+
+    steps:
+      - name: Install flyctl
+        run: curl -L https://fly.io/install.sh | sh
+
+      - name: Run prewarm on Fly machine
+        run: |
+          ~/.fly/bin/flyctl ssh console \
+            --app sea-temperature \
+            --command "python -m app.scripts.prewarm_tiles"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Confirm status
+        run: |
+          ~/.fly/bin/flyctl ssh console \
+            --app sea-temperature \
+            --command "cat /data/prewarm_status.json"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
