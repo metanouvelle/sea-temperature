@@ -188,27 +188,7 @@
             gap: 11px;
             padding: 8px 10px;
             border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.15s, opacity 0.25s, transform 0.15s;
             margin: 2px 0;
-            border: 1px solid transparent;
-            user-select: none;
-        }
-
-        .legend-item:hover {
-            background: rgba(0, 0, 0, 0.04);
-            border-color: rgba(0, 0, 0, 0.07);
-            transform: translateX(2px);
-        }
-
-        .legend-item.is-active {
-            background: rgba(0, 0, 0, 0.05);
-            border-color: rgba(0, 0, 0, 0.10);
-            transform: translateX(3px);
-        }
-
-        .legend-item.is-dimmed {
-            opacity: 0.25;
         }
 
         .legend-swatch {
@@ -216,12 +196,6 @@
             height: 6px;
             border-radius: 3px;
             flex-shrink: 0;
-            transition: width 0.2s;
-        }
-
-        .legend-item:hover .legend-swatch,
-        .legend-item.is-active .legend-swatch {
-            width: 34px;
         }
 
         .legend-name {
@@ -234,42 +208,6 @@
         .legend-range {
             font-size: 10px;
             color: var(--soft);
-        }
-
-        .legend-footer {
-            margin-top: 12px;
-            padding-top: 11px;
-            border-top: 1px solid rgba(0, 0, 0, 0.07);
-            font-size: 9px;
-            color: var(--soft);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            text-align: center;
-        }
-
-        /* ── Zoom notice ── */
-        #zoom-notice {
-            position: fixed;
-            bottom: 32px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            background: rgba(13, 27, 42, 0.88);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 100px;
-            padding: 10px 22px;
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.6);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            pointer-events: none;
-            transition: opacity 0.4s;
-            white-space: nowrap;
-        }
-
-        #zoom-notice.hidden {
-            opacity: 0;
         }
 
         .maplibregl-ctrl-attrib {
@@ -302,11 +240,8 @@
     <div class="panel" id="legend-panel">
         <div class="legend-eyebrow">Water temperature</div>
         <div id="legend-items"></div>
-        <div class="legend-footer" id="legend-footer">Click a band to highlight</div>
+
     </div>
-
-    <div id="zoom-notice">Zoom in to see temperature data</div>
-
     <script>
         const BANDS = [
             { id: 'cold', label: 'Cold', range: '< 17°C', color: '#2563eb', emoji: '🥶', min: -99, max: 17 },
@@ -317,7 +252,6 @@
         ];
 
         function getBand(t) { return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1]; }
-        function getBandId(t) { return getBand(t).id; }
 
         // ── Reverse geocoding (Nominatim — free, no API key) ──────────────────────────
         async function getPlaceName(lat, lon) {
@@ -351,45 +285,30 @@
         map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
-        const MIN_ZOOM = 4;
-        let activeBand = null;
-        let loadTimer = null;
 
         map.on('error', e => console.error('MapLibre error:', e.error));
 
         map.on('load', () => {
             console.log('Map loaded OK');
 
-            map.addSource('sst', {
-                type: 'geojson',
-                data: { type: 'FeatureCollection', features: [] },
+            map.addSource('sst-tiles', {
+                type: 'raster',
+                tiles: [window.location.origin + '/tiles/latest/{z}/{x}/{y}.png'],
+                tileSize: 256,
+                minzoom: 3,
+                maxzoom: 7,
+                attribution: 'SST © Copernicus Marine',
             });
 
             map.addLayer({
-                id: 'sst-fill',
-                type: 'circle',
-                source: 'sst',
+                id: 'sst-raster',
+                type: 'raster',
+                source: 'sst-tiles',
                 paint: {
-                    'circle-radius': [
-                        'interpolate', ['exponential', 2], ['zoom'],
-                        5, 3, 7, 7, 9, 14, 11, 28, 13, 56,
-                    ],
-                    'circle-color': [
-                        'match', ['get', 'band'],
-                        'cold', '#2563eb',
-                        'brave', '#0ea5e9',
-                        'nice', '#22c55e',
-                        'perfect', '#f59e0b',
-                        'very_warm', '#ef4444',
-                        '#cccccc'
-                    ],
-                    'circle-opacity': 0,
-                    'circle-blur': 0.6,
-                    'circle-pitch-alignment': 'map',
+                    'raster-opacity': 0.75,
+                    'raster-fade-duration': 300,
                 },
             }, findLabelLayer());
-
-            loadGrid();
         });
 
         function findLabelLayer() {
@@ -397,86 +316,17 @@
             return undefined;
         }
 
-        // ── Load SST grid ─────────────────────────────────────────────────────────────
-        async function loadGrid() {
-            const zoom = map.getZoom();
-            const res = await fetch(`/api/grid?bbox=${bbox}&zoom=${zoom.toFixed(1)}`);
-            const notice = document.getElementById('zoom-notice');
-            if (zoom < MIN_ZOOM) { notice.classList.remove('hidden'); return; }
-            notice.classList.add('hidden');
 
-            const b = map.getBounds();
-            const bbox = [b.getSouth().toFixed(3), b.getWest().toFixed(3), b.getNorth().toFixed(3), b.getEast().toFixed(3)].join(',');
-
-            try {
-                const res = await fetch(`/api/grid?bbox=${bbox}`);
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                updateSSTSource(data.points || []);
-                if (data.pending > 0) setTimeout(loadGrid, 3000);
-            } catch (err) {
-                console.error('loadGrid error:', err);
-            }
-        }
-
-        function updateSSTSource(points) {
-            const features = points.map(p => ({
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
-                properties: { band: getBandId(p.temp_c), temp: p.temp_c },
-            }));
-            map.getSource('sst').setData({ type: 'FeatureCollection', features });
-            if (activeBand !== null) applyHighlight(activeBand);
-        }
-
-        map.on('moveend', () => { clearTimeout(loadTimer); loadTimer = setTimeout(loadGrid, 400); });
-
-        // ── Legend ────────────────────────────────────────────────────────────────────
-        function applyHighlight(bandId) {
-            if (!map.getLayer('sst-fill')) return;
-            activeBand = bandId;
-            if (bandId === null) {
-                map.setPaintProperty('sst-fill', 'circle-opacity', 0);
-            } else {
-                map.setPaintProperty('sst-fill', 'circle-opacity', [
-                    'case', ['==', ['get', 'band'], bandId], 0.85, 0
-                ]);
-            }
-        }
-
+        // ── Legend — static color key, no interaction ────────────────────────────────
         BANDS.forEach(band => {
             const item = document.createElement('div');
             item.className = 'legend-item';
-            item.dataset.bandId = band.id;
             item.innerHTML = `
-        <div class="legend-swatch" style="background:${band.color};box-shadow:0 2px 8px ${band.color}55"></div>
+        <div class="legend-swatch" style="background:${band.color};box-shadow:0 2px 6px ${band.color}44"></div>
         <span class="legend-name">${band.label}</span>
         <span class="legend-range">${band.range}</span>
     `;
-            item.addEventListener('click', e => {
-                e.stopPropagation();
-                const alreadyActive = activeBand === band.id;
-                const newBand = alreadyActive ? null : band.id;
-                applyHighlight(newBand);
-                document.querySelectorAll('.legend-item').forEach(el => {
-                    const isThis = el.dataset.bandId === band.id;
-                    el.classList.toggle('is-active', isThis && !alreadyActive);
-                    el.classList.toggle('is-dimmed', newBand !== null && !isThis);
-                });
-                document.getElementById('legend-footer').textContent =
-                    newBand ? 'Click again or map to clear' : 'Click a band to highlight';
-            });
             document.getElementById('legend-items').appendChild(item);
-        });
-
-        // Map click: clear highlight OR fetch temperature
-        map.on('click', e => {
-            if (e.originalEvent.target.closest('.panel')) return;
-            if (activeBand !== null) {
-                applyHighlight(null);
-                document.querySelectorAll('.legend-item').forEach(el => el.classList.remove('is-active', 'is-dimmed'));
-                document.getElementById('legend-footer').textContent = 'Click a band to highlight';
-            }
         });
 
         // ── Click to inspect temperature ──────────────────────────────────────────────

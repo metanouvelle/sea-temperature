@@ -22,11 +22,11 @@ Or as a separate cron machine — see README for setup.
 
 from __future__ import annotations
 
-import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app.database import init_db
+from app.logger import get_logger
 from app.services.sst_cache import (
     ensure_tile,
     login_copernicus,
@@ -34,12 +34,7 @@ from app.services.sst_cache import (
     yesterday_utc,
 )
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s  %(levelname)-8s  %(message)s",
-    datefmt="%H:%M:%S",
-)
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 # ── Coastal tile regions ──────────────────────────────────────────────────────

@@ -22,3 +22,4 @@ sst.sqlite-wal
 
 # Deprecated
 .deprecated/
+data/
