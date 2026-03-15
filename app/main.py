@@ -226,3 +226,17 @@ def serve_tile_latest(z: int, x: int, y: int):
     return FileResponse(tile_path, media_type="image/png", headers={
         "Cache-Control": "public, max-age=86400",  # cache 24h in browser
     })
+
+
+
+@app.get("/api/status")
+def api_status():
+    import json
+    status_file = Path("/data/prewarm_status.json")
+    prewarm_info = {}
+    if status_file.exists():
+        try:
+            prewarm_info = json.loads(status_file.read_text())
+        except Exception:
+            prewarm_info = {"error": "could not read status file"}
+    return {"status": "ok", "prewarm": prewarm_info}
