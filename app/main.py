@@ -174,13 +174,27 @@ def _background_prewarm():
         date = yesterday_utc()
         start = time.time()
         results = prewarm(date)
-        elapsed = round((time.time() - start) / 60, 1)
+        elapsed_prewarm = round((time.time() - start) / 60, 1)
+        log.info(
+            "Prewarm complete — %s fetched, %s skipped, %.1f min",
+            results.get("ok", 0),
+            results.get("skipped", 0),
+            elapsed_prewarm,
+        )
 
+        # Render tiles after prewarm
+        log.info("Starting tile render...")
+        from app.scripts.render_tiles import render
+        render(date)
+        log.info("Tile render complete")
+
+        # Write status only after BOTH prewarm and render succeed
+        elapsed_total = round((time.time() - start) / 60, 1)
         Path("/data/prewarm_status.json").write_text(
             json.dumps(
                 {
                     "last_run": date,
-                    "elapsed_minutes": elapsed,
+                    "elapsed_minutes": elapsed_total,
                     "fetched": results.get("ok", 0),
                     "skipped": results.get("skipped", 0),
                     "failed": results.get("failed", 0),
@@ -189,13 +203,6 @@ def _background_prewarm():
                 },
                 indent=2,
             )
-        )
-
-        log.info(
-            "Prewarm complete — %s fetched, %s skipped, %.1f min",
-            results.get("ok", 0),
-            results.get("skipped", 0),
-            elapsed,
         )
 
     except Exception as e:

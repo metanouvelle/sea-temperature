@@ -8,7 +8,7 @@ on:
 jobs:
   prewarm:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
 
     steps:
       - name: Wake machine and trigger prewarm
