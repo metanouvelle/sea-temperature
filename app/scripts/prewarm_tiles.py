@@ -33,6 +33,7 @@ from app.services.sst_cache import (
     tile_id_for,
     yesterday_utc,
 )
+from app.scripts.render_tiles import render
 
 log = get_logger(__name__)
 
@@ -192,3 +193,7 @@ if __name__ == "__main__":
         raise SystemExit(f"Too many failures: {results['failed']}/{results['total']}")
 
     log.info("Pre-warm complete ✓")
+
+    log.info("Rendering static tiles for date: %s", date)
+    render(date)
+    log.info("Static tile render complete ✓")

@@ -20,6 +20,9 @@ primary_region = 'fra'
   min_machines_running = 1
   processes = ['app']
 
+[deploy]
+  release_command = "python -m app.scripts.prewarm_tiles"
+
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'
