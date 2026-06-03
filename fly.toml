@@ -35,5 +35,6 @@ primary_region = 'fra'
   app = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
 [[crons]]
-  schedule = "0 3 * * *"
+  schedule = "0 2 * * *"
   command = "python -m app.scripts.prewarm_tiles"
+  timeout = "1h"

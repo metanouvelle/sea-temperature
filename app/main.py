@@ -49,7 +49,9 @@ def _startup():
     """
     init_db()
     login_copernicus()
-    threading.Thread(target=_background_prewarm, daemon=True).start()
+    # Don't run prewarm on app startup — it can timeout on shared CPU.
+    # Rely on scheduled cron job instead (see fly.toml [[crons]])
+    # threading.Thread(target=_background_prewarm, daemon=True).start()
 
 
 @app.get("/", response_class=HTMLResponse)
