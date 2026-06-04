@@ -11,7 +11,15 @@ DB_PATH = Path(os.getenv("SST_DB_PATH", "/data/sst.sqlite")).resolve()
 
 def connect() -> sqlite3.Connection:
     """Create connection to local SQLite DB."""
-    conn = sqlite3.connect(DB_PATH)
+    # Ensure parent directory exists (helps on fresh machines where /data
+    # may not exist yet). Creating the directory is safe whether it's a
+    # mounted volume or the container filesystem.
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+    except sqlite3.OperationalError as e:
+        raise
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")
     return conn
