@@ -20,9 +20,7 @@ primary_region = 'fra'
   min_machines_running = 1
   processes = ['app']
 
-[deploy]
-  release_command = "python -m app.scripts.prewarm_tiles"
-
+# Prewarm is handled by the nightly cron job, not by the deployment release command
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'
