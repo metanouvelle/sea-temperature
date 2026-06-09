@@ -240,8 +240,8 @@
     <div class="panel" id="legend-panel">
         <div class="legend-eyebrow">Water temperature</div>
         <div id="legend-items"></div>
-
     </div>
+
     <script>
         const BANDS = [
             { id: 'cold', label: 'Cold', range: '< 17°C', color: '#2563eb', emoji: '🥶', min: -99, max: 17 },
@@ -251,9 +251,11 @@
             { id: 'very_warm', label: 'Very Warm', range: '> 26°C', color: '#ef4444', emoji: '🔥', min: 26, max: 999 },
         ];
 
-        function getBand(t) { return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1]; }
+        function getBand(t) {
+            return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1];
+        }
 
-        // ── Reverse geocoding (Nominatim — free, no API key) ──────────────────────────
+        // ── Reverse geocoding (Nominatim) ─────────────────────────────────────────────
         async function getPlaceName(lat, lon) {
             try {
                 const res = await fetch(
@@ -263,10 +265,8 @@
                 if (!res.ok) return null;
                 const d = await res.json();
                 const a = d.address || {};
-                // If nominatim returns a sea/ocean name, use it directly
                 if (a.sea) return a.sea;
                 if (a.ocean) return a.ocean;
-                // Otherwise build "City, Country" style
                 const place = a.city || a.town || a.village || a.county || a.state || '';
                 const country = a.country || '';
                 if (place && country) return `${place}, ${country}`;
@@ -282,42 +282,17 @@
             center: [14, 36], zoom: 5.5, minZoom: 3, maxZoom: 18,
             attributionControl: false,
         });
+
         map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
-
 
         map.on('error', e => console.error('MapLibre error:', e.error));
 
         map.on('load', () => {
             console.log('Map loaded OK');
-
-            map.addSource('sst-tiles', {
-                type: 'raster',
-                tiles: [window.location.origin + '/tiles/latest/{z}/{x}/{y}.png'],
-                tileSize: 256,
-                minzoom: 3,
-                maxzoom: 7,
-                attribution: 'SST © Copernicus Marine',
-            });
-
-            map.addLayer({
-                id: 'sst-raster',
-                type: 'raster',
-                source: 'sst-tiles',
-                paint: {
-                    'raster-opacity': 0.75,
-                    'raster-fade-duration': 300,
-                },
-            }, findLabelLayer());
         });
 
-        function findLabelLayer() {
-            for (const l of map.getStyle().layers) { if (l.type === 'symbol') return l.id; }
-            return undefined;
-        }
-
-
-        // ── Legend — static color key, no interaction ────────────────────────────────
+        // ── Legend — static color key ─────────────────────────────────────────────────
         BANDS.forEach(band => {
             const item = document.createElement('div');
             item.className = 'legend-item';
@@ -337,7 +312,6 @@
 
             const { lng: lon, lat } = e.lngLat;
 
-            // Drop marker immediately
             if (marker) marker.remove();
             const el = document.createElement('div');
             el.style.cssText = `
@@ -349,7 +323,6 @@
 
             document.getElementById('info-body').innerHTML = `<div class="spinner"></div>`;
 
-            // Fire both requests in parallel — temperature + place name
             const [tempResult, placeName] = await Promise.all([
                 fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=10`)
                     .then(r => r.ok ? r.json() : null)

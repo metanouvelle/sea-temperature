@@ -16,7 +16,8 @@ from app.database import init_db
 from app.logger import get_logger
 from app.middleware import TimingMiddleware
 from app.scripts.prewarm_tiles import prewarm
-from app.scripts.render_tiles import render
+
+# from app.scripts.render_tiles import render
 from app.services.optimized_query import query_points_in_bbox_optimized
 from app.services.sst_cache import (
     ensure_tile,
@@ -220,19 +221,19 @@ def trigger_prewarm(authorization: str = Header(None)):
     return {"status": "started"}
 
 
-@app.get("/tiles/latest/{z}/{x}/{y}.png")
-def serve_tile_latest(z: int, x: int, y: int):
-    tiles_dir = Path(os.getenv("SST_TILES_DIR", "/data/tiles"))
-    tile_path = tiles_dir / "latest" / str(z) / str(x) / f"{y}.png"
-    if not tile_path.exists():
-        raise HTTPException(status_code=404)
-    return FileResponse(
-        tile_path,
-        media_type="image/png",
-        headers={
-            "Cache-Control": "public, max-age=86400",  # cache 24h in browser
-        },
-    )
+# @app.get("/tiles/latest/{z}/{x}/{y}.png")
+# def serve_tile_latest(z: int, x: int, y: int):
+#     tiles_dir = Path(os.getenv("SST_TILES_DIR", "/data/tiles"))
+#     tile_path = tiles_dir / "latest" / str(z) / str(x) / f"{y}.png"
+#     if not tile_path.exists():
+#         raise HTTPException(status_code=404)
+#     return FileResponse(
+#         tile_path,
+#         media_type="image/png",
+#         headers={
+#             "Cache-Control": "public, max-age=86400",  # cache 24h in browser
+#         },
+#     )
 
 
 @app.get("/api/status")
