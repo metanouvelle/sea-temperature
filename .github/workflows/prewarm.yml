@@ -14,12 +14,12 @@ jobs:
       - name: Wake machine and trigger prewarm
         run: |
           echo "Waking machine..."
-          curl -sf https://sea-temperature.fly.dev/ \
+          curl -sf https://swimtemp.com/ \
             --max-time 30 --retry 10 --retry-delay 6 || true
           sleep 10
 
           echo "Triggering prewarm..."
-          curl -X POST https://sea-temperature.fly.dev/api/admin/prewarm \
+          curl -X POST https://swimtemp.com/api/admin/prewarm \
             -H "Authorization: Bearer ${{ secrets.PREWARM_SECRET }}" \
             -f
           echo "Prewarm triggered OK"
@@ -31,7 +31,7 @@ jobs:
             sleep 120
 
             # Ping /api/status — this also keeps the machine awake
-            curl -sf https://sea-temperature.fly.dev/api/status > /tmp/status.json || echo '{}' > /tmp/status.json
+            curl -sf https://swimtemp.com/api/status > /tmp/status.json || echo '{}' > /tmp/status.json
 
             LAST_RUN=$(python3 -c "import json; d=json.load(open('/tmp/status.json')); print(d.get('prewarm',{}).get('last_run','unknown'))" 2>/dev/null || echo "unknown")
             SUCCESS=$(python3 -c "import json; d=json.load(open('/tmp/status.json')); print(d.get('prewarm',{}).get('success','false'))" 2>/dev/null || echo "false")

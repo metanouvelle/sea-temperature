@@ -9,6 +9,7 @@ primary_region = 'fra'
 [env]
   SST_DB_PATH = "/data/sst.sqlite"
   SST_TILES_DIR = "/data/tiles"
+  APP_URL = "https://swimtemp.com"
 
 [build]
 
