@@ -26,6 +26,7 @@ from app.services.sst_cache import (
     yesterday_utc,
 )
 from fastapi.responses import FileResponse
+from app.data.beaches import BEACHES, BEACHES_BY_SLUG
 
 log = get_logger(__name__)
 
@@ -187,6 +188,7 @@ def _background_prewarm():
         # Render tiles after prewarm
         log.info("Starting tile render...")
         from app.scripts.render_tiles import render
+
         render(date)
         log.info("Tile render complete")
 
@@ -225,15 +227,19 @@ def serve_tile_latest(z: int, x: int, y: int):
     tile_path = tiles_dir / "latest" / str(z) / str(x) / f"{y}.png"
     if not tile_path.exists():
         raise HTTPException(status_code=404)
-    return FileResponse(tile_path, media_type="image/png", headers={
-        "Cache-Control": "public, max-age=86400",  # cache 24h in browser
-    })
-
+    return FileResponse(
+        tile_path,
+        media_type="image/png",
+        headers={
+            "Cache-Control": "public, max-age=86400",  # cache 24h in browser
+        },
+    )
 
 
 @app.get("/api/status")
 def api_status():
     import json
+
     status_file = Path("/data/prewarm_status.json")
     prewarm_info = {}
     if status_file.exists():
@@ -242,3 +248,68 @@ def api_status():
         except Exception:
             prewarm_info = {"error": "could not read status file"}
     return {"status": "ok", "prewarm": prewarm_info}
+
+
+@app.get("/beaches", response_class=HTMLResponse)
+def beaches_page(request: Request):
+    return templates.TemplateResponse("beaches.html", {"request": request})
+
+
+@app.get("/beach/{slug}", response_class=HTMLResponse)
+def beach_page(request: Request, slug: str):
+    beach = BEACHES_BY_SLUG.get(slug)
+    if not beach:
+        raise HTTPException(status_code=404)
+    return templates.TemplateResponse(
+        "beach.html",
+        {
+            "request": request,
+            "beach": beach,
+        },
+    )
+
+
+@app.get("/api/beaches")
+def api_beaches():
+    """
+    Return all beaches with current SST temperature.
+    Fetches temperatures in parallel for speed.
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from app.services.sst_cache import point_temperature, yesterday_utc
+
+    date = yesterday_utc()
+
+    def fetch(beach):
+        try:
+            result = point_temperature(date, beach["lat"], beach["lon"], radius_km=25)
+            temp = result["mean_c"] if result and result.get("status") == "ok" else None
+        except Exception:
+            temp = None
+        return {**beach, "temp_c": temp, "date": date}
+
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        futures = [pool.submit(fetch, b) for b in BEACHES]
+        results = [f.result() for f in as_completed(futures)]
+
+    # Sort by temperature descending (warmest first), nulls last
+    results.sort(
+        key=lambda x: x["temp_c"] if x["temp_c"] is not None else -99, reverse=True
+    )
+    return {"beaches": results, "date": date}
+
+
+@app.get("/api/beach/{slug}")
+def api_beach(slug: str):
+    """Return temperature for a single beach."""
+    from app.services.sst_cache import point_temperature, yesterday_utc
+
+    beach = BEACHES_BY_SLUG.get(slug)
+    if not beach:
+        raise HTTPException(status_code=404)
+
+    date = yesterday_utc()
+    result = point_temperature(date, beach["lat"], beach["lon"], radius_km=25)
+    temp = result["mean_c"] if result and result.get("status") == "ok" else None
+
+    return {**beach, "temp_c": temp, "date": date}

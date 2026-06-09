@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ beach.name }} Water Temperature Today — Sea Temperature</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Current sea temperature at {{ beach.name }}, {{ beach.city }}, {{ beach.country }}. Real-time satellite data from Copernicus Marine.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --deep: #060f1a;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #e8f4f8;
+            --muted: rgba(255, 255, 255, 0.38);
+            --soft: rgba(255, 255, 255, 0.55);
+            --accent: #38bdf8;
+            --band: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Mono', monospace;
+            background: var(--deep);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.025;
+        }
+
+        nav {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 8vw;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-brand {
+            font-family: 'Fraunces', serif;
+            font-size: 16px;
+            font-weight: 300;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .nav-link {
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+        }
+
+        /* ── Page layout ── */
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 64px 8vw 120px;
+        }
+
+        /* ── Breadcrumb ── */
+        .breadcrumb {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 32px;
+        }
+
+        .breadcrumb a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--text);
+        }
+
+        .breadcrumb span {
+            margin: 0 8px;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            margin-bottom: 56px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.1s;
+        }
+
+        .hero-eyebrow {
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .hero-title {
+            font-family: 'Fraunces', serif;
+            font-size: clamp(36px, 5vw, 60px);
+            font-weight: 700;
+            letter-spacing: -2px;
+            line-height: 1.0;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .hero-location {
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: 0.5px;
+            margin-bottom: 40px;
+        }
+
+        /* ── Temperature display ── */
+        .temp-block {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .temp-main {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .temp-value {
+            font-family: 'Fraunces', serif;
+            font-size: 96px;
+            font-weight: 300;
+            letter-spacing: -6px;
+            line-height: 1;
+            color: var(--text);
+            transition: color 0.5s;
+        }
+
+        .temp-unit {
+            font-size: 22px;
+            font-weight: 300;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .temp-right {}
+
+        .temp-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            border-radius: 100px;
+            font-family: 'Fraunces', serif;
+            font-style: italic;
+            font-size: 18px;
+            font-weight: 300;
+            margin-bottom: 12px;
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            transition: all 0.5s;
+        }
+
+        .temp-date {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* ── Info grid ── */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.3s;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .info-card-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .info-card-value {
+            font-family: 'Fraunces', serif;
+            font-size: 24px;
+            font-weight: 300;
+            color: var(--text);
+            letter-spacing: -0.5px;
+        }
+
+        .info-card-sub {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Best months ── */
+        .months-section {
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.5s;
+        }
+
+        .section-label {
+            font-size: 9px;
+            letter-spacing: 3.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .months-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 6px;
+        }
+
+        .month-bar {
+            text-align: center;
+        }
+
+        .month-fill {
+            height: 40px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            transition: background 0.3s;
+        }
+
+        .month-label {
+            font-size: 8px;
+            color: var(--muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* ── CTA ── */
+        .cta-section {
+            padding: 32px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.7s;
+        }
+
+        .cta-text {
+            font-family: 'Fraunces', serif;
+            font-size: 20px;
+            font-weight: 300;
+            font-style: italic;
+            color: var(--soft);
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: var(--accent);
+            color: var(--deep);
+            border-radius: 100px;
+            text-decoration: none;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+
+        .cta-btn:hover {
+            background: #7dd3fc;
+            transform: translateY(-2px);
+        }
+
+        /* ── Footer ── */
+        .data-footer {
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* ── Spinner ── */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .months-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+
+            .temp-value {
+                font-size: 72px;
+            }
+
+            .cta-section {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a href="/" class="nav-brand">Sea Temperature</a>
+        <div class="nav-links">
+            <a href="/beaches" class="nav-link">Beaches</a>
+            <a href="/map" class="nav-link">Map</a>
+        </div>
+    </nav>
+
+    <div class="page">
+        <div class="breadcrumb">
+            <a href="/beaches">Beaches</a>
+            <span>›</span>
+            {{ beach.city }}, {{ beach.country }}
+        </div>
+
+        <div class="hero">
+            <div class="hero-eyebrow">Sea surface temperature</div>
+            <h1 class="hero-title">{{ beach.name }}</h1>
+            <div class="hero-location">{{ beach.city }}, {{ beach.country }}</div>
+
+            <div class="temp-block">
+                <div class="temp-main">
+                    <span class="temp-value" id="temp-value"><span class="spinner"></span></span>
+                    <span class="temp-unit" id="temp-unit"></span>
+                </div>
+                <div class="temp-right">
+                    <div class="temp-badge" id="temp-badge">Loading...</div>
+                    <div class="temp-date" id="temp-date"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-card-label">Location</div>
+                <div class="info-card-value">{{ beach.city }}</div>
+                <div class="info-card-sub">{{ beach.country }}</div>
+            </div>
+            <div class="info-card">
+                <div class="info-card-label">Coordinates</div>
+                <div class="info-card-value">{{ "%.2f"|format(beach.lat) }}°, {{ "%.2f"|format(beach.lon) }}°</div>
+                <div class="info-card-sub">Search radius 25km</div>
+            </div>
+        </div>
+
+        <div class="months-section">
+            <div class="section-label">Typical monthly temperatures</div>
+            <div class="months-grid" id="months-grid">
+                <!-- filled by JS -->
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <span class="cta-text">See the full ocean picture.</span>
+            <a href="/map#{{ beach.lon }},{{ beach.lat }},8" class="cta-btn">
+                Open on Map
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </a>
+        </div>
+
+        <div class="data-footer" id="data-footer">
+            Data source: Copernicus Marine Environment Monitoring Service
+        </div>
+    </div>
+
+    <script>
+        const BANDS = [
+            { id: 'cold', label: 'Cold', emoji: '🥶', min: -99, max: 17, color: '#2563eb' },
+            { id: 'brave', label: 'Brave', emoji: '🤿', min: 17, max: 20, color: '#0ea5e9' },
+            { id: 'nice', label: 'Nice', emoji: '😊', min: 20, max: 23, color: '#22c55e' },
+            { id: 'perfect', label: 'Perfect', emoji: '🏊', min: 23, max: 26, color: '#f59e0b' },
+            { id: 'very_warm', label: 'Very Warm', emoji: '🔥', min: 26, max: 999, color: '#ef4444' },
+        ];
+
+        function getBand(t) {
+            return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1];
+        }
+
+        // Typical monthly temps — placeholder bars (warm up later with real historical data)
+        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthsGrid = document.getElementById('months-grid');
+        MONTHS.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'month-bar';
+            div.innerHTML = `
+        <div class="month-fill" style="background:rgba(255,255,255,0.06)"></div>
+        <div class="month-label">${m}</div>
+    `;
+            monthsGrid.appendChild(div);
+        });
+
+        // Load current temperature
+        async function loadTemp() {
+            try {
+                const res = await fetch('/api/beach/{{ beach.slug }}');
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+
+                if (data.temp_c === null) {
+                    document.getElementById('temp-value').textContent = '—';
+                    document.getElementById('temp-badge').textContent = 'No data available';
+                    return;
+                }
+
+                const band = getBand(data.temp_c);
+
+                document.getElementById('temp-value').textContent = data.temp_c.toFixed(1);
+                document.getElementById('temp-unit').textContent = '°C';
+
+                const badge = document.getElementById('temp-badge');
+                badge.textContent = `${band.emoji} ${band.label}`;
+                badge.style.background = `${band.color}20`;
+                badge.style.color = band.color;
+                badge.style.borderColor = `${band.color}35`;
+
+                document.getElementById('temp-date').textContent =
+                    `Updated ${data.date}`;
+
+                document.getElementById('data-footer').textContent =
+                    `Sea surface temperature · ${data.date} · Copernicus Marine · 25km search radius`;
+
+            } catch {
+                document.getElementById('temp-value').textContent = '—';
+                document.getElementById('temp-badge').textContent = 'Could not load data';
+            }
+        }
+
+        loadTemp();
+    </script>
+</body>
+
+</html>

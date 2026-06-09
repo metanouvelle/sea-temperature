@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Beaches — Sea Temperature</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Find the warmest beaches in the world right now. Real-time sea surface temperature for 50 famous beaches worldwide.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --deep: #060f1a;
+            --navy: #0d1b2a;
+            --card: rgba(255, 255, 255, 0.04);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #e8f4f8;
+            --muted: rgba(255, 255, 255, 0.38);
+            --soft: rgba(255, 255, 255, 0.55);
+            --accent: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Mono', monospace;
+            background: var(--deep);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Grain ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.025;
+        }
+
+        /* ── Nav ── */
+        nav {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 8vw;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-brand {
+            font-family: 'Fraunces', serif;
+            font-size: 16px;
+            font-weight: 300;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-link {
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+        }
+
+        .nav-link.active {
+            color: var(--accent);
+        }
+
+        /* ── Page ── */
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 64px 8vw 120px;
+        }
+
+        /* ── Header ── */
+        .page-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 48px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-left {}
+
+        .page-eyebrow {
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .page-title {
+            font-family: 'Fraunces', serif;
+            font-size: clamp(36px, 5vw, 56px);
+            font-weight: 700;
+            letter-spacing: -2px;
+            line-height: 1.0;
+            color: var(--text);
+        }
+
+        .page-title em {
+            font-style: italic;
+            font-weight: 300;
+            color: var(--accent);
+        }
+
+        .page-subtitle {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 12px;
+            letter-spacing: 0.3px;
+        }
+
+        /* ── Filter bar ── */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text);
+        }
+
+        .filter-btn.active {
+            background: var(--accent);
+            color: var(--deep);
+            border-color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* ── Loading state ── */
+        .loading {
+            text-align: center;
+            padding: 80px 0;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            margin: 0 auto 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── Beach grid ── */
+        .beach-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        /* ── Beach card ── */
+        .beach-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+            cursor: pointer;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .beach-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--band-color, transparent);
+            border-radius: 20px 20px 0 0;
+            transition: background 0.3s;
+        }
+
+        .beach-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-location {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .card-name {
+            font-family: 'Fraunces', serif;
+            font-size: 20px;
+            font-weight: 300;
+            color: var(--text);
+            margin-bottom: 20px;
+            line-height: 1.2;
+            letter-spacing: -0.3px;
+        }
+
+        .card-temp-row {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .card-temp {
+            font-family: 'Fraunces', serif;
+            font-size: 48px;
+            font-weight: 300;
+            letter-spacing: -3px;
+            line-height: 1;
+            color: var(--text);
+        }
+
+        .card-unit {
+            font-size: 14px;
+            color: var(--muted);
+            font-weight: 300;
+            margin-bottom: 4px;
+        }
+
+        .card-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .card-no-data {
+            font-size: 11px;
+            color: var(--muted);
+            padding: 12px 0;
+            letter-spacing: 0.5px;
+        }
+
+        .card-arrow {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            font-size: 16px;
+            color: var(--muted);
+            transition: all 0.2s;
+            opacity: 0;
+        }
+
+        .beach-card:hover .card-arrow {
+            opacity: 1;
+            transform: translateX(4px);
+        }
+
+        /* ── Date footer ── */
+        .data-footer {
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 640px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .beach-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a href="/" class="nav-brand">Sea Temperature</a>
+        <div class="nav-links">
+            <a href="/beaches" class="nav-link active">Beaches</a>
+            <a href="/map" class="nav-link">Map</a>
+        </div>
+    </nav>
+
+    <div class="page">
+        <div class="page-header">
+            <div class="header-left">
+                <div class="page-eyebrow">Updated daily</div>
+                <h1 class="page-title">Where is the sea<br><em>warm right now?</em></h1>
+                <p class="page-subtitle" id="subtitle">Loading temperatures for 50 beaches...</p>
+            </div>
+            <div class="filter-bar">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="very_warm">🔥 Very Warm</button>
+                <button class="filter-btn" data-filter="perfect">🏊 Perfect</button>
+                <button class="filter-btn" data-filter="nice">😊 Nice</button>
+                <button class="filter-btn" data-filter="brave">🤿 Brave</button>
+                <button class="filter-btn" data-filter="cold">🥶 Cold</button>
+            </div>
+        </div>
+
+        <div id="beach-grid" class="beach-grid">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                Fetching temperatures...
+            </div>
+        </div>
+
+        <div class="data-footer" id="data-footer"></div>
+    </div>
+
+    <script>
+        const BANDS = [
+            { id: 'cold', label: 'Cold', emoji: '🥶', min: -99, max: 17, color: '#2563eb' },
+            { id: 'brave', label: 'Brave', emoji: '🤿', min: 17, max: 20, color: '#0ea5e9' },
+            { id: 'nice', label: 'Nice', emoji: '😊', min: 20, max: 23, color: '#22c55e' },
+            { id: 'perfect', label: 'Perfect', emoji: '🏊', min: 23, max: 26, color: '#f59e0b' },
+            { id: 'very_warm', label: 'Very Warm', emoji: '🔥', min: 26, max: 999, color: '#ef4444' },
+        ];
+
+        function getBand(t) {
+            return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1];
+        }
+
+        let allBeaches = [];
+        let activeFilter = 'all';
+
+        async function loadBeaches() {
+            try {
+                const res = await fetch('/api/beaches');
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                allBeaches = data.beaches;
+                document.getElementById('data-footer').textContent =
+                    `Sea surface temperature · ${data.date} · Copernicus Marine`;
+                document.getElementById('subtitle').textContent =
+                    `${allBeaches.filter(b => b.temp_c !== null).length} beaches with live data`;
+                renderGrid();
+            } catch {
+                document.getElementById('beach-grid').innerHTML =
+                    `<div class="loading">Could not load temperatures. Try again later.</div>`;
+            }
+        }
+
+        function renderGrid() {
+            const filtered = activeFilter === 'all'
+                ? allBeaches
+                : allBeaches.filter(b => b.temp_c !== null && getBand(b.temp_c).id === activeFilter);
+
+            if (filtered.length === 0) {
+                document.getElementById('beach-grid').innerHTML =
+                    `<div class="loading">No beaches match this filter right now.</div>`;
+                return;
+            }
+
+            document.getElementById('beach-grid').innerHTML = filtered.map(beach => {
+                const hasTemp = beach.temp_c !== null;
+                const band = hasTemp ? getBand(beach.temp_c) : null;
+
+                return `
+        <a href="/beach/${beach.slug}" class="beach-card"
+           style="${band ? `--band-color: ${band.color}` : ''}">
+            <div class="card-location">${beach.city}, ${beach.country}</div>
+            <div class="card-name">${beach.name}</div>
+            ${hasTemp ? `
+                <div class="card-temp-row">
+                    <span class="card-temp">${beach.temp_c.toFixed(1)}</span>
+                    <span class="card-unit">°C</span>
+                </div>
+                <div class="card-badge"
+                     style="background:${band.color}20;color:${band.color};border:1px solid ${band.color}35">
+                    ${band.emoji} ${band.label}
+                </div>
+            ` : `<div class="card-no-data">No data available</div>`}
+            <span class="card-arrow">→</span>
+        </a>`;
+            }).join('');
+        }
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                activeFilter = btn.dataset.filter;
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderGrid();
+            });
+        });
+
+        loadBeaches();
+    </script>
+</body>
+
+</html>
