@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.content.beaches import BEACHES, BEACHES_BY_SLUG
@@ -307,3 +307,33 @@ def api_beach(slug: str):
     temp = result["mean_c"] if result and result.get("status") == "ok" else None
 
     return {**beach, "temp_c": temp, "date": date}
+
+
+@app.get("/sitemap.xml")
+def sitemap():
+    beaches_urls = "\n".join(
+        [
+            f"""  <url>
+    <loc>https://swimtemp.com/beach/{b['slug']}</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>"""
+            for b in BEACHES
+        ]
+    )
+
+    content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://swimtemp.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://swimtemp.com/beaches</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+{beaches_urls}
+</urlset>"""
+    return Response(content=content, media_type="application/xml")
