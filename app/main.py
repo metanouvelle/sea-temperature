@@ -4,17 +4,19 @@ import json
 import os
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from app.content.beaches import BEACHES, BEACHES_BY_SLUG
 from app.database import init_db
 from app.logger import get_logger
 from app.middleware import TimingMiddleware
-from app.scripts.prewarm_tiles import prewarm, yesterday_utc
+from app.scripts.prewarm_tiles import prewarm
+from app.scripts.render_tiles import render
 from app.services.optimized_query import query_points_in_bbox_optimized
 from app.services.sst_cache import (
     ensure_tile,
@@ -25,8 +27,6 @@ from app.services.sst_cache import (
     tile_id_for,
     yesterday_utc,
 )
-from fastapi.responses import FileResponse
-from app.data.beaches import BEACHES, BEACHES_BY_SLUG
 
 log = get_logger(__name__)
 
@@ -187,7 +187,6 @@ def _background_prewarm():
 
         # Render tiles after prewarm
         log.info("Starting tile render...")
-        from app.scripts.render_tiles import render
 
         render(date)
         log.info("Tile render complete")
@@ -238,8 +237,6 @@ def serve_tile_latest(z: int, x: int, y: int):
 
 @app.get("/api/status")
 def api_status():
-    import json
-
     status_file = Path("/data/prewarm_status.json")
     prewarm_info = {}
     if status_file.exists():
@@ -275,8 +272,6 @@ def api_beaches():
     Return all beaches with current SST temperature.
     Fetches temperatures in parallel for speed.
     """
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    from app.services.sst_cache import point_temperature, yesterday_utc
 
     date = yesterday_utc()
 
@@ -302,8 +297,6 @@ def api_beaches():
 @app.get("/api/beach/{slug}")
 def api_beach(slug: str):
     """Return temperature for a single beach."""
-    from app.services.sst_cache import point_temperature, yesterday_utc
-
     beach = BEACHES_BY_SLUG.get(slug)
     if not beach:
         raise HTTPException(status_code=404)

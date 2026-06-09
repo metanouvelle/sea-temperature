@@ -17,6 +17,7 @@ Zoom levels rendered: 3-7
 import math
 import os
 import shutil
+import sqlite3
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -25,8 +26,10 @@ import numpy as np
 from dotenv import load_dotenv
 from PIL import Image, ImageFilter
 
-load_dotenv()
 from app.logger import get_logger
+
+load_dotenv()
+
 
 log = get_logger(__name__)
 
@@ -86,7 +89,6 @@ def latlon_to_tile(lat: float, lon: float, z: int) -> tuple:
 
 # ── Load SST data ─────────────────────────────────────────────────────────────
 def load_sst_data(date: str) -> np.ndarray:
-    import sqlite3
 
     log.info("Loading SST data for %s from %s...", date, DB_PATH)
     conn = sqlite3.connect(DB_PATH)
@@ -245,6 +247,7 @@ def render(date: str) -> None:
 
 if __name__ == "__main__":
     import sys
+
     from app.database import init_db
 
     init_db()

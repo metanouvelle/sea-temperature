@@ -27,13 +27,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app.database import init_db
 from app.logger import get_logger
+from app.scripts.render_tiles import render
 from app.services.sst_cache import (
     ensure_tile,
     login_copernicus,
     tile_id_for,
     yesterday_utc,
 )
-from app.scripts.render_tiles import render
 
 log = get_logger(__name__)
 

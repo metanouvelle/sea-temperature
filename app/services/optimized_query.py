@@ -14,6 +14,8 @@ Zoom → step size → approx points for Mediterranean viewport
 This reduces mobile data usage by 10-100x at typical zoom levels.
 """
 
+from app.database import connect
+
 
 def _step_for_zoom(zoom: float) -> float:
     """Return the grid step size in degrees for a given zoom level."""
@@ -42,8 +44,6 @@ def query_points_in_bbox_optimized(
         bbox:  dict with min_lat, max_lat, min_lon, max_lon
         zoom:  current map zoom level (default 8 = full resolution)
     """
-    from app.database import connect
-
     step = _step_for_zoom(zoom)
     conn = connect()
     cur = conn.cursor()
@@ -77,16 +77,15 @@ def _query_full(cur, date, min_lat, max_lat, min_lon, max_lon):
             """,
             (date, min_lat, max_lat, min_lon, max_lon),
         ).fetchall()
-    else:
-        return cur.execute(
-            """
+    return cur.execute(
+        """
             SELECT lat, lon, temp_c FROM sst_grid
             WHERE date=?
               AND lat BETWEEN ? AND ?
               AND (lon BETWEEN ? AND 180 OR lon BETWEEN -180 AND ?)
             """,
-            (date, min_lat, max_lat, min_lon, max_lon),
-        ).fetchall()
+        (date, min_lat, max_lat, min_lon, max_lon),
+    ).fetchall()
 
 
 def _query_downsampled(cur, date, min_lat, max_lat, min_lon, max_lon, step):
@@ -109,9 +108,8 @@ def _query_downsampled(cur, date, min_lat, max_lat, min_lon, max_lon, step):
             """,
             (step, step, step, step, date, min_lat, max_lat, min_lon, max_lon),
         ).fetchall()
-    else:
-        return cur.execute(
-            """
+    return cur.execute(
+        """
             SELECT
                 ROUND(lat / ?) * ? AS cell_lat,
                 ROUND(lon / ?) * ? AS cell_lon,
@@ -122,5 +120,5 @@ def _query_downsampled(cur, date, min_lat, max_lat, min_lon, max_lon, step):
               AND (lon BETWEEN ? AND 180 OR lon BETWEEN -180 AND ?)
             GROUP BY cell_lat, cell_lon
             """,
-            (step, step, step, step, date, min_lat, max_lat, min_lon, max_lon),
-        ).fetchall()
+        (step, step, step, step, date, min_lat, max_lat, min_lon, max_lon),
+    ).fetchall()
