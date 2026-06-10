@@ -1,4 +1,4 @@
-"""this is the main entry point for the sea temperature project"""
+"""Main entry point for the sea temperature project."""
 
 import json
 import os
@@ -8,109 +8,137 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.content.beaches import BEACHES, BEACHES_BY_SLUG
 from app.database import init_db
 from app.logger import get_logger
 from app.middleware import TimingMiddleware
-from app.scripts.prewarm_tiles import prewarm
-
-# from app.scripts.render_tiles import render
+from app.scripts.prewarm_tiles import prewarm, yesterday_utc
 from app.services.optimized_query import query_points_in_bbox_optimized
 from app.services.sst_cache import (
     ensure_tile,
     login_copernicus,
     point_temperature,
-    query_points_in_bbox,
     tile_exists,
     tile_id_for,
-    yesterday_utc,
 )
 
 log = get_logger(__name__)
 
 PREWARM_SECRET = os.getenv("PREWARM_SECRET", "")
 
-
 _tile_executor = ThreadPoolExecutor(max_workers=8)
-
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
-
-
 app.add_middleware(TimingMiddleware)
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+
+def get_latest_available_date() -> str:
+    """Return most recent date with SST data, fallback to yesterday."""
+    try:
+        from app.database import connect
+
+        conn = connect()
+        result = conn.execute(
+            "SELECT date FROM sst_tile ORDER BY date DESC LIMIT 1"
+        ).fetchone()
+        conn.close()
+        if result:
+            return result[0]
+    except Exception:
+        pass
+    return yesterday_utc()
+
+
+# ── Startup ───────────────────────────────────────────────────────────────────
 
 
 @app.on_event("startup")
 def _startup():
-    """
-    init database before everything else
-    """
+    """Init database and Copernicus on startup."""
     init_db()
     login_copernicus()
-    # Don't run prewarm on app startup — it can timeout on shared CPU.
-    # Rely on scheduled cron job instead (see fly.toml [[crons]])
-    # threading.Thread(target=_background_prewarm, daemon=True).start()
+
+
+# ── Background prewarm ────────────────────────────────────────────────────────
+
+
+def _background_prewarm():
+    log.info("Background prewarm starting...")
+    try:
+        # Always fetch yesterday's fresh data, not what's already cached
+        date = yesterday_utc()
+        start = time.time()
+        results = prewarm(date)
+        elapsed = round((time.time() - start) / 60, 1)
+
+        log.info(
+            "Prewarm complete — %s fetched, %s skipped, %s failed, %.1f min",
+            results.get("ok", 0),
+            results.get("skipped", 0),
+            results.get("failed", 0),
+            elapsed,
+        )
+
+        Path("/data/prewarm_status.json").write_text(
+            json.dumps(
+                {
+                    "last_run": date,
+                    "elapsed_minutes": elapsed,
+                    "fetched": results.get("ok", 0),
+                    "skipped": results.get("skipped", 0),
+                    "failed": results.get("failed", 0),
+                    "total": results.get("total", 0),
+                    "success": True,
+                },
+                indent=2,
+            )
+        )
+
+    except Exception as e:
+        log.error("Background prewarm failed: %s", e)
+
+
+# ── Pages ─────────────────────────────────────────────────────────────────────
 
 
 @app.get("/", response_class=HTMLResponse)
 def landing(request: Request):
-    """
-    render landing page
-    """
     return templates.TemplateResponse("landing.html", {"request": request})
 
 
 @app.get("/map", response_class=HTMLResponse)
 def map_page(request: Request):
-    """
-    render map main page
-    """
     return templates.TemplateResponse("sea-temp-map.html", {"request": request})
 
 
 @app.get("/about", response_class=HTMLResponse)
 def about(request: Request):
-    """
-    render about page
-    """
     return templates.TemplateResponse("about.html", {"request": request})
 
 
-@app.get("/api/area")
-def api_area(
-    min_lat: float = Query(..., ge=-90, le=90),
-    max_lat: float = Query(..., ge=-90, le=90),
-    min_lon: float = Query(..., ge=-180, le=180),
-    max_lon: float = Query(..., ge=-180, le=180),
-):
-    """
-    Return cached SST grid points within a bounding box.
-    Never triggers new Copernicus fetches — overlay-safe.
-    """
-    if min_lat >= max_lat:
-        raise HTTPException(status_code=422, detail="min_lat must be less than max_lat")
-    d = yesterday_utc()
-    bbox = {
-        "min_lat": min_lat,
-        "max_lat": max_lat,
-        "min_lon": min_lon,
-        "max_lon": max_lon,
-    }
-    try:
-        raw = query_points_in_bbox(d, bbox)
-        return {
-            "date": d,
-            "points": [{"lat": p[0], "lon": p[1], "temp_c": p[2]} for p in raw],
-        }
-    except Exception as exc:  # pylint: disable=broad-exception-caught
-        log.error("api_area error bbox=%s: %s", bbox, exc)
-        raise HTTPException(
-            status_code=503, detail="Service temporarily unavailable"
-        ) from exc
+@app.get("/beaches", response_class=HTMLResponse)
+def beaches_page(request: Request):
+    return templates.TemplateResponse("beaches.html", {"request": request})
+
+
+@app.get("/beach/{slug}", response_class=HTMLResponse)
+def beach_page(request: Request, slug: str):
+    beach = BEACHES_BY_SLUG.get(slug)
+    if not beach:
+        raise HTTPException(status_code=404)
+    return templates.TemplateResponse(
+        "beach.html", {"request": request, "beach": beach}
+    )
+
+
+# ── API ───────────────────────────────────────────────────────────────────────
 
 
 @app.get("/api/point")
@@ -119,10 +147,7 @@ def api_point(
     lon: float = Query(..., ge=-180, le=180),
     radius_km: float = Query(10.0, gt=0, le=50),
 ):
-    """
-    get temperature by coordinates
-    """
-    d = yesterday_utc()
+    d = get_latest_available_date()
     try:
         return point_temperature(d, lat, lon, radius_km)
     except Exception as exc:
@@ -133,15 +158,13 @@ def api_point(
 
 
 @app.get("/api/grid")
-def get_grid(bbox: str, zoom: float = Query(8.0)):  # add zoom param
+def get_grid(bbox: str, zoom: float = Query(8.0)):
     """
     Return cached SST grid points for a bounding box.
-    Uncached tiles are submitted to a background thread pool; cached data is
-    returned immediately so the frontend can show what it has and poll for more.
     bbox format: south,west,north,east
     """
     south, west, north, east = map(float, bbox.split(","))
-    date = yesterday_utc()
+    date = get_latest_available_date()
     bounds = {"min_lat": south, "max_lat": north, "min_lon": west, "max_lon": east}
     pending = 0
     lat = south
@@ -163,7 +186,7 @@ def get_grid(bbox: str, zoom: float = Query(8.0)):  # add zoom param
                 pending += 1
             lon += 2.0
         lat += 2.0
-    points = query_points_in_bbox_optimized(date, bounds, zoom=zoom)  # swap this
+    points = query_points_in_bbox_optimized(date, bounds, zoom=zoom)
     return {
         "points": [
             {"lat": p[0], "lon": p[1], "temp_c": round(p[2], 2)} for p in points
@@ -172,118 +195,10 @@ def get_grid(bbox: str, zoom: float = Query(8.0)):  # add zoom param
     }
 
 
-def _background_prewarm():
-    log.info("Background prewarm starting...")
-    try:
-        date = yesterday_utc()
-        start = time.time()
-        results = prewarm(date)
-        elapsed_prewarm = round((time.time() - start) / 60, 1)
-        log.info(
-            "Prewarm complete — %s fetched, %s skipped, %.1f min",
-            results.get("ok", 0),
-            results.get("skipped", 0),
-            elapsed_prewarm,
-        )
-
-        # Render tiles after prewarm
-        log.info("Starting tile render...")
-
-        render(date)
-        log.info("Tile render complete")
-
-        # Write status only after BOTH prewarm and render succeed
-        elapsed_total = round((time.time() - start) / 60, 1)
-        Path("/data/prewarm_status.json").write_text(
-            json.dumps(
-                {
-                    "last_run": date,
-                    "elapsed_minutes": elapsed_total,
-                    "fetched": results.get("ok", 0),
-                    "skipped": results.get("skipped", 0),
-                    "failed": results.get("failed", 0),
-                    "total": results.get("total", 0),
-                    "success": True,
-                },
-                indent=2,
-            )
-        )
-
-    except Exception as e:
-        log.error("Background prewarm failed: %s", e)
-
-
-@app.post("/api/admin/prewarm")
-def trigger_prewarm(authorization: str = Header(None)):
-    if not PREWARM_SECRET or authorization != f"Bearer {PREWARM_SECRET}":
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    # Clear status so polling knows a fresh run is in progress
-    Path("/data/prewarm_status.json").write_text(
-        json.dumps(
-            {
-                "last_run": "running",
-                "success": False,
-            }
-        )
-    )
-    threading.Thread(target=_background_prewarm, daemon=True).start()
-    return {"status": "started"}
-
-
-# @app.get("/tiles/latest/{z}/{x}/{y}.png")
-# def serve_tile_latest(z: int, x: int, y: int):
-#     tiles_dir = Path(os.getenv("SST_TILES_DIR", "/data/tiles"))
-#     tile_path = tiles_dir / "latest" / str(z) / str(x) / f"{y}.png"
-#     if not tile_path.exists():
-#         raise HTTPException(status_code=404)
-#     return FileResponse(
-#         tile_path,
-#         media_type="image/png",
-#         headers={
-#             "Cache-Control": "public, max-age=86400",  # cache 24h in browser
-#         },
-#     )
-
-
-@app.get("/api/status")
-def api_status():
-    status_file = Path("/data/prewarm_status.json")
-    prewarm_info = {}
-    if status_file.exists():
-        try:
-            prewarm_info = json.loads(status_file.read_text())
-        except Exception:
-            prewarm_info = {"error": "could not read status file"}
-    return {"status": "ok", "prewarm": prewarm_info}
-
-
-@app.get("/beaches", response_class=HTMLResponse)
-def beaches_page(request: Request):
-    return templates.TemplateResponse("beaches.html", {"request": request})
-
-
-@app.get("/beach/{slug}", response_class=HTMLResponse)
-def beach_page(request: Request, slug: str):
-    beach = BEACHES_BY_SLUG.get(slug)
-    if not beach:
-        raise HTTPException(status_code=404)
-    return templates.TemplateResponse(
-        "beach.html",
-        {
-            "request": request,
-            "beach": beach,
-        },
-    )
-
-
 @app.get("/api/beaches")
 def api_beaches():
-    """
-    Return all beaches with current SST temperature.
-    Fetches temperatures in parallel for speed.
-    """
-
-    date = yesterday_utc()
+    """Return all beaches with current SST temperature, sorted warmest first."""
+    date = get_latest_available_date()
 
     def fetch(beach):
         try:
@@ -297,7 +212,6 @@ def api_beaches():
         futures = [pool.submit(fetch, b) for b in BEACHES]
         results = [f.result() for f in as_completed(futures)]
 
-    # Sort by temperature descending (warmest first), nulls last
     results.sort(
         key=lambda x: x["temp_c"] if x["temp_c"] is not None else -99, reverse=True
     )
@@ -310,12 +224,39 @@ def api_beach(slug: str):
     beach = BEACHES_BY_SLUG.get(slug)
     if not beach:
         raise HTTPException(status_code=404)
-
-    date = yesterday_utc()
+    date = get_latest_available_date()
     result = point_temperature(date, beach["lat"], beach["lon"], radius_km=25)
     temp = result["mean_c"] if result and result.get("status") == "ok" else None
-
     return {**beach, "temp_c": temp, "date": date}
+
+
+@app.get("/api/status")
+def api_status():
+    """Health + prewarm status endpoint."""
+    status_file = Path("/data/prewarm_status.json")
+    prewarm_info = {}
+    if status_file.exists():
+        try:
+            prewarm_info = json.loads(status_file.read_text())
+        except Exception:
+            prewarm_info = {"error": "could not read status file"}
+    return {"status": "ok", "prewarm": prewarm_info}
+
+
+@app.post("/api/admin/prewarm")
+def trigger_prewarm(authorization: str = Header(None)):
+    """Trigger background prewarm. Protected by secret token."""
+    if not PREWARM_SECRET or authorization != f"Bearer {PREWARM_SECRET}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    # Clear status so polling knows a fresh run is in progress
+    Path("/data/prewarm_status.json").write_text(
+        json.dumps({"last_run": "running", "success": False})
+    )
+    threading.Thread(target=_background_prewarm, daemon=True).start()
+    return {"status": "started"}
+
+
+# ── Sitemap ───────────────────────────────────────────────────────────────────
 
 
 @app.get("/sitemap.xml")
@@ -325,7 +266,6 @@ def sitemap():
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>""" for b in BEACHES])
-
     content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
