@@ -217,6 +217,15 @@ def _background_prewarm():
 def trigger_prewarm(authorization: str = Header(None)):
     if not PREWARM_SECRET or authorization != f"Bearer {PREWARM_SECRET}":
         raise HTTPException(status_code=401, detail="Unauthorized")
+    # Clear status so polling knows a fresh run is in progress
+    Path("/data/prewarm_status.json").write_text(
+        json.dumps(
+            {
+                "last_run": "running",
+                "success": False,
+            }
+        )
+    )
     threading.Thread(target=_background_prewarm, daemon=True).start()
     return {"status": "started"}
 
@@ -311,16 +320,11 @@ def api_beach(slug: str):
 
 @app.get("/sitemap.xml")
 def sitemap():
-    beaches_urls = "\n".join(
-        [
-            f"""  <url>
+    beaches_urls = "\n".join([f"""  <url>
     <loc>https://swimtemp.com/beach/{b['slug']}</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>"""
-            for b in BEACHES
-        ]
-    )
+  </url>""" for b in BEACHES])
 
     content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
