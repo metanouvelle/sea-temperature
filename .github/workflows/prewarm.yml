@@ -8,7 +8,7 @@ on:
 jobs:
   prewarm:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
 
     steps:
       - name: Wake machine and trigger prewarm
@@ -23,14 +23,16 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.PREWARM_SECRET }}" \
             -f
           echo "Prewarm triggered OK"
-
       - name: Keep machine alive and wait for prewarm to complete
         run: |
           echo "Polling every 2 min (max 60 attempts = 2 hours)..."
-          for i in {1..60}; do
+          YESTERDAY=$(date -u -d "yesterday" +%Y-%m-%d 2>/dev/null || date -u -v-1d +%Y-%m-%d)
+          TODAY=$(date -u +%Y-%m-%d)
+          echo "Expecting last_run to be $YESTERDAY or $TODAY"
+
+          for i in {1..90}; do
             sleep 120
 
-            # Ping /api/status — this also keeps the machine awake
             curl -sf https://swimtemp.com/api/status > /tmp/status.json || echo '{}' > /tmp/status.json
 
             LAST_RUN=$(python3 -c "import json; d=json.load(open('/tmp/status.json')); print(d.get('prewarm',{}).get('last_run','unknown'))" 2>/dev/null || echo "unknown")
@@ -38,12 +40,13 @@ jobs:
 
             echo "[$i/60] last_run=$LAST_RUN success=$SUCCESS"
 
-            if [ "$SUCCESS" = "True" ] || [ "$SUCCESS" = "true" ]; then
+            if ([ "$SUCCESS" = "True" ] || [ "$SUCCESS" = "true" ]) && \
+               ([ "$LAST_RUN" = "$YESTERDAY" ] || [ "$LAST_RUN" = "$TODAY" ]); then
               echo "Prewarm completed successfully!"
               cat /tmp/status.json | python3 -m json.tool
               exit 0
             fi
           done
 
-          echo "Timed out after 2 hours"
+          echo "Timed out after 6 hours"
           exit 1
