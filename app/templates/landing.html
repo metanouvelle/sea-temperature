@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Sea Temperature — Real-time ocean data for swimmers & travelers</title>
+    <title>SwimTemp — Real-time sea temperature for swimmers & travelers</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
         content="Satellite-based sea temperature data for every ocean. Find where the water is perfect.">
@@ -18,7 +18,7 @@
             --mid: #0e2d4a;
             --foam: rgba(255, 255, 255, 0.06);
             --text: #e8f4f8;
-            --muted: rgba(255, 255, 255, 0.38);
+            --muted: rgba(255, 255, 255, 0.60);
             --accent: #38bdf8;
         }
 
@@ -181,8 +181,8 @@
         }
 
         .about-link {
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.25);
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.55);
             text-decoration: none;
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -191,7 +191,7 @@
         }
 
         .about-link:hover {
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.8);
         }
 
         /* ── Right: live temperature card ── */
@@ -217,7 +217,7 @@
         }
 
         .card-label {
-            font-size: 9px;
+            font-size: 10px;
             letter-spacing: 3px;
             text-transform: uppercase;
             color: var(--muted);
@@ -283,7 +283,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 10px;
+            font-size: 11px;
             color: var(--muted);
             letter-spacing: 0.5px;
         }
@@ -314,7 +314,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 9px;
+            font-size: 10px;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: var(--muted);
@@ -370,7 +370,7 @@
         }
 
         .stat-label {
-            font-size: 9px;
+            font-size: 10px;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: var(--muted);
@@ -445,17 +445,156 @@
                 align-items: flex-start;
             }
         }
+
+        /* ── Accessibility ── */
+        .skip-link {
+            position: fixed;
+            top: -100%;
+            left: 1rem;
+            z-index: 1000;
+            padding: 8px 16px;
+            background: var(--accent);
+            color: var(--deep);
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 0 0 8px 8px;
+            text-decoration: none;
+            transition: top 0.2s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* ── Site Footer ── */
+        .site-footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 48px 8vw 32px;
+            margin-top: 80px;
+        }
+
+        .footer-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 48px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand {
+            max-width: 200px;
+        }
+
+        .footer-logo {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 300;
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .footer-tagline {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.8;
+            letter-spacing: 0.3px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-col-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .footer-col a {
+            font-size: 12px;
+            color: var(--soft);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: var(--text);
+        }
+
+        .footer-bottom {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 640px) {
+            .footer-inner {
+                flex-direction: column;
+                gap: 32px;
+            }
+
+            .footer-links {
+                gap: 32px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <canvas id="ocean-canvas"></canvas>
+    <canvas id="ocean-canvas" aria-hidden="true"></canvas>
 
-    <div class="page">
+    <main class="page" id="main-content">
         <!-- Left: hero -->
         <div class="hero">
-            <div class="eyebrow">Satellite · Real-time · Global</div>
+            <div class="eyebrow" aria-hidden="true">Satellite · Real-time · Global</div>
             <h1>Find your<br><em>perfect</em><br>ocean.</h1>
             <p class="subtitle">
                 Sea temperature data updated daily from satellite observations.
@@ -465,14 +604,16 @@
                 <div class="actions-row">
                     <a href="/map" class="cta cta-primary">
                         Explore the Map
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"
+                            focusable="false">
                             <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5"
                                 stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                     </a>
                     <a href="/beaches" class="cta cta-secondary">
                         Browse Beaches
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"
+                            focusable="false">
                             <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5"
                                 stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
@@ -483,62 +624,44 @@
         </div>
 
         <!-- Right: temperature showcase card -->
-        <div class="temp-showcase">
+        <section class="temp-showcase" aria-label="Live sea temperature sample">
             <div class="temp-card">
-                <div class="live-dot">Live</div>
+                <div class="live-dot" aria-hidden="true">Live</div>
                 <div class="card-label">Featured location</div>
                 <div class="card-location" id="card-location">Mediterranean Sea</div>
-                <div class="card-temp" id="card-temp">—<span>°C</span></div>
-                <div class="card-badge" id="card-badge">🌊 Loading...</div>
-                <div class="card-divider"></div>
-                <div class="card-samples" id="card-samples">
+                <div aria-live="polite" aria-atomic="true">
+                    <div class="card-temp" id="card-temp">—<span>°C</span></div>
+                    <div class="card-badge" id="card-badge">Loading...</div>
+                </div>
+                <div class="card-divider" aria-hidden="true"></div>
+                <div class="card-samples" id="card-samples" aria-live="polite">
                     <div class="card-sample">
-                        <div class="sample-dot" style="background:#0ea5e9"></div>
+                        <div class="sample-dot" style="background:#0ea5e9" aria-hidden="true"></div>
                         <span class="sample-name">Adriatic Sea</span>
                         <span class="sample-temp">—</span>
                     </div>
                     <div class="card-sample">
-                        <div class="sample-dot" style="background:#22c55e"></div>
+                        <div class="sample-dot" style="background:#22c55e" aria-hidden="true"></div>
                         <span class="sample-name">Aegean Sea</span>
                         <span class="sample-temp">—</span>
                     </div>
                     <div class="card-sample">
-                        <div class="sample-dot" style="background:#f59e0b"></div>
+                        <div class="sample-dot" style="background:#f59e0b" aria-hidden="true"></div>
                         <span class="sample-name">Red Sea</span>
                         <span class="sample-temp">—</span>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Footer stats -->
-        <div class="footer">
-            <div class="footer-stat">
-                <span class="stat-value">0.05°</span>
-                <span class="stat-label">Grid resolution</span>
-            </div>
-            <div class="footer-divider"></div>
-            <div class="footer-stat">
-                <span class="stat-value">Daily</span>
-                <span class="stat-label">Data refresh</span>
-            </div>
-            <div class="footer-divider"></div>
-            <div class="footer-stat">
-                <span class="stat-value">Global</span>
-                <span class="stat-label">Coverage</span>
-            </div>
-            <div class="footer-divider"></div>
-            <div class="footer-stat">
-                <span class="stat-value">50</span>
-                <span class="stat-label">Famous beaches</span>
-            </div>
-        </div>
-    </div>
+    </main>
 
     <script>
         const canvas = document.getElementById('ocean-canvas');
         const ctx = canvas.getContext('2d');
         let W, H, t = 0;
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         function resize() {
             W = canvas.width = window.innerWidth;
@@ -595,9 +718,16 @@
             ctx.fillStyle = shimmer;
             ctx.fillRect(0, 0, W, H * 0.5);
 
+            if (!prefersReducedMotion) {
+                requestAnimationFrame(drawOcean);
+            }
+        }
+
+        if (prefersReducedMotion) {
+            drawOcean(0);
+        } else {
             requestAnimationFrame(drawOcean);
         }
-        requestAnimationFrame(drawOcean);
 
         const SAMPLES = [
             { name: 'Mediterranean Sea', lat: 37.5, lon: 13.5, color: '#38bdf8' },
@@ -654,6 +784,40 @@
 
         loadTemperatures();
     </script>
+
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <a href="/" class="footer-logo">SwimTemp</a>
+            <p class="footer-tagline">Real-time sea temperature<br>for swimmers &amp; travelers.</p>
+        </div>
+        <div class="footer-links">
+            <div class="footer-col">
+                <div class="footer-col-label">Explore</div>
+                <a href="/map">Map</a>
+                <a href="/beaches">Beaches</a>
+                <a href="/about">About</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Data</div>
+                <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
+                <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA WOA23</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Legal</div>
+                <a href="/privacy">Privacy Policy</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Contact</div>
+                <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>© 2026 SwimTemp</span>
+        <span>Sea surface temperature updated daily</span>
+    </div>
+</footer>
 </body>
 
 </html>

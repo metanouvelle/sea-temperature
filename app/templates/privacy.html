@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Privacy Policy — SwimTemp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Privacy Policy for SwimTemp — real-time sea temperature data.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --deep: #060f1a;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #e8f4f8;
+            --muted: rgba(255, 255, 255, 0.60);
+            --soft: rgba(255, 255, 255, 0.72);
+            --accent: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Mono', monospace;
+            background: var(--deep);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.025;
+        }
+
+        nav {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 8vw;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-brand {
+            font-family: 'Fraunces', serif;
+            font-size: 16px;
+            font-weight: 300;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .nav-link {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 64px 8vw 80px;
+        }
+
+        .page-eyebrow {
+            font-size: 11px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+
+        .page-title {
+            font-family: 'Fraunces', serif;
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 700;
+            letter-spacing: -2px;
+            line-height: 1.0;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .page-updated {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 48px;
+            letter-spacing: 0.5px;
+        }
+
+        .section {
+            margin-bottom: 48px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .section-title {
+            font-family: 'Fraunces', serif;
+            font-size: 22px;
+            font-weight: 300;
+            color: var(--text);
+            margin-bottom: 14px;
+            letter-spacing: -0.3px;
+        }
+
+        .section p {
+            font-size: 13px;
+            line-height: 2;
+            color: var(--soft);
+            margin-bottom: 14px;
+            letter-spacing: 0.2px;
+        }
+
+        .section p strong {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .section a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .section a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Footer ── */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 48px 8vw 32px;
+            margin-top: 80px;
+        }
+
+        .footer-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 48px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand {
+            max-width: 200px;
+        }
+
+        .footer-logo {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 300;
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .footer-tagline {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.8;
+            letter-spacing: 0.3px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-col-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .footer-col a {
+            font-size: 12px;
+            color: var(--soft);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: var(--text);
+        }
+
+        .footer-bottom {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 640px) {
+            .footer-inner {
+                flex-direction: column;
+                gap: 32px;
+            }
+
+            .footer-links {
+                gap: 32px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a href="/" class="nav-brand">SwimTemp</a>
+        <a href="/beaches" class="nav-link">Beaches</a>
+    </nav>
+
+    <div class="page">
+        <div class="page-eyebrow">Legal</div>
+        <h1 class="page-title">Privacy Policy</h1>
+        <p class="page-updated">Last updated: June 2026</p>
+
+        <div class="section">
+            <div class="section-label">Overview</div>
+            <h2 class="section-title">We keep it simple</h2>
+            <p>SwimTemp (<strong>swimtemp.com</strong>) is a sea temperature information service. We are committed to
+                protecting your privacy. This policy explains what data we collect, how we use it, and your rights under
+                GDPR.</p>
+            <p>SwimTemp is operated by an individual based in Berlin, Germany.</p>
+        </div>
+
+        <div class="section">
+            <div class="section-label">Data we collect</div>
+            <h2 class="section-title">Minimal by design</h2>
+            <p>SwimTemp does <strong>not</strong> require account registration. We do not collect names, email
+                addresses, or any personal information from users.</p>
+            <p>We collect the following anonymous technical data through our hosting provider (Fly.io):</p>
+            <p>
+                — IP addresses (anonymized, used for abuse prevention)<br>
+                — Browser type and operating system<br>
+                — Pages visited and time of visit<br>
+                — Geographic region (country level only)
+            </p>
+            <p>This data is used solely to keep the service running and to understand general usage patterns. It is
+                never sold or shared with third parties for marketing purposes.</p>
+        </div>
+
+        <div class="section">
+            <div class="section-label">Cookies</div>
+            <h2 class="section-title">No tracking cookies</h2>
+            <p>SwimTemp does not use tracking cookies, advertising cookies, or analytics cookies. We do not use Google
+                Analytics or any similar third-party tracking service.</p>
+            <p>Our hosting provider (Fly.io) may set technical cookies necessary for load balancing and security. These
+                are strictly necessary and cannot be disabled without affecting service functionality.</p>
+        </div>
+
+        <div class="section">
+            <div class="section-label">Third-party services</div>
+            <h2 class="section-title">External services we use</h2>
+            <p><strong>Copernicus Marine Service</strong> — provides sea surface temperature data. When you use
+                SwimTemp, temperature data is fetched from Copernicus servers. Their privacy policy applies: <a
+                    href="https://marine.copernicus.eu/privacy-notice" target="_blank"
+                    rel="noopener">marine.copernicus.eu/privacy-notice</a></p>
+            <p><strong>OpenStreetMap / Nominatim</strong> — used for reverse geocoding (converting coordinates to place
+                names) when you click on the map. Your clicked coordinates are sent to Nominatim servers. Their privacy
+                policy: <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank"
+                    rel="noopener">osmfoundation.org</a></p>
+            <p><strong>OpenFreeMap</strong> — provides the base map tiles. Map tile requests are sent to their servers.
+                Their privacy policy: <a href="https://openfreemap.org" target="_blank"
+                    rel="noopener">openfreemap.org</a></p>
+            <p><strong>Booking.com / GetYourGuide</strong> — SwimTemp may display affiliate links to these services. If
+                you click a link and make a booking, SwimTemp may receive a commission. These services have their own
+                privacy policies which apply when you visit their websites.</p>
+        </div>
+
+        <div class="section">
+            <div class="section-label">Your rights (GDPR)</div>
+            <h2 class="section-title">You are in control</h2>
+            <p>Under the General Data Protection Regulation (GDPR), you have the right to:</p>
+            <p>
+                — Access any personal data we hold about you<br>
+                — Request deletion of your data<br>
+                — Object to processing of your data<br>
+                — Lodge a complaint with your local data protection authority
+            </p>
+            <p>Since we collect minimal data and no personal accounts exist, most of these rights are satisfied by
+                default. If you have any questions or requests, contact us at <a
+                    href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>.</p>
+        </div>
+
+        <div class="section">
+            <div class="section-label">Contact</div>
+            <h2 class="section-title">Get in touch</h2>
+            <p>For any privacy-related questions or requests:</p>
+            <p><a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a></p>
+            <p>We will respond within 30 days as required by GDPR.</p>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a href="/" class="footer-logo">SwimTemp</a>
+                <p class="footer-tagline">Real-time sea temperature<br>for swimmers & travelers.</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-col">
+                    <div class="footer-col-label">Explore</div>
+                    <a href="/map">Map</a>
+                    <a href="/beaches">Beaches</a>
+                    <a href="/about">About</a>
+                </div>
+                <div class="footer-col">
+                    <div class="footer-col-label">Data</div>
+                    <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
+                    <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA
+                        WOA23</a>
+                </div>
+                <div class="footer-col">
+                    <div class="footer-col-label">Legal</div>
+                    <a href="/privacy">Privacy Policy</a>
+                </div>
+                <div class="footer-col">
+                    <div class="footer-col-label">Contact</div>
+                    <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2026 SwimTemp</span>
+            <span>Sea surface temperature updated daily</span>
+        </div>
+    </footer>
+
+</body>
+
+</html>

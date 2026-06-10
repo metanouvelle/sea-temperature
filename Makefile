@@ -49,3 +49,11 @@ create-cron:
 	--entrypoint "python -m app.scripts.prewarm_tiles" \
 	--vm-size shared-cpu-1x \
 	--volume vol_vx2qxjw0dlqnz6wr:/data
+
+download-historical-data:
+	for m in $(seq -f "%02g" 1 12); do
+		curl -O "https://www.ncei.noaa.gov/data/oceans/woa/WOA23/DATA/temperature/netcdf/decav/0.25/woa23_decav_t${m}_04.nc"
+	done
+	wait
+	echo "All downloaded"
+	python extract_noaa_monthly.py

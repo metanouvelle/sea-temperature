@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Beaches — Sea Temperature</title>
+    <title>Beaches — SwimTemp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
         content="Find the warmest beaches in the world right now. Real-time sea surface temperature for 50 famous beaches worldwide.">
@@ -18,8 +18,8 @@
             --card: rgba(255, 255, 255, 0.04);
             --border: rgba(255, 255, 255, 0.08);
             --text: #e8f4f8;
-            --muted: rgba(255, 255, 255, 0.38);
-            --soft: rgba(255, 255, 255, 0.55);
+            --muted: rgba(255, 255, 255, 0.60);
+            --soft: rgba(255, 255, 255, 0.72);
             --accent: #38bdf8;
         }
 
@@ -73,7 +73,7 @@
         }
 
         .nav-link {
-            font-size: 10px;
+            font-size: 11px;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: var(--muted);
@@ -111,7 +111,7 @@
         .header-left {}
 
         .page-eyebrow {
-            font-size: 10px;
+            font-size: 11px;
             letter-spacing: 4px;
             text-transform: uppercase;
             color: var(--accent);
@@ -151,7 +151,7 @@
             padding: 8px 16px;
             border-radius: 100px;
             font-family: 'DM Mono', monospace;
-            font-size: 10px;
+            font-size: 11px;
             letter-spacing: 1.5px;
             text-transform: uppercase;
             cursor: pointer;
@@ -166,7 +166,8 @@
             color: var(--text);
         }
 
-        .filter-btn.active {
+        .filter-btn.active,
+        .filter-btn[aria-pressed="true"] {
             background: var(--accent);
             color: var(--deep);
             border-color: var(--accent);
@@ -178,7 +179,7 @@
             text-align: center;
             padding: 80px 0;
             color: var(--muted);
-            font-size: 11px;
+            font-size: 12px;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
@@ -241,7 +242,7 @@
         }
 
         .card-location {
-            font-size: 9px;
+            font-size: 10px;
             letter-spacing: 3px;
             text-transform: uppercase;
             color: var(--muted);
@@ -287,14 +288,14 @@
             gap: 6px;
             padding: 4px 12px;
             border-radius: 100px;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 500;
             letter-spacing: 1px;
             text-transform: uppercase;
         }
 
         .card-no-data {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--muted);
             padding: 12px 0;
             letter-spacing: 0.5px;
@@ -316,16 +317,6 @@
         }
 
         /* ── Date footer ── */
-        .data-footer {
-            margin-top: 48px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
-            font-size: 10px;
-            color: var(--muted);
-            letter-spacing: 1px;
-            text-align: center;
-            text-transform: uppercase;
-        }
 
         @media (max-width: 640px) {
             .page-header {
@@ -337,45 +328,187 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* ── Accessibility ── */
+        .skip-link {
+            position: absolute;
+            top: -100%;
+            left: 1rem;
+            z-index: 1000;
+            padding: 8px 16px;
+            background: var(--accent);
+            color: var(--deep);
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 0 0 8px 8px;
+            text-decoration: none;
+            transition: top 0.2s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* ── Site Footer ── */
+        .site-footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 48px 8vw 32px;
+            margin-top: 80px;
+        }
+
+        .footer-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 48px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand {
+            max-width: 200px;
+        }
+
+        .footer-logo {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 300;
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .footer-tagline {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.8;
+            letter-spacing: 0.3px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-col-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .footer-col a {
+            font-size: 12px;
+            color: var(--soft);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: var(--text);
+        }
+
+        .footer-bottom {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 640px) {
+            .footer-inner {
+                flex-direction: column;
+                gap: 32px;
+            }
+
+            .footer-links {
+                gap: 32px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <nav>
+    <nav aria-label="Main navigation">
         <a href="/" class="nav-brand">Sea Temperature</a>
         <div class="nav-links">
-            <a href="/beaches" class="nav-link active">Beaches</a>
+            <a href="/beaches" class="nav-link active" aria-current="page">Beaches</a>
             <a href="/map" class="nav-link">Map</a>
         </div>
     </nav>
 
-    <div class="page">
+    <main class="page" id="main-content">
         <div class="page-header">
             <div class="header-left">
-                <div class="page-eyebrow">Updated daily</div>
+                <div class="page-eyebrow" aria-hidden="true">Updated daily</div>
                 <h1 class="page-title">Where is the sea<br><em>warm right now?</em></h1>
                 <p class="page-subtitle" id="subtitle">Loading temperatures for 50 beaches...</p>
             </div>
-            <div class="filter-bar">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="very_warm">🔥 Very Warm</button>
-                <button class="filter-btn" data-filter="perfect">🏊 Perfect</button>
-                <button class="filter-btn" data-filter="nice">😊 Nice</button>
-                <button class="filter-btn" data-filter="brave">🤿 Brave</button>
-                <button class="filter-btn" data-filter="cold">🥶 Cold</button>
+            <div class="filter-bar" role="group" aria-label="Filter beaches by water temperature">
+                <button class="filter-btn active" data-filter="all" aria-pressed="true">All</button>
+                <button class="filter-btn" data-filter="very_warm" aria-pressed="false"><span
+                        aria-hidden="true">🔥</span> Very Warm</button>
+                <button class="filter-btn" data-filter="perfect" aria-pressed="false"><span aria-hidden="true">🏊</span>
+                    Perfect</button>
+                <button class="filter-btn" data-filter="nice" aria-pressed="false"><span aria-hidden="true">😊</span>
+                    Nice</button>
+                <button class="filter-btn" data-filter="brave" aria-pressed="false"><span aria-hidden="true">🤿</span>
+                    Brave</button>
+                <button class="filter-btn" data-filter="cold" aria-pressed="false"><span aria-hidden="true">🥶</span>
+                    Cold</button>
             </div>
         </div>
 
-        <div id="beach-grid" class="beach-grid">
-            <div class="loading">
-                <div class="loading-spinner"></div>
+        <div id="beach-grid" class="beach-grid" aria-live="polite" aria-busy="true">
+            <div class="loading" role="status">
+                <div class="loading-spinner" aria-hidden="true"></div>
                 Fetching temperatures...
             </div>
         </div>
-
-        <div class="data-footer" id="data-footer"></div>
-    </div>
+    </main>
 
     <script>
         const BANDS = [
@@ -399,14 +532,14 @@
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 allBeaches = data.beaches;
-                document.getElementById('data-footer').textContent =
-                    `Sea surface temperature · ${data.date} · Copernicus Marine`;
                 document.getElementById('subtitle').textContent =
                     `${allBeaches.filter(b => b.temp_c !== null).length} beaches with live data`;
                 renderGrid();
             } catch {
-                document.getElementById('beach-grid').innerHTML =
-                    `<div class="loading">Could not load temperatures. Try again later.</div>`;
+                const grid = document.getElementById('beach-grid');
+                grid.setAttribute('aria-busy', 'false');
+                grid.innerHTML =
+                    `<div class="loading" role="alert">Could not load temperatures. Try again later.</div>`;
             }
         }
 
@@ -415,13 +548,16 @@
                 ? allBeaches
                 : allBeaches.filter(b => b.temp_c !== null && getBand(b.temp_c).id === activeFilter);
 
+            const grid = document.getElementById('beach-grid');
+            grid.setAttribute('aria-busy', 'false');
+
             if (filtered.length === 0) {
-                document.getElementById('beach-grid').innerHTML =
-                    `<div class="loading">No beaches match this filter right now.</div>`;
+                grid.innerHTML =
+                    `<div class="loading" role="status">No beaches match this filter right now.</div>`;
                 return;
             }
 
-            document.getElementById('beach-grid').innerHTML = filtered.map(beach => {
+            grid.innerHTML = filtered.map(beach => {
                 const hasTemp = beach.temp_c !== null;
                 const band = hasTemp ? getBand(beach.temp_c) : null;
 
@@ -437,10 +573,10 @@
                 </div>
                 <div class="card-badge"
                      style="background:${band.color}20;color:${band.color};border:1px solid ${band.color}35">
-                    ${band.emoji} ${band.label}
+                    <span aria-hidden="true">${band.emoji}</span> ${band.label}
                 </div>
             ` : `<div class="card-no-data">No data available</div>`}
-            <span class="card-arrow">→</span>
+            <span class="card-arrow" aria-hidden="true">→</span>
         </a>`;
             }).join('');
         }
@@ -449,14 +585,53 @@
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 activeFilter = btn.dataset.filter;
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-pressed', 'false');
+                });
                 btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
+                document.getElementById('beach-grid').setAttribute('aria-busy', 'true');
                 renderGrid();
             });
         });
 
         loadBeaches();
     </script>
+
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <a href="/" class="footer-logo">SwimTemp</a>
+            <p class="footer-tagline">Real-time sea temperature<br>for swimmers &amp; travelers.</p>
+        </div>
+        <div class="footer-links">
+            <div class="footer-col">
+                <div class="footer-col-label">Explore</div>
+                <a href="/map">Map</a>
+                <a href="/beaches">Beaches</a>
+                <a href="/about">About</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Data</div>
+                <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
+                <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA WOA23</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Legal</div>
+                <a href="/privacy">Privacy Policy</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Contact</div>
+                <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>© 2026 SwimTemp</span>
+        <span>Sea surface temperature updated daily</span>
+    </div>
+</footer>
 </body>
 
 </html>

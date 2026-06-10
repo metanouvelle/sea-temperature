@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>About • Sea Temperature</title>
+    <title>About — SwimTemp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
@@ -15,8 +15,8 @@
             --navy: #0d1b2a;
             --card: rgba(255, 255, 255, 0.04);
             --text: #e8f4f8;
-            --muted: rgba(255, 255, 255, 0.38);
-            --soft: rgba(255, 255, 255, 0.55);
+            --muted: rgba(255, 255, 255, 0.60);
+            --soft: rgba(255, 255, 255, 0.72);
             --accent: #38bdf8;
             --border: rgba(255, 255, 255, 0.08);
         }
@@ -66,7 +66,7 @@
         }
 
         .nav-link {
-            font-size: 10px;
+            font-size: 11px;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: var(--muted);
@@ -89,7 +89,7 @@
 
         /* ── Header ── */
         .page-eyebrow {
-            font-size: 10px;
+            font-size: 11px;
             letter-spacing: 4px;
             text-transform: uppercase;
             color: var(--accent);
@@ -150,7 +150,7 @@
         }
 
         .section-label {
-            font-size: 9px;
+            font-size: 10px;
             letter-spacing: 3.5px;
             text-transform: uppercase;
             color: var(--muted);
@@ -269,17 +269,6 @@
             transform: translateX(4px);
         }
 
-        /* ── Footer note ── */
-        .footer-note {
-            margin-top: 48px;
-            font-size: 10px;
-            color: var(--muted);
-            line-height: 1.9;
-            letter-spacing: 0.3px;
-            padding-top: 32px;
-            border-top: 1px solid var(--border);
-        }
-
         @keyframes fadeUp {
             from {
                 opacity: 0;
@@ -302,19 +291,158 @@
                 align-items: flex-start;
             }
         }
+
+        /* ── Accessibility ── */
+        .skip-link {
+            position: absolute;
+            top: -100%;
+            left: 1rem;
+            z-index: 1000;
+            padding: 8px 16px;
+            background: var(--accent);
+            color: var(--deep);
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 0 0 8px 8px;
+            text-decoration: none;
+            transition: top 0.2s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* ── Site Footer ── */
+        .site-footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 48px 8vw 32px;
+            margin-top: 80px;
+        }
+
+        .footer-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 48px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand {
+            max-width: 200px;
+        }
+
+        .footer-logo {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 300;
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .footer-tagline {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.8;
+            letter-spacing: 0.3px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-col-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .footer-col a {
+            font-size: 12px;
+            color: var(--soft);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: var(--text);
+        }
+
+        .footer-bottom {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 640px) {
+            .footer-inner {
+                flex-direction: column;
+                gap: 32px;
+            }
+
+            .footer-links {
+                gap: 32px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <nav>
+    <nav aria-label="Main navigation">
         <a href="/" class="nav-brand">Sea Temperature</a>
-        <a href="/map" class="nav-link">Explore Map →</a>
+        <a href="/map" class="nav-link">Explore Map <span aria-hidden="true">→</span></a>
     </nav>
 
-    <div class="page">
+    <main class="page" id="main-content">
 
-        <div class="page-eyebrow">Our story</div>
+        <div class="page-eyebrow" aria-hidden="true">Our story</div>
         <h1 class="page-title">Why the sea temp<br>in weather apps is<br><em>often wrong.</em></h1>
         <p class="page-lead">
             A simple question in Tenerife led to building something better.
@@ -322,9 +450,9 @@
 
         <div class="sections">
 
-            <div class="section">
-                <div class="section-label">The beginning</div>
-                <h2 class="section-title">It started in Tenerife</h2>
+            <section class="section" aria-labelledby="section-beginning">
+                <div class="section-label" aria-hidden="true">The beginning</div>
+                <h2 class="section-title" id="section-beginning">It started in Tenerife</h2>
                 <p>
                     We were planning a trip to Tenerife. Like most beach lovers,
                     we checked the weather app before booking — just wanted to know if we could swim.
@@ -333,20 +461,20 @@
                     The app said <strong>17°C</strong>. Chilly. But photos of the beaches showed
                     people swimming everywhere.
                 </p>
-                <div class="pullquote">
+                <blockquote class="pullquote">
                     <p>Something didn't add up...</p>
-                </div>
+                </blockquote>
                 <p>
                     During the hiking trip in Agana, our guide Alex revealed the secret:
                     the official weather station sits at <strong>high elevation</strong>.
                     In Tenerife, roughly every 100 meters higher means about 1°C lower.
                     Suddenly everything made sense.
                 </p>
-            </div>
+            </section>
 
-            <div class="section">
-                <div class="section-label">The problem</div>
-                <h2 class="section-title">Weather apps show the wrong temperature</h2>
+            <section class="section" aria-labelledby="section-problem">
+                <div class="section-label" aria-hidden="true">The problem</div>
+                <h2 class="section-title" id="section-problem">Weather apps show the wrong temperature</h2>
                 <p>
                     Most weather apps show air temperature measured inland or at altitude.
                     They do <em>not</em> show real sea surface temperature near the beach
@@ -356,11 +484,11 @@
                     That means travelers routinely underestimate — or overestimate —
                     how warm the ocean really is at their destination.
                 </p>
-            </div>
+            </section>
 
-            <div class="section">
-                <div class="section-label">The solution</div>
-                <h2 class="section-title">Satellite data, right at the coast</h2>
+            <section class="section" aria-labelledby="section-solution">
+                <div class="section-label" aria-hidden="true">The solution</div>
+                <h2 class="section-title" id="section-solution">Satellite data, right at the coast</h2>
                 <p>
                     This tool uses satellite-derived sea surface temperature data
                     from <strong>Copernicus Marine</strong> — the same data source used by
@@ -370,20 +498,20 @@
                     Instead of guessing, you click directly on any coastline and see
                     what the water is actually like near that exact spot, updated daily.
                 </p>
-            </div>
+            </section>
 
-            <div class="section">
-                <div class="section-label">The goal</div>
-                <h2 class="section-title">One simple question, answered.</h2>
-                <div class="pullquote">
+            <section class="section" aria-labelledby="section-goal">
+                <div class="section-label" aria-hidden="true">The goal</div>
+                <h2 class="section-title" id="section-goal">One simple question, answered.</h2>
+                <blockquote class="pullquote">
                     <p>"Is the sea warm enough to swim here?"</p>
-                </div>
+                </blockquote>
                 <p>
                     Help travelers plan better beach days.
                     Help swimmers avoid surprises.
                     That's it.
                 </p>
-            </div>
+            </section>
 
         </div>
 
@@ -391,21 +519,49 @@
             <span class="cta-text">Ready to explore?</span>
             <a href="/map" class="cta-btn">
                 Open the Map
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false">
                     <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                         stroke-linejoin="round" />
                 </svg>
             </a>
         </div>
 
-        <div class="footer-note">
-            Sea surface temperature is measured at the top layer of the ocean.
-            Actual temperature may vary slightly depending on depth and local conditions.
-            Data source: Copernicus Marine Environment Monitoring Service.
+    </main>
+
+
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <a href="/" class="footer-logo">SwimTemp</a>
+            <p class="footer-tagline">Real-time sea temperature<br>for swimmers &amp; travelers.</p>
         </div>
-
+        <div class="footer-links">
+            <div class="footer-col">
+                <div class="footer-col-label">Explore</div>
+                <a href="/map">Map</a>
+                <a href="/beaches">Beaches</a>
+                <a href="/about">About</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Data</div>
+                <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
+                <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA WOA23</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Legal</div>
+                <a href="/privacy">Privacy Policy</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Contact</div>
+                <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
+            </div>
+        </div>
     </div>
-
+    <div class="footer-bottom">
+        <span>© 2026 SwimTemp</span>
+        <span>Sea surface temperature updated daily</span>
+    </div>
+</footer>
 </body>
 
 </html>

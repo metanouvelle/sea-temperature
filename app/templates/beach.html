@@ -3,10 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{{ beach.name }} Water Temperature Today — Sea Temperature</title>
+    <title>{{ beach.name }} Water Temperature Today — SwimTemp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Current sea temperature at {{ beach.name }}, {{ beach.city }}, {{ beach.country }}. Real-time satellite data from Copernicus Marine.">
+        content="Current sea temperature at {{ beach.name }}, {{ beach.city }}, {{ beach.country }}. Real-time satellite data updated daily.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
@@ -16,10 +16,9 @@
             --deep: #060f1a;
             --border: rgba(255, 255, 255, 0.08);
             --text: #e8f4f8;
-            --muted: rgba(255, 255, 255, 0.38);
-            --soft: rgba(255, 255, 255, 0.55);
+            --muted: rgba(255, 255, 255, 0.60);
+            --soft: rgba(255, 255, 255, 0.72);
             --accent: #38bdf8;
-            --band: #38bdf8;
         }
 
         * {
@@ -69,7 +68,7 @@
         }
 
         .nav-link {
-            font-size: 10px;
+            font-size: 11px;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: var(--muted);
@@ -81,7 +80,6 @@
             color: var(--text);
         }
 
-        /* ── Page layout ── */
         .page {
             position: relative;
             z-index: 1;
@@ -90,9 +88,8 @@
             padding: 64px 8vw 120px;
         }
 
-        /* ── Breadcrumb ── */
         .breadcrumb {
-            font-size: 10px;
+            font-size: 11px;
             color: var(--muted);
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -114,13 +111,13 @@
 
         /* ── Hero ── */
         .hero {
-            margin-bottom: 56px;
+            margin-bottom: 48px;
             opacity: 0;
             animation: fadeUp 0.7s ease forwards 0.1s;
         }
 
         .hero-eyebrow {
-            font-size: 10px;
+            font-size: 11px;
             letter-spacing: 4px;
             text-transform: uppercase;
             color: var(--accent);
@@ -141,10 +138,9 @@
             font-size: 13px;
             color: var(--muted);
             letter-spacing: 0.5px;
-            margin-bottom: 40px;
+            margin-bottom: 36px;
         }
 
-        /* ── Temperature display ── */
         .temp-block {
             display: flex;
             align-items: center;
@@ -175,8 +171,6 @@
             margin-bottom: 8px;
         }
 
-        .temp-right {}
-
         .temp-badge {
             display: inline-flex;
             align-items: center;
@@ -195,10 +189,74 @@
         }
 
         .temp-date {
-            font-size: 10px;
+            font-size: 11px;
             color: var(--muted);
             letter-spacing: 1.5px;
             text-transform: uppercase;
+        }
+
+        /* ── Monthly chart ── */
+        .chart-section {
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.3s;
+        }
+
+        .section-label {
+            font-size: 10px;
+            letter-spacing: 3.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 24px 20px;
+            position: relative;
+        }
+
+        .chart-canvas-wrap {
+            position: relative;
+            height: 140px;
+            margin-bottom: 12px;
+        }
+
+        canvas#monthly-chart {
+            width: 100%;
+            height: 140px;
+        }
+
+        .chart-months {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 0;
+        }
+
+        .chart-month {
+            text-align: center;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding-top: 6px;
+        }
+
+        .chart-month.current {
+            color: var(--accent);
+            font-weight: 500;
         }
 
         /* ── Info grid ── */
@@ -208,7 +266,7 @@
             gap: 16px;
             margin-bottom: 40px;
             opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.3s;
+            animation: fadeUp 0.7s ease forwards 0.5s;
         }
 
         .info-card {
@@ -219,7 +277,7 @@
         }
 
         .info-card-label {
-            font-size: 9px;
+            font-size: 10px;
             letter-spacing: 3px;
             text-transform: uppercase;
             color: var(--muted);
@@ -235,60 +293,10 @@
         }
 
         .info-card-sub {
-            font-size: 10px;
+            font-size: 11px;
             color: var(--muted);
             margin-top: 4px;
             letter-spacing: 0.5px;
-        }
-
-        /* ── Best months ── */
-        .months-section {
-            margin-bottom: 40px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.5s;
-        }
-
-        .section-label {
-            font-size: 9px;
-            letter-spacing: 3.5px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .section-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        .months-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 6px;
-        }
-
-        .month-bar {
-            text-align: center;
-        }
-
-        .month-fill {
-            height: 40px;
-            border-radius: 4px;
-            margin-bottom: 6px;
-            background: rgba(255, 255, 255, 0.06);
-            transition: background 0.3s;
-        }
-
-        .month-label {
-            font-size: 8px;
-            color: var(--muted);
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
         }
 
         /* ── CTA ── */
@@ -335,18 +343,14 @@
             transform: translateY(-2px);
         }
 
-        /* ── Footer ── */
-        .data-footer {
-            margin-top: 48px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
-            font-size: 10px;
-            color: var(--muted);
-            letter-spacing: 1px;
-            text-transform: uppercase;
+        .cta-btn svg {
+            transition: transform 0.25s;
         }
 
-        /* ── Spinner ── */
+        .cta-btn:hover svg {
+            transform: translateX(4px);
+        }
+
         .spinner {
             width: 20px;
             height: 20px;
@@ -380,10 +384,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .months-grid {
-                grid-template-columns: repeat(6, 1fr);
-            }
-
             .temp-value {
                 font-size: 72px;
             }
@@ -391,43 +391,206 @@
             .cta-section {
                 flex-direction: column;
             }
+
+            .chart-month {
+                font-size: 8px;
+            }
+        }
+
+        /* ── Accessibility ── */
+        .skip-link {
+            position: absolute;
+            top: -100%;
+            left: 1rem;
+            z-index: 1000;
+            padding: 8px 16px;
+            background: var(--accent);
+            color: var(--deep);
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 0 0 8px 8px;
+            text-decoration: none;
+            transition: top 0.2s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* ── Site Footer ── */
+        .site-footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 48px 8vw 32px;
+            margin-top: 80px;
+        }
+
+        .footer-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 48px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand {
+            max-width: 200px;
+        }
+
+        .footer-logo {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 300;
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .footer-tagline {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.8;
+            letter-spacing: 0.3px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-col-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .footer-col a {
+            font-size: 12px;
+            color: var(--soft);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: var(--text);
+        }
+
+        .footer-bottom {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 640px) {
+            .footer-inner {
+                flex-direction: column;
+                gap: 32px;
+            }
+
+            .footer-links {
+                gap: 32px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <nav>
-        <a href="/" class="nav-brand">Sea Temperature</a>
+    <nav aria-label="Main navigation">
+        <a href="/" class="nav-brand">SwimTemp</a>
         <div class="nav-links">
             <a href="/beaches" class="nav-link">Beaches</a>
             <a href="/map" class="nav-link">Map</a>
         </div>
     </nav>
 
-    <div class="page">
-        <div class="breadcrumb">
+    <main class="page" id="main-content">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
             <a href="/beaches">Beaches</a>
-            <span>›</span>
+            <span aria-hidden="true">›</span>
             {{ beach.city }}, {{ beach.country }}
-        </div>
+        </nav>
 
         <div class="hero">
-            <div class="hero-eyebrow">Sea surface temperature</div>
+            <div class="hero-eyebrow" aria-hidden="true">Sea surface temperature</div>
             <h1 class="hero-title">{{ beach.name }}</h1>
-            <div class="hero-location">{{ beach.city }}, {{ beach.country }}</div>
+            <p class="hero-location">{{ beach.city }}, {{ beach.country }}</p>
 
-            <div class="temp-block">
+            <div class="temp-block" aria-live="polite" aria-atomic="true">
                 <div class="temp-main">
-                    <span class="temp-value" id="temp-value"><span class="spinner"></span></span>
+                    <span class="temp-value" id="temp-value">
+                        <span class="spinner" role="status" aria-label="Loading temperature"></span>
+                    </span>
                     <span class="temp-unit" id="temp-unit"></span>
                 </div>
-                <div class="temp-right">
+                <div>
                     <div class="temp-badge" id="temp-badge">Loading...</div>
                     <div class="temp-date" id="temp-date"></div>
                 </div>
             </div>
         </div>
+
+        <!-- Monthly temperature chart -->
+        <section class="chart-section" aria-labelledby="chart-heading">
+            <div class="section-label" id="chart-heading">Average sea temperature by month</div>
+            <div class="chart-container">
+                <div class="chart-canvas-wrap">
+                    <canvas id="monthly-chart" role="img"
+                        aria-label="Monthly average sea temperature chart for {{ beach.name }}. Best month shown on chart.">
+                    </canvas>
+                </div>
+                <div class="chart-months" aria-hidden="true">
+                    {% set months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+                    {% for m in months %}
+                    <div class="chart-month {% if loop.index == current_month %}current{% endif %}">{{ m }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
 
         <div class="info-grid">
             <div class="info-card">
@@ -436,34 +599,23 @@
                 <div class="info-card-sub">{{ beach.country }}</div>
             </div>
             <div class="info-card">
-                <div class="info-card-label">Coordinates</div>
-                <div class="info-card-value">{{ "%.2f"|format(beach.lat) }}°, {{ "%.2f"|format(beach.lon) }}°</div>
-                <div class="info-card-sub">Search radius 25km</div>
-            </div>
-        </div>
-
-        <div class="months-section">
-            <div class="section-label">Typical monthly temperatures</div>
-            <div class="months-grid" id="months-grid">
-                <!-- filled by JS -->
+                <div class="info-card-label">Best month</div>
+                <div class="info-card-value" id="best-month">—</div>
+                <div class="info-card-sub" id="best-temp">—</div>
             </div>
         </div>
 
         <div class="cta-section">
             <span class="cta-text">See the full ocean picture.</span>
-            <a href="/map#{{ beach.lon }},{{ beach.lat }},8" class="cta-btn">
+            <a href="/map" class="cta-btn">
                 Open on Map
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false">
                     <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                         stroke-linejoin="round" />
                 </svg>
             </a>
         </div>
-
-        <div class="data-footer" id="data-footer">
-            Data source: Copernicus Marine Environment Monitoring Service
-        </div>
-    </div>
+    </main>
 
     <script>
         const BANDS = [
@@ -478,20 +630,136 @@
             return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1];
         }
 
-        // Typical monthly temps — placeholder bars (warm up later with real historical data)
-        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const monthsGrid = document.getElementById('months-grid');
-        MONTHS.forEach(m => {
-            const div = document.createElement('div');
-            div.className = 'month-bar';
-            div.innerHTML = `
-        <div class="month-fill" style="background:rgba(255,255,255,0.06)"></div>
-        <div class="month-label">${m}</div>
-    `;
-            monthsGrid.appendChild(div);
-        });
+        function bandColor(t) {
+            return getBand(t).color;
+        }
 
-        // Load current temperature
+        // Monthly averages passed from server
+        const MONTHLY_AVG = {{ monthly_avg | tojson }};
+        const CURRENT_MONTH = new Date().getMonth(); // 0-indexed
+
+        // ── Draw line chart ───────────────────────────────────────────────────────────
+        function drawChart(currentTemp) {
+            const canvas = document.getElementById('monthly-chart');
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = 140 * dpr;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = '140px';
+            ctx.scale(dpr, dpr);
+
+            const W = rect.width;
+            const H = 140;
+            const PAD = { top: 16, right: 16, bottom: 8, left: 32 };
+
+            const validTemps = MONTHLY_AVG.filter(t => t !== null);
+            if (validTemps.length === 0) return;
+
+            const minT = Math.min(...validTemps) - 2;
+            const maxT = Math.max(...validTemps) + 2;
+
+            function xPos(i) {
+                return PAD.left + (i / 11) * (W - PAD.left - PAD.right);
+            }
+
+            function yPos(t) {
+                return PAD.top + (1 - (t - minT) / (maxT - minT)) * (H - PAD.top - PAD.bottom);
+            }
+
+            // Draw subtle grid lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = PAD.top + (i / 4) * (H - PAD.top - PAD.bottom);
+                ctx.beginPath();
+                ctx.moveTo(PAD.left, y);
+                ctx.lineTo(W - PAD.right, y);
+                ctx.stroke();
+            }
+
+            // Build points
+            const points = MONTHLY_AVG.map((t, i) => ({
+                x: xPos(i), y: t !== null ? yPos(t) : null, t
+            }));
+
+            // Draw filled area under line
+            ctx.beginPath();
+            let started = false;
+            points.forEach((p, i) => {
+                if (p.y === null) return;
+                if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+                else ctx.lineTo(p.x, p.y);
+            });
+            // Close path at bottom
+            const lastValid = [...points].reverse().find(p => p.y !== null);
+            const firstValid = points.find(p => p.y !== null);
+            if (lastValid && firstValid) {
+                ctx.lineTo(lastValid.x, H - PAD.bottom);
+                ctx.lineTo(firstValid.x, H - PAD.bottom);
+                ctx.closePath();
+                const grad = ctx.createLinearGradient(0, PAD.top, 0, H);
+                grad.addColorStop(0, 'rgba(56,189,248,0.15)');
+                grad.addColorStop(1, 'rgba(56,189,248,0.01)');
+                ctx.fillStyle = grad;
+                ctx.fill();
+            }
+
+            // Draw colored line segments
+            for (let i = 0; i < points.length - 1; i++) {
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                if (p1.y === null || p2.y === null) continue;
+
+                const midT = ((p1.t || 0) + (p2.t || 0)) / 2;
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = bandColor(midT);
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+
+            // Draw dots for each month
+            points.forEach((p, i) => {
+                if (p.y === null) return;
+                const isCurrent = i === CURRENT_MONTH;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, isCurrent ? 5 : 3, 0, Math.PI * 2);
+                ctx.fillStyle = bandColor(p.t);
+                ctx.fill();
+
+                if (isCurrent) {
+                    // Outer ring for current month
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+                    ctx.strokeStyle = bandColor(p.t);
+                    ctx.lineWidth = 1.5;
+                    ctx.globalAlpha = 0.4;
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+
+                    // Temperature label above current month dot
+                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    ctx.font = '500 10px DM Mono, monospace';
+                    ctx.textAlign = 'center';
+                    const label = currentTemp ? `${currentTemp.toFixed(1)}°` : `${p.t}°`;
+                    ctx.fillText(label, p.x, p.y - 14);
+                }
+            });
+
+            // Y-axis labels
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.font = '9px DM Mono, monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${Math.round(maxT)}°`, PAD.left - 4, PAD.top + 4);
+            ctx.fillText(`${Math.round(minT)}°`, PAD.left - 4, H - PAD.bottom);
+        }
+
+        // ── Load current temperature ──────────────────────────────────────────────────
         async function loadTemp() {
             try {
                 const res = await fetch('/api/beach/{{ beach.slug }}');
@@ -501,6 +769,7 @@
                 if (data.temp_c === null) {
                     document.getElementById('temp-value').textContent = '—';
                     document.getElementById('temp-badge').textContent = 'No data available';
+                    drawChart(null);
                     return;
                 }
 
@@ -510,25 +779,69 @@
                 document.getElementById('temp-unit').textContent = '°C';
 
                 const badge = document.getElementById('temp-badge');
-                badge.textContent = `${band.emoji} ${band.label}`;
+                badge.innerHTML = `<span aria-hidden="true">${band.emoji}</span> ${band.label}`;
                 badge.style.background = `${band.color}20`;
                 badge.style.color = band.color;
                 badge.style.borderColor = `${band.color}35`;
 
-                document.getElementById('temp-date').textContent =
-                    `Updated ${data.date}`;
+                document.getElementById('temp-date').textContent = `Updated ${data.date}`;
 
-                document.getElementById('data-footer').textContent =
-                    `Sea surface temperature · ${data.date} · Copernicus Marine · 25km search radius`;
+                drawChart(data.temp_c);
 
             } catch {
                 document.getElementById('temp-value').textContent = '—';
                 document.getElementById('temp-badge').textContent = 'Could not load data';
+                drawChart(null);
             }
         }
 
+        // ── Best month ────────────────────────────────────────────────────────────────
+        if (MONTHLY_AVG.length === 12) {
+            const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            const maxTemp = Math.max(...MONTHLY_AVG.filter(t => t !== null));
+            const bestIdx = MONTHLY_AVG.indexOf(maxTemp);
+            document.getElementById('best-month').textContent = MONTH_NAMES[bestIdx];
+            document.getElementById('best-temp').textContent = `avg ${maxTemp}°C`;
+        }
+
         loadTemp();
+        window.addEventListener('resize', () => drawChart(null));
     </script>
+
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <a href="/" class="footer-logo">SwimTemp</a>
+            <p class="footer-tagline">Real-time sea temperature<br>for swimmers &amp; travelers.</p>
+        </div>
+        <div class="footer-links">
+            <div class="footer-col">
+                <div class="footer-col-label">Explore</div>
+                <a href="/map">Map</a>
+                <a href="/beaches">Beaches</a>
+                <a href="/about">About</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Data</div>
+                <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
+                <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA WOA23</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Legal</div>
+                <a href="/privacy">Privacy Policy</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Contact</div>
+                <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>© 2026 SwimTemp</span>
+        <span>Sea surface temperature updated daily</span>
+    </div>
+</footer>
 </body>
 
 </html>

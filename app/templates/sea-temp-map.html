@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
-    <title>Sea Temperature</title>
+    <title>Ocean Temperature Map — SwimTemp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
@@ -14,9 +14,10 @@
     <style>
         :root {
             --navy: #0d1b2a;
-            --glass: rgba(255, 255, 255, 0.92);
-            --muted: #64748b;
-            --soft: #94a3b8;
+            --glass: rgba(255, 255, 255, 0.95);
+            --muted: #475569;
+            --soft: #64748b;
+            --accent: #38bdf8;
         }
 
         * {
@@ -36,6 +37,58 @@
             inset: 0;
         }
 
+        /* ── Top nav ── */
+        #map-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            pointer-events: none;
+        }
+
+        .nav-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(13, 27, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 100px;
+            padding: 8px 18px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            pointer-events: all;
+            transition: all 0.2s;
+        }
+
+        .nav-pill:hover {
+            background: rgba(13, 27, 42, 0.95);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: #fff;
+        }
+
+        .nav-pill-brand {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .nav-pill-link {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* ── Panels ── */
         .panel {
             position: fixed;
             z-index: 10;
@@ -44,13 +97,16 @@
             -webkit-backdrop-filter: blur(24px) saturate(180%);
             border: 1px solid rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 4px 6px rgba(0, 0, 0, 0.04), 0 20px 50px rgba(0, 0, 0, 0.12);
+            box-shadow:
+                0 1px 0 rgba(255, 255, 255, 0.8) inset,
+                0 4px 6px rgba(0, 0, 0, 0.04),
+                0 20px 50px rgba(0, 0, 0, 0.12);
         }
 
         /* ── Info panel ── */
         #info-panel {
-            top: 24px;
-            left: 24px;
+            top: 72px;
+            left: 20px;
             width: 272px;
             overflow: hidden;
         }
@@ -63,21 +119,21 @@
         }
 
         #info-content {
-            padding: 22px 24px 22px;
+            padding: 20px 22px 20px;
         }
 
         .panel-eyebrow {
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 500;
             letter-spacing: 3px;
             text-transform: uppercase;
             color: var(--soft);
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .panel-title {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 21px;
+            font-size: 20px;
             font-weight: 600;
             color: var(--navy);
             letter-spacing: -0.3px;
@@ -85,7 +141,7 @@
         }
 
         .info-placeholder {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--muted);
             line-height: 1.9;
             margin-top: 12px;
@@ -93,11 +149,11 @@
         }
 
         .temp-place {
-            font-size: 10px;
+            font-size: 11px;
             color: var(--soft);
             letter-spacing: 1.5px;
             text-transform: uppercase;
-            margin-top: 16px;
+            margin-top: 14px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -112,7 +168,7 @@
 
         .temp-value {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 70px;
+            font-size: 68px;
             font-weight: 300;
             letter-spacing: -5px;
             line-height: 1;
@@ -139,7 +195,7 @@
         }
 
         .temp-meta {
-            font-size: 10px;
+            font-size: 11px;
             color: var(--soft);
             letter-spacing: 0.8px;
             line-height: 2;
@@ -167,39 +223,39 @@
 
         /* ── Legend panel ── */
         #legend-panel {
-            top: 24px;
-            right: 24px;
-            width: 212px;
-            padding: 20px 18px 16px;
+            top: 72px;
+            right: 20px;
+            width: 200px;
+            padding: 18px 16px 14px;
         }
 
         .legend-eyebrow {
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 500;
             letter-spacing: 3px;
             text-transform: uppercase;
             color: var(--soft);
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 11px;
-            padding: 8px 10px;
-            border-radius: 10px;
+            gap: 10px;
+            padding: 6px 8px;
+            border-radius: 8px;
             margin: 2px 0;
         }
 
         .legend-swatch {
-            width: 26px;
+            width: 24px;
             height: 6px;
             border-radius: 3px;
             flex-shrink: 0;
         }
 
         .legend-name {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
             color: #1e293b;
             flex: 1;
@@ -210,37 +266,133 @@
             color: var(--soft);
         }
 
+        /* ── Mobile: stack panels at bottom ── */
+        @media (max-width: 640px) {
+            #map-nav {
+                padding: 10px 14px;
+            }
+
+            #info-panel {
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                border-radius: 20px 20px 0 0;
+                max-height: 45vh;
+                overflow-y: auto;
+            }
+
+            #legend-panel {
+                top: 62px;
+                right: 10px;
+                width: 160px;
+                padding: 12px 12px 10px;
+            }
+
+            .legend-name {
+                font-size: 10px;
+            }
+
+            .legend-range {
+                font-size: 9px;
+            }
+
+            .legend-eyebrow {
+                font-size: 9px;
+                margin-bottom: 8px;
+            }
+
+            .temp-value {
+                font-size: 56px;
+            }
+        }
+
+        /* ── MapLibre overrides ── */
         .maplibregl-ctrl-attrib {
             background: rgba(255, 255, 255, 0.75) !important;
-            font-size: 9px !important;
+            font-size: 10px !important;
         }
 
         .maplibregl-ctrl-bottom-right {
             bottom: 8px;
             right: 8px;
         }
+
+        @media (max-width: 640px) {
+            .maplibregl-ctrl-bottom-right {
+                bottom: 48vh;
+            }
+        }
+
+        /* ── Accessibility ── */
+        .skip-link {
+            position: fixed;
+            top: -100%;
+            left: 1rem;
+            z-index: 1000;
+            padding: 8px 16px;
+            background: var(--accent);
+            color: #060f1a;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 0 0 8px 8px;
+            text-decoration: none;
+            transition: top 0.2s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <a href="#info-panel" class="skip-link">Skip to temperature panel</a>
 
-    <div id="map"></div>
+    <div id="map" role="application"
+        aria-label="Interactive ocean temperature map. Click on open water to check sea temperature."></div>
 
-    <div class="panel" id="info-panel">
-        <div id="info-color-bar"></div>
+    <!-- Top navigation -->
+    <nav id="map-nav" aria-label="Site navigation">
+        <a href="/" class="nav-pill nav-pill-brand"><span aria-hidden="true">←</span> SwimTemp</a>
+        <a href="/beaches" class="nav-pill nav-pill-link">Beaches</a>
+    </nav>
+
+    <!-- Info panel -->
+    <section class="panel" id="info-panel" aria-label="Temperature information">
+        <div id="info-color-bar" aria-hidden="true"></div>
         <div id="info-content">
             <div class="panel-eyebrow">Ocean conditions</div>
             <div class="panel-title">Sea Temperature</div>
-            <div id="info-body">
-                <div class="info-placeholder">Click anywhere on the ocean to check the water temperature.</div>
+            <div id="info-body" aria-live="polite" aria-atomic="true">
+                <p class="info-placeholder">Click anywhere on the ocean to check the water temperature.</p>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="panel" id="legend-panel">
+    <!-- Legend panel -->
+    <section class="panel" id="legend-panel" aria-label="Temperature scale legend">
         <div class="legend-eyebrow">Water temperature</div>
         <div id="legend-items"></div>
-    </div>
+    </section>
 
     <script>
         const BANDS = [
@@ -255,7 +407,7 @@
             return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1];
         }
 
-        // ── Reverse geocoding (Nominatim) ─────────────────────────────────────────────
+        // ── Reverse geocoding ─────────────────────────────────────────────────────────
         async function getPlaceName(lat, lon) {
             try {
                 const res = await fetch(
@@ -287,17 +439,14 @@
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
         map.on('error', e => console.error('MapLibre error:', e.error));
+        map.on('load', () => console.log('Map loaded OK'));
 
-        map.on('load', () => {
-            console.log('Map loaded OK');
-        });
-
-        // ── Legend — static color key ─────────────────────────────────────────────────
+        // ── Legend ────────────────────────────────────────────────────────────────────
         BANDS.forEach(band => {
             const item = document.createElement('div');
             item.className = 'legend-item';
             item.innerHTML = `
-        <div class="legend-swatch" style="background:${band.color};box-shadow:0 2px 6px ${band.color}44"></div>
+        <div class="legend-swatch" style="background:${band.color};box-shadow:0 2px 6px ${band.color}44" aria-hidden="true"></div>
         <span class="legend-name">${band.label}</span>
         <span class="legend-range">${band.range}</span>
     `;
@@ -308,7 +457,7 @@
         let marker = null;
 
         map.on('click', async e => {
-            if (e.originalEvent.target.closest('.panel')) return;
+            if (e.originalEvent.target.closest('.panel') || e.originalEvent.target.closest('#map-nav')) return;
 
             const { lng: lon, lat } = e.lngLat;
 
@@ -321,7 +470,16 @@
     `;
             marker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lon, lat]).addTo(map);
 
-            document.getElementById('info-body').innerHTML = `<div class="spinner"></div>`;
+            document.getElementById('info-body').innerHTML = `<div class="spinner" role="status" aria-label="Loading temperature data"></div>`;
+
+            // Timeout after 10 seconds
+            let timedOut = false;
+            const timeoutId = setTimeout(() => {
+                timedOut = true;
+                document.getElementById('info-body').innerHTML =
+                    `<p class="info-placeholder">No ocean data for this area. Try clicking closer to a coastline.</p>`;
+                if (marker) marker.remove();
+            }, 10000);
 
             const [tempResult, placeName] = await Promise.all([
                 fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=10`)
@@ -330,9 +488,12 @@
                 getPlaceName(lat, lon),
             ]);
 
+            clearTimeout(timeoutId);
+            if (timedOut) return;
+
             if (!tempResult || tempResult.status !== 'ok') {
                 document.getElementById('info-body').innerHTML =
-                    `<div class="info-placeholder">No ocean data here. Try clicking open water.</div>`;
+                    `<p class="info-placeholder">No ocean data here. Try clicking open water.</p>`;
                 return;
             }
 
@@ -344,18 +505,16 @@
             bar.style.background = `linear-gradient(90deg, ${band.color}, ${band.color}99)`;
 
             document.getElementById('info-body').innerHTML = `
-        <div class="temp-place">${placeName || 'Open Ocean'}</div>
+        <p class="temp-place">${placeName || 'Open Ocean'}</p>
         <div class="temp-display">
             <span class="temp-value">${tempResult.mean_c.toFixed(1)}</span>
             <span class="temp-unit">°C</span>
         </div>
         <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
-            <span>${band.emoji}</span>
+            <span aria-hidden="true">${band.emoji}</span>
             <span>${band.label}</span>
         </div>
-        <div class="temp-meta">
-            ${tempResult.date}
-        </div>
+        <p class="temp-meta">${tempResult.date}</p>
     `;
         });
     </script>

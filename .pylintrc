@@ -10,3 +10,4 @@ disable=
     C0415,  # too-many-locals
     R0914,  # too-many-locals
     W0718,  # broad-exception-caught
+    C0302,  # too-many-lines

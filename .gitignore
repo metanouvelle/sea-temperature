@@ -23,3 +23,5 @@ sst.sqlite-wal
 # Deprecated
 .deprecated/
 data/
+woa23_*.nc
+beach_monthly_avg.json

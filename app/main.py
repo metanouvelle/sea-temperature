@@ -5,13 +5,14 @@ import os
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.content.beaches import BEACHES, BEACHES_BY_SLUG
+from app.content.beaches import BEACH_MONTHLY_AVG, BEACHES, BEACHES_BY_SLUG
 from app.database import init_db
 from app.logger import get_logger
 from app.middleware import TimingMiddleware
@@ -153,7 +154,13 @@ def beach_page(request: Request, slug: str):
     if not beach:
         raise HTTPException(status_code=404)
     return templates.TemplateResponse(
-        "beach.html", {"request": request, "beach": beach}
+        "beach.html",
+        {
+            "request": request,
+            "beach": beach,
+            "monthly_avg": BEACH_MONTHLY_AVG.get(slug, []),
+            "current_month": datetime.now().month,  # 1-indexed for Jinja
+        },
     )
 
 
@@ -305,3 +312,8 @@ def sitemap():
 {beaches_urls}
 </urlset>"""
     return Response(content=content, media_type="application/xml")
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+def privacy(request: Request):
+    return templates.TemplateResponse("privacy.html", {"request": request})
