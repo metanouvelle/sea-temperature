@@ -208,9 +208,7 @@ def _open_sst_dataset(
                 **kwargs,
             )
             if ds is None:
-                raise RuntimeError(
-                    "open_dataset returned None on fallback"
-                )  # pylint: disable=raise-missing-fro,raise-missing-from
+                raise RuntimeError("open_dataset returned None on fallback") from exc
             return ds
         except Exception as exc2:  # pylint: disable=broad-exception-caught
             log.error(
