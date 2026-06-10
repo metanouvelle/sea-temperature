@@ -1,23 +1,11 @@
 """
 Pre-warm SST tile cache for all major coastal regions.
 
-Run this nightly so yesterday's data is always ready before users arrive.
+Run nightly so yesterday's data is always ready before users arrive.
 No user should ever wait for a Copernicus fetch.
 
 Usage:
     python -m app.scripts.prewarm_tiles
-
-Fly.io cron (add to fly.toml):
-    [processes]
-      app = "uvicorn app.main:app --host 0.0.0.0 --port 8080"
-
-    [[statics]]  # not needed but shown for context
-
-Add this to fly.toml to run nightly at 3am UTC:
-    [deploy]
-      release_command = "python -m app.scripts.prewarm_tiles"
-
-Or as a separate cron machine — see README for setup.
 """
 
 from __future__ import annotations
@@ -27,7 +15,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from app.database import init_db
 from app.logger import get_logger
-from app.scripts.render_tiles import render
 from app.services.sst_cache import (
     ensure_tile,
     login_copernicus,
@@ -40,11 +27,8 @@ log = get_logger(__name__)
 
 # ── Coastal tile regions ──────────────────────────────────────────────────────
 # Each entry is (name, lat_min, lat_max, lon_min, lon_max)
-# We only include coastal strips — no point caching mid-ocean tiles
-# that no swimmer will ever check.
-#
-# Strategy: 2° tiles means each region below generates a manageable number
-# of tiles. The full list is ~800 tiles globally — about 50-100 MB of data.
+# Only coastal strips — no point caching mid-ocean tiles.
+# 2° tiles means ~1824 tiles globally — about 100-200MB of data.
 
 COASTAL_REGIONS = [
     # ── Mediterranean ─────────────────────────────────────────────────────────
@@ -112,7 +96,7 @@ def tiles_for_region(lat_min, lat_max, lon_min, lon_max):
             tiles.append(tile_id_for(lat, lon))
             lon += 2.0
         lat += 2.0
-    return list(set(tiles))  # deduplicate
+    return list(set(tiles))
 
 
 def prewarm(date: str, max_workers: int = 6) -> dict:
@@ -121,7 +105,6 @@ def prewarm(date: str, max_workers: int = 6) -> dict:
     Uses a thread pool — Copernicus fetches are I/O bound so parallelism helps.
     max_workers=6 is conservative; Copernicus rate limits aggressively.
     """
-    # Collect all unique tiles across all regions
     all_tiles: set[str] = set()
     for name, lat_min, lat_max, lon_min, lon_max in COASTAL_REGIONS:
         region_tiles = tiles_for_region(lat_min, lat_max, lon_min, lon_max)
@@ -135,7 +118,6 @@ def prewarm(date: str, max_workers: int = 6) -> dict:
     start = time.time()
 
     def fetch_one(tile_id: str) -> tuple[str, str]:
-        """Returns (tile_id, 'ok'|'skipped'|'failed')"""
         try:
             fetched = ensure_tile(date, tile_id)
             return tile_id, "skipped" if fetched == 0 else "ok"
@@ -147,7 +129,7 @@ def prewarm(date: str, max_workers: int = 6) -> dict:
         futures = {pool.submit(fetch_one, tid): tid for tid in all_tiles}
         done = 0
         for future in as_completed(futures):
-            tile_id, status = future.result()
+            _, status = future.result()
             results[status] += 1
             done += 1
             if done % 20 == 0 or done == total:
@@ -183,17 +165,14 @@ if __name__ == "__main__":
     log.info("Logging into Copernicus...")
     login_copernicus()
 
-    date = yesterday_utc()
-    log.info("Pre-warming tiles for date: %s", date)
+    target_date = yesterday_utc()
+    log.info("Pre-warming tiles for date: %s", target_date)
 
-    results = prewarm(date)
+    prewarm_results = prewarm(target_date)
 
-    if results["failed"] > results["total"] * 0.1:
-        # More than 10% failed — something is wrong
-        raise SystemExit(f"Too many failures: {results['failed']}/{results['total']}")
+    if prewarm_results["failed"] > prewarm_results["total"] * 0.1:
+        raise SystemExit(
+            f"Too many failures: {prewarm_results['failed']}/{prewarm_results['total']}"
+        )
 
     log.info("Pre-warm complete ✓")
-
-    log.info("Rendering static tiles for date: %s", date)
-    render(date)
-    log.info("Static tile render complete ✓")

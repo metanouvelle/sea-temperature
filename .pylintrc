@@ -9,3 +9,4 @@ disable=
     R0917,  # too many positional arguments
     C0415,  # too-many-locals
     R0914,  # too-many-locals
+    W0718,  # broad-exception-caught

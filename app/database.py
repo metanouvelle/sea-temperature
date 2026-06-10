@@ -16,10 +16,7 @@ def connect() -> sqlite3.Connection:
     # mounted volume or the container filesystem.
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    try:
-        conn = sqlite3.connect(DB_PATH)
-    except sqlite3.OperationalError as e:
-        raise
+    conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")
     return conn

@@ -67,6 +67,23 @@ def _startup():
 
 
 # ── Background prewarm ────────────────────────────────────────────────────────
+def _cleanup_old_data():
+    """Delete SST data older than 3 days to keep database small."""
+    try:
+        from app.database import connect
+
+        conn = connect()
+        # Keep only last 3 days in case of prewarm failures
+        deleted = conn.execute(
+            "DELETE FROM sst_grid WHERE date < date('now', '-3 days')"
+        ).rowcount
+        conn.execute("DELETE FROM sst_tile WHERE date < date('now', '-3 days')")
+        conn.execute("VACUUM")  # reclaim disk space after deletion
+        conn.commit()
+        conn.close()
+        log.info("Cleanup complete — deleted %d old grid rows", deleted)
+    except Exception as e:
+        log.error("Cleanup failed: %s", e)
 
 
 def _background_prewarm():
@@ -98,9 +115,11 @@ def _background_prewarm():
                     "success": True,
                 },
                 indent=2,
-            )
+            ),
+            encoding="utf-8",
         )
-
+        # Clean up old data to keep database small
+        _cleanup_old_data()
     except Exception as e:
         log.error("Background prewarm failed: %s", e)
 
@@ -237,7 +256,7 @@ def api_status():
     prewarm_info = {}
     if status_file.exists():
         try:
-            prewarm_info = json.loads(status_file.read_text())
+            prewarm_info = json.loads(status_file.read_text(encoding="utf-8"))
         except Exception:
             prewarm_info = {"error": "could not read status file"}
     return {"status": "ok", "prewarm": prewarm_info}
@@ -250,7 +269,7 @@ def trigger_prewarm(authorization: str = Header(None)):
         raise HTTPException(status_code=401, detail="Unauthorized")
     # Clear status so polling knows a fresh run is in progress
     Path("/data/prewarm_status.json").write_text(
-        json.dumps({"last_run": "running", "success": False})
+        json.dumps({"last_run": "running", "success": False}), encoding="utf-8"
     )
     threading.Thread(target=_background_prewarm, daemon=True).start()
     return {"status": "started"}
@@ -261,11 +280,16 @@ def trigger_prewarm(authorization: str = Header(None)):
 
 @app.get("/sitemap.xml")
 def sitemap():
-    beaches_urls = "\n".join([f"""  <url>
+    beaches_urls = "\n".join(
+        [
+            f"""  <url>
     <loc>https://swimtemp.com/beach/{b['slug']}</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>""" for b in BEACHES])
+  </url>"""
+            for b in BEACHES
+        ]
+    )
     content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
