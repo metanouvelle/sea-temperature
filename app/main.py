@@ -7,9 +7,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, PlainTextResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.content.beaches import BEACH_MONTHLY_AVG, BEACHES, BEACHES_BY_SLUG
@@ -284,36 +285,74 @@ def trigger_prewarm(authorization: str = Header(None)):
 
 # ── Sitemap ───────────────────────────────────────────────────────────────────
 
+SITE_URL = "https://swimtemp.com"
+
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+def robots_txt():
+    return f"""User-agent: *
+Allow: /
+
+Sitemap: {SITE_URL}/sitemap.xml
+"""
+
 
 @app.get("/sitemap.xml")
-def sitemap():
-    beaches_urls = "\n".join(
-        [
-            f"""  <url>
-    <loc>https://swimtemp.com/beach/{b['slug']}</loc>
+def sitemap_xml():
+    static_pages = [
+        {"loc": f"{SITE_URL}/", "priority": "1.0"},
+        {"loc": f"{SITE_URL}/beaches", "priority": "0.9"},
+        {"loc": f"{SITE_URL}/map", "priority": "0.7"},
+        {"loc": f"{SITE_URL}/about", "priority": "0.6"},
+        {"loc": f"{SITE_URL}/privacy", "priority": "0.3"},
+    ]
+
+    beach_pages = [
+        {
+            "loc": f"{SITE_URL}/beach/{beach['slug']}",
+            "priority": "0.8",
+        }
+        for beach in BEACHES
+    ]
+
+    urls = static_pages + beach_pages
+
+    xml_parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+
+    for url in urls:
+        xml_parts.append(f"""  <url>
+    <loc>{escape(url["loc"])}</loc>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>"""
-            for b in BEACHES
-        ]
+    <priority>{url["priority"]}</priority>
+  </url>""")
+
+    xml_parts.append("</urlset>")
+
+    return Response(
+        content="\n".join(xml_parts),
+        media_type="application/xml",
     )
-    content = f"""<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://swimtemp.com/</loc>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://swimtemp.com/beaches</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-{beaches_urls}
-</urlset>"""
-    return Response(content=content, media_type="application/xml")
 
 
 @app.get("/privacy", response_class=HTMLResponse)
 def privacy(request: Request):
     return templates.TemplateResponse("privacy.html", {"request": request})
+
+
+@app.head("/sitemap.xml")
+def sitemap_head():
+    return Response(
+        status_code=200,
+        media_type="application/xml",
+    )
+
+
+@app.head("/robots.txt")
+def robots_head():
+    return Response(
+        status_code=200,
+        media_type="text/plain",
+    )
