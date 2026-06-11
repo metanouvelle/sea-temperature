@@ -30,7 +30,7 @@ log = get_logger(__name__)
 
 PREWARM_SECRET = os.getenv("PREWARM_SECRET", "")
 
-_tile_executor = ThreadPoolExecutor(max_workers=8)
+_tile_executor = ThreadPoolExecutor(max_workers=12)
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
@@ -234,7 +234,7 @@ def api_beaches():
             temp = None
         return {**beach, "temp_c": temp, "date": date}
 
-    with ThreadPoolExecutor(max_workers=10) as pool:
+    with ThreadPoolExecutor(max_workers=12) as pool:
         futures = [pool.submit(fetch, b) for b in BEACHES]
         results = [f.result() for f in as_completed(futures)]
 
@@ -287,16 +287,11 @@ def trigger_prewarm(authorization: str = Header(None)):
 
 @app.get("/sitemap.xml")
 def sitemap():
-    beaches_urls = "\n".join(
-        [
-            f"""  <url>
+    beaches_urls = "\n".join([f"""  <url>
     <loc>https://swimtemp.com/beach/{b['slug']}</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>"""
-            for b in BEACHES
-        ]
-    )
+  </url>""" for b in BEACHES])
     content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>

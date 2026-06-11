@@ -10,7 +10,8 @@
 **/.env
 
 # Database
-**/sst.sqlite
+data/
+woa23/
 
 # OS
 **/.DS_Store
