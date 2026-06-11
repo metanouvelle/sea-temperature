@@ -489,6 +489,15 @@
                 <h1 class="page-title">Where is the sea<br><em>warm right now?</em></h1>
                 <p class="page-subtitle" id="subtitle">Loading temperatures for 50 beaches...</p>
             </div>
+            <div class="filter-bar region-bar" role="group" aria-label="Filter beaches by region">
+                <button class="filter-btn active" data-region="all" aria-pressed="true">All Regions</button>
+                <button class="filter-btn" data-region="europe" aria-pressed="false">🌍 Europe</button>
+                <button class="filter-btn" data-region="asia" aria-pressed="false">🌏 Asia</button>
+                <button class="filter-btn" data-region="caribbean" aria-pressed="false">🏝 Caribbean</button>
+                <button class="filter-btn" data-region="pacific" aria-pressed="false">🌊 Pacific</button>
+                <button class="filter-btn" data-region="indian" aria-pressed="false">☀️ Indian Ocean</button>
+                <button class="filter-btn" data-region="americas" aria-pressed="false">🌎 Americas</button>
+            </div>
             <div class="filter-bar" role="group" aria-label="Filter beaches by water temperature">
                 <button class="filter-btn active" data-filter="all" aria-pressed="true">All</button>
                 <button class="filter-btn" data-filter="very_warm" aria-pressed="false"><span
@@ -527,6 +536,16 @@
 
         let allBeaches = [];
         let activeFilter = 'all';
+        let activeRegion = 'all';
+
+        const REGION_MAP = {
+            europe:    ['Spain', 'France', 'Italy', 'Greece', 'Croatia', 'Portugal', 'Malta'],
+            asia:      ['Thailand', 'Indonesia', 'Malaysia', 'Philippines', 'Maldives'],
+            caribbean: ['Mexico', 'Barbados', 'Jamaica', 'Bahamas', 'Turks & Caicos', 'St. Lucia'],
+            pacific:   ['Australia', 'French Polynesia', 'USA'],
+            indian:    ['Tanzania', 'Mauritius', 'Seychelles', 'France'],
+            americas:  ['Brazil', 'USA', 'Mexico', 'Costa Rica'],
+        };
 
         async function loadBeaches() {
             try {
@@ -546,9 +565,15 @@
         }
 
         function renderGrid() {
-            const filtered = activeFilter === 'all'
+            let filtered = activeFilter === 'all'
                 ? allBeaches
                 : allBeaches.filter(b => b.temp_c !== null && getBand(b.temp_c).id === activeFilter);
+
+            // Apply region filter
+            if (activeRegion !== 'all') {
+                const countries = REGION_MAP[activeRegion] || [];
+                filtered = filtered.filter(b => countries.includes(b.country));
+            }
 
             const grid = document.getElementById('beach-grid');
             grid.setAttribute('aria-busy', 'false');
@@ -583,8 +608,24 @@
             }).join('');
         }
 
+        // Search input
         // Filter buttons
-        document.querySelectorAll('.filter-btn').forEach(btn => {
+        // Region buttons
+        document.querySelectorAll('[data-region]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                activeRegion = btn.dataset.region;
+                document.querySelectorAll('[data-region]').forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-pressed', 'false');
+                });
+                btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
+                renderGrid();
+            });
+        });
+
+        // Temperature filter buttons
+        document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
             btn.addEventListener('click', () => {
                 activeFilter = btn.dataset.filter;
                 document.querySelectorAll('.filter-btn').forEach(b => {

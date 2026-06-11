@@ -88,6 +88,113 @@
             color: rgba(255, 255, 255, 0.6);
         }
 
+        /* ── Search bar ── */
+        #search-container {
+            position: fixed;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            width: 340px;
+            pointer-events: all;
+        }
+
+        #search-wrap {
+            position: relative;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 10px 40px 10px 16px;
+            background: rgba(13, 27, 42, 0.90);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 100px;
+            color: rgba(255, 255, 255, 0.9);
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.3px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        #search-input::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        #search-input:focus {
+            border-color: rgba(56, 189, 248, 0.5);
+            background: rgba(13, 27, 42, 0.95);
+        }
+
+        #search-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.35);
+            pointer-events: none;
+            font-size: 14px;
+        }
+
+        #search-results {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: rgba(13, 27, 42, 0.97);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            display: none;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        #search-results.visible {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            transition: background 0.15s;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .search-result-name {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 0.3px;
+            margin-bottom: 2px;
+        }
+
+        .search-result-type {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.35);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .search-loading {
+            padding: 16px;
+            text-align: center;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
         /* ── Panels ── */
         .panel {
             position: fixed;
@@ -103,7 +210,6 @@
                 0 20px 50px rgba(0, 0, 0, 0.12);
         }
 
-        /* ── Info panel ── */
         #info-panel {
             top: 72px;
             left: 20px;
@@ -266,10 +372,17 @@
             color: var(--soft);
         }
 
-        /* ── Mobile: stack panels at bottom ── */
+        /* ── Mobile ── */
         @media (max-width: 640px) {
             #map-nav {
                 padding: 10px 14px;
+            }
+
+            #search-container {
+                top: 10px;
+                width: calc(100% - 220px);
+                left: 120px;
+                transform: none;
             }
 
             #info-panel {
@@ -308,7 +421,52 @@
             }
         }
 
-        /* ── MapLibre overrides ── */
+        @media (max-width: 768px) {
+            #info-panel {
+                top: 12px;
+                left: 12px;
+                right: 12px;
+                width: auto;
+            }
+
+            #legend-panel {
+                top: auto;
+                bottom: 80px;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                padding: 12px 16px;
+            }
+
+            #legend-items {
+                display: flex;
+                flex-direction: row;
+                gap: 4px;
+                flex-wrap: wrap;
+            }
+
+            .legend-item {
+                padding: 4px 8px;
+                flex: 1;
+                min-width: 80px;
+            }
+
+            .legend-range {
+                display: none;
+            }
+
+            .temp-value {
+                font-size: 52px;
+            }
+
+            #search-container {
+                top: 10px;
+                width: calc(100% - 200px);
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+
         .maplibregl-ctrl-attrib {
             background: rgba(255, 255, 255, 0.75) !important;
             font-size: 10px !important;
@@ -361,49 +519,6 @@
                 transition-duration: 0.01ms !important;
             }
         }
-
-        @media (max-width: 768px) {
-            #info-panel {
-                top: 12px;
-                left: 12px;
-                right: 12px;
-                width: auto;
-            }
-
-            #legend-panel {
-                top: auto;
-                bottom: 80px;
-                left: 12px;
-                right: 12px;
-                width: auto;
-                padding: 12px 16px;
-            }
-
-            .legend-eyebrow {
-                margin-bottom: 8px;
-            }
-
-            #legend-items {
-                display: flex;
-                flex-direction: row;
-                gap: 4px;
-                flex-wrap: wrap;
-            }
-
-            .legend-item {
-                padding: 4px 8px;
-                flex: 1;
-                min-width: 80px;
-            }
-
-            .legend-range {
-                display: none;
-            }
-
-            .temp-value {
-                font-size: 52px;
-            }
-        }
     </style>
 </head>
 
@@ -418,6 +533,16 @@
         <a href="/" class="nav-pill nav-pill-brand"><span aria-hidden="true">←</span> SwimTemp</a>
         <a href="/beaches" class="nav-pill nav-pill-link">Beaches</a>
     </nav>
+
+    <!-- Search bar -->
+    <div id="search-container">
+        <div id="search-wrap">
+            <input id="search-input" type="text" placeholder="Search any beach or city..." autocomplete="off"
+                aria-label="Search for a beach or location" />
+            <span id="search-icon">⌕</span>
+            <div id="search-results" role="listbox" aria-label="Search suggestions"></div>
+        </div>
+    </div>
 
     <!-- Info panel -->
     <section class="panel" id="info-panel" aria-label="Temperature information">
@@ -470,6 +595,148 @@
             } catch { return null; }
         }
 
+        // ── Search ────────────────────────────────────────────────────────────────────
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        let searchTimer = null;
+        let currentMarker = null;
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            const q = searchInput.value.trim();
+            if (q.length < 2) {
+                hideResults();
+                return;
+            }
+            searchTimer = setTimeout(() => doSearch(q), 400);
+        });
+
+        searchInput.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                hideResults();
+                searchInput.blur();
+            }
+        });
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#search-container')) hideResults();
+        });
+
+        function hideResults() {
+            searchResults.classList.remove('visible');
+            searchResults.innerHTML = '';
+        }
+
+        async function doSearch(query) {
+            searchResults.innerHTML = '<div class="search-loading">Searching...</div>';
+            searchResults.classList.add('visible');
+
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`,
+                    { headers: { 'Accept-Language': 'en' } }
+                );
+                const results = await res.json();
+
+                if (results.length === 0) {
+                    searchResults.innerHTML = '<div class="search-loading">No results found</div>';
+                    return;
+                }
+
+                searchResults.innerHTML = results.map((r, i) => {
+                    const name = r.display_name.split(',').slice(0, 2).join(',');
+                    const type = r.type || r.class || '';
+                    return `
+                        <div class="search-result-item" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${name}" role="option">
+                            <div class="search-result-name">${name}</div>
+                            <div class="search-result-type">${type}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                searchResults.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const lat = parseFloat(item.dataset.lat);
+                        const lon = parseFloat(item.dataset.lon);
+                        const name = item.dataset.name;
+                        selectSearchResult(lat, lon, name);
+                    });
+                });
+
+            } catch {
+                searchResults.innerHTML = '<div class="search-loading">Search failed. Try again.</div>';
+            }
+        }
+
+        async function selectSearchResult(lat, lon, name) {
+            hideResults();
+            searchInput.value = name;
+            searchInput.blur();
+
+            // Fly to location
+            map.flyTo({ center: [lon, lat], zoom: 9, duration: 1200 });
+
+            // Drop marker and fetch temperature
+            if (currentMarker) currentMarker.remove();
+            const el = document.createElement('div');
+            el.style.cssText = `
+                width:14px;height:14px;border-radius:50%;
+                background:#fff;border:3px solid #0ea5e9;
+                box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;
+            `;
+            currentMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([lon, lat]).addTo(map);
+
+            document.getElementById('info-body').innerHTML =
+                `<div class="spinner" role="status" aria-label="Loading temperature data"></div>`;
+
+            let timedOut = false;
+            const timeoutId = setTimeout(() => {
+                timedOut = true;
+                document.getElementById('info-body').innerHTML =
+                    `<p class="info-placeholder">No ocean data for this area. Try a coastal location.</p>`;
+                if (currentMarker) currentMarker.remove();
+            }, 10000);
+
+            const [tempResult, placeName] = await Promise.all([
+                fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=25`)
+                    .then(r => r.ok ? r.json() : null)
+                    .catch(() => null),
+                getPlaceName(lat, lon),
+            ]);
+
+            clearTimeout(timeoutId);
+            if (timedOut) return;
+
+            if (!tempResult || tempResult.status !== 'ok') {
+                document.getElementById('info-body').innerHTML =
+                    `<p class="info-placeholder">No ocean data here. Try searching for a coastal city.</p>`;
+                return;
+            }
+
+            const band = getBand(tempResult.mean_c);
+            el.style.borderColor = band.color;
+
+            const bar = document.getElementById('info-color-bar');
+            bar.style.display = 'block';
+            bar.style.background = `linear-gradient(90deg, ${band.color}, ${band.color}99)`;
+
+            document.getElementById('info-body').innerHTML = `
+                <p class="temp-place">${placeName || name}</p>
+                <div class="temp-display">
+                    <span class="temp-value">${tempResult.mean_c.toFixed(1)}</span>
+                    <span class="temp-unit">°C</span>
+                </div>
+                <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
+                    <span aria-hidden="true">${band.emoji}</span>
+                    <span>${band.label}</span>
+                </div>
+                <p class="temp-meta">${tempResult.date}</p>
+            `;
+
+            marker = currentMarker;
+        }
+
         // ── Map ───────────────────────────────────────────────────────────────────────
         const map = new maplibregl.Map({
             container: 'map',
@@ -489,10 +756,10 @@
             const item = document.createElement('div');
             item.className = 'legend-item';
             item.innerHTML = `
-        <div class="legend-swatch" style="background:${band.color};box-shadow:0 2px 6px ${band.color}44" aria-hidden="true"></div>
-        <span class="legend-name">${band.label}</span>
-        <span class="legend-range">${band.range}</span>
-    `;
+                <div class="legend-swatch" style="background:${band.color};box-shadow:0 2px 6px ${band.color}44" aria-hidden="true"></div>
+                <span class="legend-name">${band.label}</span>
+                <span class="legend-range">${band.range}</span>
+            `;
             document.getElementById('legend-items').appendChild(item);
         });
 
@@ -500,22 +767,22 @@
         let marker = null;
 
         map.on('click', async e => {
-            if (e.originalEvent.target.closest('.panel') || e.originalEvent.target.closest('#map-nav')) return;
+            if (e.originalEvent.target.closest('.panel') || e.originalEvent.target.closest('#map-nav') || e.originalEvent.target.closest('#search-container')) return;
 
             const { lng: lon, lat } = e.lngLat;
 
             if (marker) marker.remove();
             const el = document.createElement('div');
             el.style.cssText = `
-        width:14px;height:14px;border-radius:50%;
-        background:#fff;border:3px solid #0ea5e9;
-        box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;
-    `;
+                width:14px;height:14px;border-radius:50%;
+                background:#fff;border:3px solid #0ea5e9;
+                box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;
+            `;
             marker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lon, lat]).addTo(map);
 
-            document.getElementById('info-body').innerHTML = `<div class="spinner" role="status" aria-label="Loading temperature data"></div>`;
+            document.getElementById('info-body').innerHTML =
+                `<div class="spinner" role="status" aria-label="Loading temperature data"></div>`;
 
-            // Timeout after 10 seconds
             let timedOut = false;
             const timeoutId = setTimeout(() => {
                 timedOut = true;
@@ -548,17 +815,17 @@
             bar.style.background = `linear-gradient(90deg, ${band.color}, ${band.color}99)`;
 
             document.getElementById('info-body').innerHTML = `
-        <p class="temp-place">${placeName || 'Open Ocean'}</p>
-        <div class="temp-display">
-            <span class="temp-value">${tempResult.mean_c.toFixed(1)}</span>
-            <span class="temp-unit">°C</span>
-        </div>
-        <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
-            <span aria-hidden="true">${band.emoji}</span>
-            <span>${band.label}</span>
-        </div>
-        <p class="temp-meta">${tempResult.date}</p>
-    `;
+                <p class="temp-place">${placeName || 'Open Ocean'}</p>
+                <div class="temp-display">
+                    <span class="temp-value">${tempResult.mean_c.toFixed(1)}</span>
+                    <span class="temp-unit">°C</span>
+                </div>
+                <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
+                    <span aria-hidden="true">${band.emoji}</span>
+                    <span>${band.label}</span>
+                </div>
+                <p class="temp-meta">${tempResult.date}</p>
+            `;
         });
     </script>
 </body>
