@@ -210,6 +210,7 @@
                 0 20px 50px rgba(0, 0, 0, 0.12);
         }
 
+        /* ── Info panel ── */
         #info-panel {
             top: 72px;
             left: 20px;
@@ -225,7 +226,7 @@
         }
 
         #info-content {
-            padding: 20px 22px 20px;
+            padding: 20px 22px;
         }
 
         .panel-eyebrow {
@@ -372,101 +373,33 @@
             color: var(--soft);
         }
 
-        /* ── Mobile ── */
-        @media (max-width: 640px) {
-            #map-nav {
-                padding: 10px 14px;
-            }
-
-            #search-container {
-                top: 10px;
-                width: calc(100% - 220px);
-                left: 120px;
-                transform: none;
-            }
-
-            #info-panel {
-                top: auto;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                width: 100%;
-                border-radius: 20px 20px 0 0;
-                max-height: 45vh;
-                overflow-y: auto;
-            }
-
-            #legend-panel {
-                top: 62px;
-                right: 10px;
-                width: 160px;
-                padding: 12px 12px 10px;
-            }
-
-            .legend-name {
-                font-size: 10px;
-            }
-
-            .legend-range {
-                font-size: 9px;
-            }
-
-            .legend-eyebrow {
-                font-size: 9px;
-                margin-bottom: 8px;
-            }
-
-            .temp-value {
-                font-size: 56px;
-            }
+        /* ── Legend toggle button (mobile only) ── */
+        #legend-toggle {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            right: 16px;
+            z-index: 20;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(13, 27, 42, 0.90);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            pointer-events: all;
+            transition: all 0.2s;
         }
 
-        @media (max-width: 768px) {
-            #info-panel {
-                top: 12px;
-                left: 12px;
-                right: 12px;
-                width: auto;
-            }
-
-            #legend-panel {
-                top: auto;
-                bottom: 80px;
-                left: 12px;
-                right: 12px;
-                width: auto;
-                padding: 12px 16px;
-            }
-
-            #legend-items {
-                display: flex;
-                flex-direction: row;
-                gap: 4px;
-                flex-wrap: wrap;
-            }
-
-            .legend-item {
-                padding: 4px 8px;
-                flex: 1;
-                min-width: 80px;
-            }
-
-            .legend-range {
-                display: none;
-            }
-
-            .temp-value {
-                font-size: 52px;
-            }
-
-            #search-container {
-                top: 10px;
-                width: calc(100% - 200px);
-                left: 50%;
-                transform: translateX(-50%);
-            }
+        #legend-toggle:hover {
+            background: rgba(13, 27, 42, 0.98);
         }
 
+        /* ── Desktop ── */
         .maplibregl-ctrl-attrib {
             background: rgba(255, 255, 255, 0.75) !important;
             font-size: 10px !important;
@@ -477,9 +410,74 @@
             right: 8px;
         }
 
-        @media (max-width: 640px) {
+        /* ── Mobile ── */
+        @media (max-width: 768px) {
+
+            /* Search bar — full width below nav pills */
+            #search-container {
+                top: 60px;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                transform: none;
+            }
+
+            /* Push info panel down to account for search bar */
+            #info-panel {
+                bottom: 0;
+            }
+
+            /* Info panel — compact bottom sheet */
+            #info-panel {
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                border-radius: 20px 20px 0 0;
+                border-bottom: none;
+                max-height: 38vh;
+                overflow-y: auto;
+            }
+
+            #info-content {
+                padding: 16px 20px;
+            }
+
+            .panel-eyebrow {
+                display: none;
+            }
+
+            .panel-title {
+                font-size: 16px;
+            }
+
+            .temp-value {
+                font-size: 52px;
+            }
+
+            /* Legend — hidden by default, shown via toggle */
+            #legend-panel {
+                top: auto;
+                bottom: 40vh;
+                right: 12px;
+                width: 170px;
+                padding: 12px 12px 10px;
+                display: none;
+            }
+
+            #legend-panel.visible {
+                display: block;
+            }
+
+            /* Show legend toggle button */
+            #legend-toggle {
+                display: flex;
+            }
+
             .maplibregl-ctrl-bottom-right {
-                bottom: 48vh;
+                bottom: 40vh;
+                right: 8px;
             }
         }
 
@@ -562,7 +560,15 @@
         <div id="legend-items"></div>
     </section>
 
+    <!-- Legend toggle (mobile only) -->
+    <button id="legend-toggle" aria-label="Toggle temperature legend">🌡</button>
+
     <script>
+        // ── Legend toggle ─────────────────────────────────────────────────────────────
+        document.getElementById('legend-toggle').addEventListener('click', () => {
+            document.getElementById('legend-panel').classList.toggle('visible');
+        });
+
         const BANDS = [
             { id: 'cold', label: 'Cold', range: '< 17°C', color: '#2563eb', emoji: '🥶', min: -99, max: 17 },
             { id: 'brave', label: 'Brave', range: '17–20°C', color: '#0ea5e9', emoji: '🤿', min: 17, max: 20 },
@@ -604,18 +610,12 @@
         searchInput.addEventListener('input', () => {
             clearTimeout(searchTimer);
             const q = searchInput.value.trim();
-            if (q.length < 2) {
-                hideResults();
-                return;
-            }
+            if (q.length < 2) { hideResults(); return; }
             searchTimer = setTimeout(() => doSearch(q), 400);
         });
 
         searchInput.addEventListener('keydown', e => {
-            if (e.key === 'Escape') {
-                hideResults();
-                searchInput.blur();
-            }
+            if (e.key === 'Escape') { hideResults(); searchInput.blur(); }
         });
 
         document.addEventListener('click', e => {
@@ -630,39 +630,29 @@
         async function doSearch(query) {
             searchResults.innerHTML = '<div class="search-loading">Searching...</div>';
             searchResults.classList.add('visible');
-
             try {
                 const res = await fetch(
                     `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`,
                     { headers: { 'Accept-Language': 'en' } }
                 );
                 const results = await res.json();
-
                 if (results.length === 0) {
                     searchResults.innerHTML = '<div class="search-loading">No results found</div>';
                     return;
                 }
-
-                searchResults.innerHTML = results.map((r, i) => {
+                searchResults.innerHTML = results.map(r => {
                     const name = r.display_name.split(',').slice(0, 2).join(',');
                     const type = r.type || r.class || '';
-                    return `
-                        <div class="search-result-item" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${name}" role="option">
-                            <div class="search-result-name">${name}</div>
-                            <div class="search-result-type">${type}</div>
-                        </div>
-                    `;
+                    return `<div class="search-result-item" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${name}" role="option">
+                        <div class="search-result-name">${name}</div>
+                        <div class="search-result-type">${type}</div>
+                    </div>`;
                 }).join('');
-
                 searchResults.querySelectorAll('.search-result-item').forEach(item => {
                     item.addEventListener('click', () => {
-                        const lat = parseFloat(item.dataset.lat);
-                        const lon = parseFloat(item.dataset.lon);
-                        const name = item.dataset.name;
-                        selectSearchResult(lat, lon, name);
+                        selectSearchResult(parseFloat(item.dataset.lat), parseFloat(item.dataset.lon), item.dataset.name);
                     });
                 });
-
             } catch {
                 searchResults.innerHTML = '<div class="search-loading">Search failed. Try again.</div>';
             }
@@ -672,36 +662,24 @@
             hideResults();
             searchInput.value = name;
             searchInput.blur();
-
-            // Fly to location
             map.flyTo({ center: [lon, lat], zoom: 9, duration: 1200 });
 
-            // Drop marker and fetch temperature
             if (currentMarker) currentMarker.remove();
             const el = document.createElement('div');
-            el.style.cssText = `
-                width:14px;height:14px;border-radius:50%;
-                background:#fff;border:3px solid #0ea5e9;
-                box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;
-            `;
-            currentMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
-                .setLngLat([lon, lat]).addTo(map);
+            el.style.cssText = `width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #0ea5e9;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;`;
+            currentMarker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lon, lat]).addTo(map);
 
-            document.getElementById('info-body').innerHTML =
-                `<div class="spinner" role="status" aria-label="Loading temperature data"></div>`;
+            document.getElementById('info-body').innerHTML = `<div class="spinner" role="status"></div>`;
 
             let timedOut = false;
             const timeoutId = setTimeout(() => {
                 timedOut = true;
-                document.getElementById('info-body').innerHTML =
-                    `<p class="info-placeholder">No ocean data for this area. Try a coastal location.</p>`;
+                document.getElementById('info-body').innerHTML = `<p class="info-placeholder">No ocean data for this area. Try a coastal location.</p>`;
                 if (currentMarker) currentMarker.remove();
             }, 10000);
 
             const [tempResult, placeName] = await Promise.all([
-                fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=25`)
-                    .then(r => r.ok ? r.json() : null)
-                    .catch(() => null),
+                fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=25`).then(r => r.ok ? r.json() : null).catch(() => null),
                 getPlaceName(lat, lon),
             ]);
 
@@ -709,31 +687,22 @@
             if (timedOut) return;
 
             if (!tempResult || tempResult.status !== 'ok') {
-                document.getElementById('info-body').innerHTML =
-                    `<p class="info-placeholder">No ocean data here. Try searching for a coastal city.</p>`;
+                document.getElementById('info-body').innerHTML = `<p class="info-placeholder">No ocean data here. Try searching for a coastal city.</p>`;
                 return;
             }
 
             const band = getBand(tempResult.mean_c);
             el.style.borderColor = band.color;
-
             const bar = document.getElementById('info-color-bar');
             bar.style.display = 'block';
             bar.style.background = `linear-gradient(90deg, ${band.color}, ${band.color}99)`;
-
             document.getElementById('info-body').innerHTML = `
                 <p class="temp-place">${placeName || name}</p>
-                <div class="temp-display">
-                    <span class="temp-value">${tempResult.mean_c.toFixed(1)}</span>
-                    <span class="temp-unit">°C</span>
-                </div>
+                <div class="temp-display"><span class="temp-value">${tempResult.mean_c.toFixed(1)}</span><span class="temp-unit">°C</span></div>
                 <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
-                    <span aria-hidden="true">${band.emoji}</span>
-                    <span>${band.label}</span>
+                    <span aria-hidden="true">${band.emoji}</span><span>${band.label}</span>
                 </div>
-                <p class="temp-meta">${tempResult.date}</p>
-            `;
-
+                <p class="temp-meta">${tempResult.date}</p>`;
             marker = currentMarker;
         }
 
@@ -748,9 +717,6 @@
         map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
-        map.on('error', e => console.error('MapLibre error:', e.error));
-        map.on('load', () => console.log('Map loaded OK'));
-
         // ── Legend ────────────────────────────────────────────────────────────────────
         BANDS.forEach(band => {
             const item = document.createElement('div');
@@ -758,8 +724,7 @@
             item.innerHTML = `
                 <div class="legend-swatch" style="background:${band.color};box-shadow:0 2px 6px ${band.color}44" aria-hidden="true"></div>
                 <span class="legend-name">${band.label}</span>
-                <span class="legend-range">${band.range}</span>
-            `;
+                <span class="legend-range">${band.range}</span>`;
             document.getElementById('legend-items').appendChild(item);
         });
 
@@ -767,34 +732,29 @@
         let marker = null;
 
         map.on('click', async e => {
-            if (e.originalEvent.target.closest('.panel') || e.originalEvent.target.closest('#map-nav') || e.originalEvent.target.closest('#search-container')) return;
+            if (e.originalEvent.target.closest('.panel') ||
+                e.originalEvent.target.closest('#map-nav') ||
+                e.originalEvent.target.closest('#search-container') ||
+                e.originalEvent.target.closest('#legend-toggle')) return;
 
             const { lng: lon, lat } = e.lngLat;
 
             if (marker) marker.remove();
             const el = document.createElement('div');
-            el.style.cssText = `
-                width:14px;height:14px;border-radius:50%;
-                background:#fff;border:3px solid #0ea5e9;
-                box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;
-            `;
+            el.style.cssText = `width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #0ea5e9;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;`;
             marker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lon, lat]).addTo(map);
 
-            document.getElementById('info-body').innerHTML =
-                `<div class="spinner" role="status" aria-label="Loading temperature data"></div>`;
+            document.getElementById('info-body').innerHTML = `<div class="spinner" role="status" aria-label="Loading temperature data"></div>`;
 
             let timedOut = false;
             const timeoutId = setTimeout(() => {
                 timedOut = true;
-                document.getElementById('info-body').innerHTML =
-                    `<p class="info-placeholder">No ocean data for this area. Try clicking closer to a coastline.</p>`;
+                document.getElementById('info-body').innerHTML = `<p class="info-placeholder">No ocean data for this area. Try clicking closer to a coastline.</p>`;
                 if (marker) marker.remove();
             }, 10000);
 
             const [tempResult, placeName] = await Promise.all([
-                fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=10`)
-                    .then(r => r.ok ? r.json() : null)
-                    .catch(() => null),
+                fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=10`).then(r => r.ok ? r.json() : null).catch(() => null),
                 getPlaceName(lat, lon),
             ]);
 
@@ -802,30 +762,22 @@
             if (timedOut) return;
 
             if (!tempResult || tempResult.status !== 'ok') {
-                document.getElementById('info-body').innerHTML =
-                    `<p class="info-placeholder">No ocean data here. Try clicking open water.</p>`;
+                document.getElementById('info-body').innerHTML = `<p class="info-placeholder">No ocean data here. Try clicking open water.</p>`;
                 return;
             }
 
             const band = getBand(tempResult.mean_c);
             el.style.borderColor = band.color;
-
             const bar = document.getElementById('info-color-bar');
             bar.style.display = 'block';
             bar.style.background = `linear-gradient(90deg, ${band.color}, ${band.color}99)`;
-
             document.getElementById('info-body').innerHTML = `
                 <p class="temp-place">${placeName || 'Open Ocean'}</p>
-                <div class="temp-display">
-                    <span class="temp-value">${tempResult.mean_c.toFixed(1)}</span>
-                    <span class="temp-unit">°C</span>
-                </div>
+                <div class="temp-display"><span class="temp-value">${tempResult.mean_c.toFixed(1)}</span><span class="temp-unit">°C</span></div>
                 <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
-                    <span aria-hidden="true">${band.emoji}</span>
-                    <span>${band.label}</span>
+                    <span aria-hidden="true">${band.emoji}</span><span>${band.label}</span>
                 </div>
-                <p class="temp-meta">${tempResult.date}</p>
-            `;
+                <p class="temp-meta">${tempResult.date}</p>`;
         });
     </script>
 </body>

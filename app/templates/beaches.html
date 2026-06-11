@@ -539,12 +539,12 @@
         let activeRegion = 'all';
 
         const REGION_MAP = {
-            europe:    ['Spain', 'France', 'Italy', 'Greece', 'Croatia', 'Portugal', 'Malta'],
-            asia:      ['Thailand', 'Indonesia', 'Malaysia', 'Philippines', 'Maldives'],
+            europe: ['Spain', 'France', 'Italy', 'Greece', 'Croatia', 'Portugal', 'Malta'],
+            asia: ['Thailand', 'Indonesia', 'Malaysia', 'Philippines', 'Maldives'],
             caribbean: ['Mexico', 'Barbados', 'Jamaica', 'Bahamas', 'Turks & Caicos', 'St. Lucia'],
-            pacific:   ['Australia', 'French Polynesia', 'USA'],
-            indian:    ['Tanzania', 'Mauritius', 'Seychelles', 'France'],
-            americas:  ['Brazil', 'USA', 'Mexico', 'Costa Rica'],
+            pacific: ['Australia', 'French Polynesia', 'USA'],
+            indian: ['Tanzania', 'Mauritius', 'Seychelles', 'France'],
+            americas: ['Brazil', 'USA', 'Mexico', 'Costa Rica'],
         };
 
         async function loadBeaches() {
@@ -642,39 +642,40 @@
         loadBeaches();
     </script>
 
-<footer class="site-footer">
-    <div class="footer-inner">
-        <div class="footer-brand">
-            <a href="/" class="footer-logo">SwimTemp</a>
-            <p class="footer-tagline">Real-time sea temperature<br>for swimmers &amp; travelers.</p>
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a href="/" class="footer-logo">SwimTemp</a>
+                <p class="footer-tagline">Real-time sea temperature<br>for swimmers &amp; travelers.</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-col">
+                    <div class="footer-col-label">Explore</div>
+                    <a href="/map">Map</a>
+                    <a href="/beaches">Beaches</a>
+                    <a href="/about">About</a>
+                </div>
+                <div class="footer-col">
+                    <div class="footer-col-label">Data</div>
+                    <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
+                    <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA
+                        WOA23</a>
+                </div>
+                <div class="footer-col">
+                    <div class="footer-col-label">Legal</div>
+                    <a href="/privacy">Privacy Policy</a>
+                </div>
+                <div class="footer-col">
+                    <div class="footer-col-label">Contact</div>
+                    <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
+                </div>
+            </div>
         </div>
-        <div class="footer-links">
-            <div class="footer-col">
-                <div class="footer-col-label">Explore</div>
-                <a href="/map">Map</a>
-                <a href="/beaches">Beaches</a>
-                <a href="/about">About</a>
-            </div>
-            <div class="footer-col">
-                <div class="footer-col-label">Data</div>
-                <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
-                <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA WOA23</a>
-            </div>
-            <div class="footer-col">
-                <div class="footer-col-label">Legal</div>
-                <a href="/privacy">Privacy Policy</a>
-            </div>
-            <div class="footer-col">
-                <div class="footer-col-label">Contact</div>
-                <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
-            </div>
+        <div class="footer-bottom">
+            <span>© 2026 SwimTemp</span>
+            <span>Sea surface temperature updated daily</span>
         </div>
-    </div>
-    <div class="footer-bottom">
-        <span>© 2026 SwimTemp</span>
-        <span>Sea surface temperature updated daily</span>
-    </div>
-</footer>
+    </footer>
 </body>
 
 </html>

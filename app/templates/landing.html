@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Sea Temperature — Real-time ocean data for swimmers & travelers</title>
+    <title>SwimTemp — Real-time sea temperature for swimmers & travelers</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
         content="Satellite-based sea temperature data for every ocean. Find where the water is perfect.">
@@ -31,7 +31,6 @@
         html,
         body {
             height: 100%;
-            overflow: hidden;
         }
 
         body {
@@ -39,6 +38,7 @@
             background: var(--deep);
             color: var(--text);
             cursor: default;
+            overflow-x: hidden;
         }
 
         #ocean-canvas {
@@ -62,7 +62,7 @@
         .page {
             position: relative;
             z-index: 2;
-            height: 100vh;
+            min-height: 100vh;
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr auto;
@@ -504,6 +504,106 @@
         .nav-bar-link:hover {
             color: var(--text);
         }
+
+        /* ── Site Footer ── */
+        .site-footer {
+            position: relative;
+            z-index: 2;
+            border-top: 1px solid var(--border);
+            padding: 48px 8vw 32px;
+        }
+
+        .footer-inner {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 48px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand {
+            max-width: 200px;
+        }
+
+        .footer-logo {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 300;
+            color: var(--text);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .footer-tagline {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.8;
+            letter-spacing: 0.3px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-col-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .footer-col a {
+            font-size: 12px;
+            color: var(--soft);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: var(--text);
+        }
+
+        .footer-bottom {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 640px) {
+            .footer-inner {
+                flex-direction: column;
+                gap: 32px;
+            }
+
+            .footer-links {
+                gap: 32px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 
@@ -520,7 +620,7 @@
     <main class="page" id="main-content">
         <!-- Left: hero -->
         <div class="hero">
-            <div class="eyebrow" aria-hidden="true">Satellite · Real-time · Global</div>
+            <div class="eyebrow" aria-hidden="true">Satellite · Daily updated · Global</div>
             <h1>Find your<br><em>perfect</em><br>ocean.</h1>
             <p class="subtitle">
                 Sea temperature data updated daily from satellite observations.
@@ -529,7 +629,7 @@
             <div class="actions">
                 <div class="actions-row">
                     <a href="/map" class="cta cta-primary">
-                        Explore the Map
+                        Explore Ocean Temperatures
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"
                             focusable="false">
                             <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5"
@@ -537,7 +637,7 @@
                         </svg>
                     </a>
                     <a href="/beaches" class="cta cta-secondary">
-                        Browse Beaches
+                        Browse Beach Temperatures
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"
                             focusable="false">
                             <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5"
@@ -579,29 +679,42 @@
             </div>
         </section>
 
-        <!-- Footer stats -->
-        <footer class="footer" aria-label="Dataset statistics">
-            <div class="footer-stat">
-                <span class="stat-value">0.05°</span>
-                <span class="stat-label">Grid resolution</span>
-            </div>
-            <div class="footer-divider" aria-hidden="true"></div>
-            <div class="footer-stat">
-                <span class="stat-value">Daily</span>
-                <span class="stat-label">Data refresh</span>
-            </div>
-            <div class="footer-divider" aria-hidden="true"></div>
-            <div class="footer-stat">
-                <span class="stat-value">Global</span>
-                <span class="stat-label">Coverage</span>
-            </div>
-            <div class="footer-divider" aria-hidden="true"></div>
-            <div class="footer-stat">
-                <span class="stat-value">50</span>
-                <span class="stat-label">Famous beaches</span>
-            </div>
-        </footer>
     </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a href="/" class="footer-logo">SwimTemp</a>
+                <p class="footer-tagline">Daily updated sea temperature<br>for swimmers &amp; travelers.</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-col">
+                    <div class="footer-col-label">Explore</div>
+                    <a href="/map">Map</a>
+                    <a href="/beaches">Beaches</a>
+                    <a href="/about">About</a>
+                </div>
+                <div class="footer-col">
+                    <div class="footer-col-label">Data</div>
+                    <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
+                    <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA
+                        WOA23</a>
+                </div>
+                <div class="footer-col">
+                    <div class="footer-col-label">Legal</div>
+                    <a href="/privacy">Privacy Policy</a>
+                </div>
+                <div class="footer-col">
+                    <div class="footer-col-label">Contact</div>
+                    <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2026 SwimTemp</span>
+            <span>Sea surface temperature updated daily</span>
+        </div>
+    </footer>
 
     <script>
         const canvas = document.getElementById('ocean-canvas');

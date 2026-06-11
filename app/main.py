@@ -287,11 +287,16 @@ def trigger_prewarm(authorization: str = Header(None)):
 
 @app.get("/sitemap.xml")
 def sitemap():
-    beaches_urls = "\n".join([f"""  <url>
+    beaches_urls = "\n".join(
+        [
+            f"""  <url>
     <loc>https://swimtemp.com/beach/{b['slug']}</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>""" for b in BEACHES])
+  </url>"""
+            for b in BEACHES
+        ]
+    )
     content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
