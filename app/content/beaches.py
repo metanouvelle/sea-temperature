@@ -8,10 +8,13 @@ Each beach has a slug (URL), name, location, lat/lon for SST lookup.
 import urllib.parse
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+ENV_PATH = BASE_DIR / ".env"
+
+load_dotenv(dotenv_path=ENV_PATH)
 GYG_PARTNER_ID = os.getenv("GYG_PARTNER_ID")
-
 
 BEACHES = [
     # Mediterranean

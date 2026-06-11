@@ -27,6 +27,10 @@ from app.services.sst_cache import (
     tile_id_for,
 )
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 log = get_logger(__name__)
 
 PREWARM_SECRET = os.getenv("PREWARM_SECRET", "")

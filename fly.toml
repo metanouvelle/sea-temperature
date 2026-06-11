@@ -4,6 +4,7 @@ primary_region = 'fra'
 [env]
   SST_DB_PATH = "/data/sst.sqlite"
   APP_URL = "https://swimtemp.com"
+  GYG_PARTNER_ID = "XWCA45N"
 
 [build]
 
