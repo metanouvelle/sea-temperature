@@ -361,6 +361,49 @@
                 transition-duration: 0.01ms !important;
             }
         }
+
+        @media (max-width: 768px) {
+            #info-panel {
+                top: 12px;
+                left: 12px;
+                right: 12px;
+                width: auto;
+            }
+
+            #legend-panel {
+                top: auto;
+                bottom: 80px;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                padding: 12px 16px;
+            }
+
+            .legend-eyebrow {
+                margin-bottom: 8px;
+            }
+
+            #legend-items {
+                display: flex;
+                flex-direction: row;
+                gap: 4px;
+                flex-wrap: wrap;
+            }
+
+            .legend-item {
+                padding: 4px 8px;
+                flex: 1;
+                min-width: 80px;
+            }
+
+            .legend-range {
+                display: none;
+            }
+
+            .temp-value {
+                font-size: 52px;
+            }
+        }
     </style>
 </head>
 
