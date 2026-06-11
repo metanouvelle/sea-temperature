@@ -2,11 +2,8 @@
 <html lang="en">
 
 <head>
-    <!-- GetYourGuide Analytics -->
-
     <script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js"
         data-gyg-partner-id="XWCA45N"></script>
-    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q3NYKPGQ"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -279,7 +276,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            margin-bottom: 40px;
+            margin-bottom: 16px;
             opacity: 0;
             animation: fadeUp 0.7s ease forwards 0.5s;
         }
@@ -312,6 +309,82 @@
             color: var(--muted);
             margin-top: 4px;
             letter-spacing: 0.5px;
+        }
+
+        /* ── GYG Native Affiliate Card ── */
+        .gyg-card-container {
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.6s;
+        }
+
+        .gyg-affiliate-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+            transition: border-color 0.25s, background 0.25s;
+        }
+
+        .gyg-affiliate-card:hover {
+            border-color: rgba(56, 189, 248, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .gyg-card-content {
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .gyg-card-title {
+            font-family: 'Fraunces', serif;
+            font-size: 20px;
+            font-weight: 300;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .gyg-card-desc {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .gyg-card-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 100px;
+            text-decoration: none;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+
+        .gyg-card-btn:hover {
+            background: var(--accent);
+            color: var(--deep);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .gyg-card-btn svg {
+            transition: transform 0.25s;
+        }
+
+        .gyg-card-btn:hover svg {
+            transform: translateX(4px);
         }
 
         /* ── CTA ── */
@@ -403,8 +476,15 @@
                 font-size: 72px;
             }
 
-            .cta-section {
+            .cta-section,
+            .gyg-affiliate-card {
                 flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .gyg-card-btn {
+                width: 100%;
+                justify-content: center;
             }
 
             .chart-month {
@@ -598,7 +678,6 @@
             </div>
         </div>
 
-        <!-- Monthly temperature chart -->
         <section class="chart-section" aria-labelledby="chart-heading">
             <div class="section-label" id="chart-heading">Average sea temperature by month</div>
             <div class="chart-container">
@@ -628,6 +707,23 @@
                 <div class="info-card-sub" id="best-temp">—</div>
             </div>
         </div>
+
+        <section class="gyg-card-container" aria-label="Local Experiences">
+            <div class="gyg-affiliate-card">
+                <div class="gyg-card-content">
+                    <h2 class="gyg-card-title">Heading out onto the water?</h2>
+                    <p class="gyg-card-desc">Explore boat trips, surfing guides, snorkeling tours, and coastal
+                        excursions around {{ beach.city }}.</p>
+                </div>
+                <a href="{{ gyg_link }}" class="gyg-card-btn" target="_blank" rel="noopener noreferrer">
+                    Explore Activities
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false">
+                        <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </a>
+            </div>
+        </section>
 
         <div class="cta-section">
             <span class="cta-text">See the full ocean picture.</span>

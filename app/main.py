@@ -13,7 +13,7 @@ from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.content.beaches import BEACH_MONTHLY_AVG, BEACHES, BEACHES_BY_SLUG
+from app.content.beaches import BEACH_MONTHLY_AVG, BEACHES, BEACHES_BY_SLUG, get_gyg_url
 from app.database import init_db
 from app.logger import get_logger
 from app.middleware import TimingMiddleware
@@ -161,6 +161,7 @@ def beach_page(request: Request, slug: str):
             "beach": beach,
             "monthly_avg": BEACH_MONTHLY_AVG.get(slug, []),
             "current_month": datetime.now().month,  # 1-indexed for Jinja
+            "gyg_link": get_gyg_url(slug),  # gyg link
         },
     )
 

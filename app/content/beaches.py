@@ -5,6 +5,14 @@ Curated list of ~50 famous beaches worldwide.
 Each beach has a slug (URL), name, location, lat/lon for SST lookup.
 """
 
+import urllib.parse
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+GYG_PARTNER_ID = os.getenv("GYG_PARTNER_ID")
+
+
 BEACHES = [
     # Mediterranean
     {
@@ -1101,3 +1109,39 @@ BEACH_MONTHLY_AVG = {
         27.8,
     ],
 }
+
+
+def get_gyg_url(beach_slug: str) -> str:
+    """
+    Dynamically builds a robust GetYourGuide tracking search URL.
+    Optimizes queries based on city or beach name to guarantee results.
+    """
+    utm_medium = "online_publisher"
+
+    # 1. Grab the beach data object using the lookup dict
+    beach = BEACHES_BY_SLUG.get(beach_slug)
+    if not beach:
+        return f"https://www.getyourguide.com/?partner_id={GYG_PARTNER_ID}"
+
+    # 2. Pick the best location keywords for GetYourGuide's search engine.
+    if beach["city"] in [
+        "Tenerife",
+        "Mallorca",
+        "Ibiza",
+        "Mykonos",
+        "Santorini",
+        "Bali",
+        "Phuket",
+        "Maldives",
+        "Boracay",
+    ]:
+        search_term = f"{beach['city']}"
+    else:
+        # Combining City + Country ensures GYG anchors to the right spot worldwide
+        search_term = f"{beach['city']} {beach['country']}"
+
+    # 3. Clean and URL-encode the text string (e.g. "Nice France" -> "Nice%20France")
+    encoded_query = urllib.parse.quote(search_term)
+
+    # 4. Generate the direct tracking query path
+    return f"https://www.getyourguide.com/s/?q={encoded_query}&partner_id={GYG_PARTNER_ID}&utm_medium={utm_medium}"
