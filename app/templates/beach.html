@@ -387,6 +387,82 @@
             transform: translateX(4px);
         }
 
+
+        /* ── Booking.com card (placeholder until approved) ── */
+        .booking-card-container {
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.65s;
+        }
+
+        .booking-affiliate-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+            transition: border-color 0.25s, background 0.25s;
+        }
+
+        .booking-affiliate-card:hover {
+            border-color: rgba(0, 113, 194, 0.4);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .booking-card-content {
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .booking-card-title {
+            font-family: 'Fraunces', serif;
+            font-size: 20px;
+            font-weight: 300;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .booking-card-desc {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .booking-card-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: #0071c2;
+            color: #fff;
+            border: none;
+            border-radius: 100px;
+            text-decoration: none;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+
+        .booking-card-btn:hover {
+            background: #005fa3;
+            transform: translateY(-2px);
+        }
+
+        /* ── Affiliate disclosure ── */
+        .affiliate-disclosure {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+            opacity: 0.7;
+        }
+
         /* ── CTA ── */
         .cta-section {
             padding: 32px;
@@ -630,6 +706,15 @@
             }
         }
     </style>
+    <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1"
+        data-no-defer="1">
+            (function () {
+                var script = document.createElement("script");
+                script.async = 1;
+                script.src = 'https://emrldco.com/NTM4NjAw.js?t=538600';
+                document.head.appendChild(script);
+            })();
+        </script>
 </head>
 
 <body>
@@ -702,11 +787,11 @@
         <section class="gyg-card-container" aria-label="Local Experiences">
             <div class="gyg-affiliate-card">
                 <div class="gyg-card-content">
-                    <h2 class="gyg-card-title">Heading out onto the water?</h2>
-                    <p class="gyg-card-desc">Explore boat trips, surfing guides, snorkeling tours, and coastal
-                        excursions around {{ beach.city }}.</p>
+                    <h2 class="gyg-card-title" id="gyg-title">Heading out onto the water?</h2>
+                    <p class="gyg-card-desc" id="gyg-desc">Explore boat trips, snorkeling tours, and coastal excursions
+                        around {{ beach.city }}.</p>
                 </div>
-                <a href="{{ gyg_link }}" class="gyg-card-btn" target="_blank" rel="noopener noreferrer">
+                <a href="{{ gyg_link }}" class="gyg-card-btn" target="_blank" rel="noopener noreferrer sponsored">
                     Explore Activities
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false">
                         <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
@@ -714,6 +799,29 @@
                     </svg>
                 </a>
             </div>
+            <p class="affiliate-disclosure">* Affiliate link — we may earn a small commission at no extra cost to you.
+            </p>
+        </section>
+
+        <!-- Booking.com card — shown once affiliate approved -->
+        <section class="booking-card-container" id="booking-card" style="display:none" aria-label="Hotel booking">
+            <div class="booking-affiliate-card">
+                <div class="booking-card-content">
+                    <h2 class="booking-card-title">Planning a stay near {{ beach.city }}?</h2>
+                    <p class="booking-card-desc">Find and book hotels, apartments and resorts close to {{ beach.name }}.
+                    </p>
+                </div>
+                <a href="#" class="booking-card-btn" id="booking-link" target="_blank"
+                    rel="noopener noreferrer sponsored">
+                    Find Hotels
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false">
+                        <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </a>
+            </div>
+            <p class="affiliate-disclosure">* Affiliate link — we may earn a small commission at no extra cost to you.
+            </p>
         </section>
 
         <div class="cta-section">
@@ -896,6 +1004,23 @@
                 badge.style.borderColor = `${band.color}35`;
 
                 document.getElementById('temp-date').textContent = `Updated ${data.date}`;
+
+                // Temperature-aware GYG copy
+                const gygTitle = document.getElementById('gyg-title');
+                const gygDesc = document.getElementById('gyg-desc');
+                if (data.temp_c >= 26) {
+                    gygTitle.textContent = 'Perfect conditions for water sports 🔥';
+                    gygDesc.textContent = `The water is ${data.temp_c.toFixed(1)}°C — ideal for snorkeling, diving and boat trips around {{ beach.city }}.`;
+                } else if (data.temp_c >= 23) {
+                    gygTitle.textContent = 'Great day for ocean activities 🏊';
+                    gygDesc.textContent = `At ${data.temp_c.toFixed(1)}°C, the water is perfect for snorkeling tours and boat excursions around {{ beach.city }}.`;
+                } else if (data.temp_c >= 20) {
+                    gygTitle.textContent = 'Heading out onto the water? 😊';
+                    gygDesc.textContent = `Explore guided tours, coastal walks and water activities around {{ beach.city }}.`;
+                } else {
+                    gygTitle.textContent = 'Explore {{ beach.city }} beyond the beach';
+                    gygDesc.textContent = `Discover coastal tours, cultural experiences and outdoor activities around {{ beach.city }}.`;
+                }
 
                 drawChart(data.temp_c);
 
