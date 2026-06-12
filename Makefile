@@ -57,3 +57,6 @@ download-historical-data:
 	wait
 	echo "All downloaded"
 	python extract_noaa_monthly.py
+
+check-log:
+	fly logs -a sea-temperature --no-tail | grep "Progress" | tail -3

@@ -16,7 +16,7 @@
     <title>{{ beach.name }} Water Temperature Today — SwimTemp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Current sea temperature at {{ beach.name }}, {{ beach.city }}, {{ beach.country }}. Real-time satellite data updated daily.">
+        content="Sea temperature at {{ beach.name }}, {{ beach.city }} today: updated daily from satellite data. Monthly averages, best time to swim, and local activities.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
@@ -387,82 +387,6 @@
             transform: translateX(4px);
         }
 
-
-        /* ── Booking.com card (placeholder until approved) ── */
-        .booking-card-container {
-            margin-bottom: 40px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.65s;
-        }
-
-        .booking-affiliate-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
-            flex-wrap: wrap;
-            transition: border-color 0.25s, background 0.25s;
-        }
-
-        .booking-affiliate-card:hover {
-            border-color: rgba(0, 113, 194, 0.4);
-            background: rgba(255, 255, 255, 0.04);
-        }
-
-        .booking-card-content {
-            flex: 1;
-            min-width: 260px;
-        }
-
-        .booking-card-title {
-            font-family: 'Fraunces', serif;
-            font-size: 20px;
-            font-weight: 300;
-            color: var(--text);
-            margin-bottom: 6px;
-        }
-
-        .booking-card-desc {
-            font-size: 12px;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        .booking-card-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 24px;
-            background: #0071c2;
-            color: #fff;
-            border: none;
-            border-radius: 100px;
-            text-decoration: none;
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition: all 0.25s;
-            white-space: nowrap;
-        }
-
-        .booking-card-btn:hover {
-            background: #005fa3;
-            transform: translateY(-2px);
-        }
-
-        /* ── Affiliate disclosure ── */
-        .affiliate-disclosure {
-            font-size: 10px;
-            color: var(--muted);
-            letter-spacing: 0.5px;
-            margin-top: 8px;
-            opacity: 0.7;
-        }
-
         /* ── CTA ── */
         .cta-section {
             padding: 32px;
@@ -705,16 +629,101 @@
                 flex-direction: column;
             }
         }
+
+        /* ── SEO text section ── */
+        .seo-section {
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.55s;
+        }
+
+        .seo-intro {
+            font-size: 13px;
+            line-height: 2;
+            color: var(--soft);
+            letter-spacing: 0.2px;
+            margin-bottom: 24px;
+        }
+
+        .seo-intro strong {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .seo-months-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .seo-month-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            transition: background 0.2s;
+        }
+
+        .seo-month-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .seo-month-name {
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .seo-month-temp {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 300;
+            letter-spacing: -0.5px;
+        }
+
+        .seo-month-band {
+            font-size: 9px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .seo-faq {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .seo-faq-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+
+        .seo-faq-q {
+            font-size: 13px;
+            color: var(--text);
+            font-weight: 500;
+            margin-bottom: 8px;
+            letter-spacing: 0.2px;
+        }
+
+        .seo-faq-a {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.9;
+            letter-spacing: 0.2px;
+        }
+
+        @media (max-width: 640px) {
+            .seo-months-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
     </style>
-    <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1"
-        data-no-defer="1">
-            (function () {
-                var script = document.createElement("script");
-                script.async = 1;
-                script.src = 'https://emrldco.com/NTM4NjAw.js?t=538600';
-                document.head.appendChild(script);
-            })();
-        </script>
 </head>
 
 <body>
@@ -784,14 +793,108 @@
             </div>
         </div>
 
+
+        <!-- SEO: Static text for Google indexing -->
+        <section class="seo-section" aria-labelledby="seo-heading">
+            <div class="section-label" id="seo-heading">Sea temperature guide — {{ beach.name }}</div>
+
+            <p class="seo-intro">
+                The sea temperature at <strong>{{ beach.name }}</strong> in <strong>{{ current_month_name }}</strong>
+                {% if monthly_avg and current_month %}
+                {% set current_temp = monthly_avg[current_month - 1] %}
+                {% if current_temp %}
+                is typically around <strong>{{ current_temp }}°C</strong>.
+                {% if current_temp >= 26 %} The water is very warm — excellent for swimming, snorkeling and water
+                sports.
+                {% elif current_temp >= 23 %} The water temperature is perfect for swimming.
+                {% elif current_temp >= 20 %} The water is pleasant for most swimmers.
+                {% elif current_temp >= 17 %} The water is cool — a wetsuit is recommended for longer swims.
+                {% else %} The water is cold — a wetsuit is strongly recommended.{% endif %}
+                {% endif %}
+                {% endif %}
+            </p>
+
+            {% if monthly_avg %}
+            <div class="seo-months-grid">
+                {% set month_short = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+                {% for temp in monthly_avg %}
+                {% if temp %}
+                <div class="seo-month-item">
+                    <div class="seo-month-name">{{ month_short[loop.index0] }}</div>
+                    <div class="seo-month-temp" style="color:
+                        {%- if temp >= 26 %}#ef4444
+                        {%- elif temp >= 23 %}#f59e0b
+                        {%- elif temp >= 20 %}#22c55e
+                        {%- elif temp >= 17 %}#0ea5e9
+                        {%- else %}#2563eb{%- endif %}">{{ temp }}°C</div>
+                    <div class="seo-month-band">
+                        {%- if temp >= 26 %}Very Warm
+                        {%- elif temp >= 23 %}Perfect
+                        {%- elif temp >= 20 %}Nice
+                        {%- elif temp >= 17 %}Brave
+                        {%- else %}Cold{%- endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="seo-faq">
+                <div class="seo-faq-item">
+                    <div class="seo-faq-q">When is the best time to swim at {{ beach.name }}?</div>
+                    <div class="seo-faq-a">
+                        {% if monthly_avg %}
+                        {% set max_temp = monthly_avg | max %}
+                        {% set month_names =
+                        ['January','February','March','April','May','June','July','August','September','October','November','December']
+                        %}
+                        The warmest month at {{ beach.name }} is {{ month_names[monthly_avg.index(max_temp)] }},
+                        with an average sea temperature of {{ max_temp }}°C.
+                        {% if max_temp >= 23 %}This is ideal for swimming and water sports.
+                        {% elif max_temp >= 20 %}The water is comfortable for most swimmers.
+                        {% else %}A wetsuit is recommended for extended swims.{% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="seo-faq-item">
+                    <div class="seo-faq-q">Is the sea warm enough to swim at {{ beach.name }} in {{ current_month_name
+                        }}?</div>
+                    <div class="seo-faq-a">
+                        {% if monthly_avg and current_month %}
+                        {% set current_temp = monthly_avg[current_month - 1] %}
+                        {% if current_temp %}
+                        The average sea temperature at {{ beach.name }} in {{ current_month_name }} is {{ current_temp
+                        }}°C.
+                        {% if current_temp >= 26 %}The water is very warm — perfect for swimming, snorkeling and water
+                        sports.
+                        {% elif current_temp >= 23 %}The water temperature is perfect for swimming.
+                        {% elif current_temp >= 20 %}The water is pleasant for most swimmers.
+                        {% elif current_temp >= 17 %}The water is cool — a wetsuit is recommended for longer swims.
+                        {% else %}The water is cold — a wetsuit is strongly recommended.{% endif %}
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="seo-faq-item">
+                    <div class="seo-faq-q">What is the sea temperature at {{ beach.name }} today?</div>
+                    <div class="seo-faq-a">
+                        The current sea temperature at {{ beach.name }}, {{ beach.city }} is updated daily
+                        using satellite observations from the Copernicus Marine Service.
+                        Check the live reading at the top of this page for today's exact temperature.
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="gyg-card-container" aria-label="Local Experiences">
             <div class="gyg-affiliate-card">
                 <div class="gyg-card-content">
-                    <h2 class="gyg-card-title" id="gyg-title">Heading out onto the water?</h2>
-                    <p class="gyg-card-desc" id="gyg-desc">Explore boat trips, snorkeling tours, and coastal excursions
-                        around {{ beach.city }}.</p>
+                    <h2 class="gyg-card-title">Heading out onto the water?</h2>
+                    <p class="gyg-card-desc">Explore boat trips, surfing guides, snorkeling tours, and coastal
+                        excursions around {{ beach.city }}.</p>
                 </div>
-                <a href="{{ gyg_link }}" class="gyg-card-btn" target="_blank" rel="noopener noreferrer sponsored">
+                <a href="{{ gyg_link }}" class="gyg-card-btn" target="_blank" rel="noopener noreferrer">
                     Explore Activities
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false">
                         <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
@@ -799,29 +902,6 @@
                     </svg>
                 </a>
             </div>
-            <p class="affiliate-disclosure">* Affiliate link — we may earn a small commission at no extra cost to you.
-            </p>
-        </section>
-
-        <!-- Booking.com card — shown once affiliate approved -->
-        <section class="booking-card-container" id="booking-card" style="display:none" aria-label="Hotel booking">
-            <div class="booking-affiliate-card">
-                <div class="booking-card-content">
-                    <h2 class="booking-card-title">Planning a stay near {{ beach.city }}?</h2>
-                    <p class="booking-card-desc">Find and book hotels, apartments and resorts close to {{ beach.name }}.
-                    </p>
-                </div>
-                <a href="#" class="booking-card-btn" id="booking-link" target="_blank"
-                    rel="noopener noreferrer sponsored">
-                    Find Hotels
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false">
-                        <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                            stroke-linejoin="round" />
-                    </svg>
-                </a>
-            </div>
-            <p class="affiliate-disclosure">* Affiliate link — we may earn a small commission at no extra cost to you.
-            </p>
         </section>
 
         <div class="cta-section">
@@ -1004,23 +1084,6 @@
                 badge.style.borderColor = `${band.color}35`;
 
                 document.getElementById('temp-date').textContent = `Updated ${data.date}`;
-
-                // Temperature-aware GYG copy
-                const gygTitle = document.getElementById('gyg-title');
-                const gygDesc = document.getElementById('gyg-desc');
-                if (data.temp_c >= 26) {
-                    gygTitle.textContent = 'Perfect conditions for water sports 🔥';
-                    gygDesc.textContent = `The water is ${data.temp_c.toFixed(1)}°C — ideal for snorkeling, diving and boat trips around {{ beach.city }}.`;
-                } else if (data.temp_c >= 23) {
-                    gygTitle.textContent = 'Great day for ocean activities 🏊';
-                    gygDesc.textContent = `At ${data.temp_c.toFixed(1)}°C, the water is perfect for snorkeling tours and boat excursions around {{ beach.city }}.`;
-                } else if (data.temp_c >= 20) {
-                    gygTitle.textContent = 'Heading out onto the water? 😊';
-                    gygDesc.textContent = `Explore guided tours, coastal walks and water activities around {{ beach.city }}.`;
-                } else {
-                    gygTitle.textContent = 'Explore {{ beach.city }} beyond the beach';
-                    gygDesc.textContent = `Discover coastal tours, cultural experiences and outdoor activities around {{ beach.city }}.`;
-                }
 
                 drawChart(data.temp_c);
 

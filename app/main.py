@@ -158,14 +158,16 @@ def beach_page(request: Request, slug: str):
     beach = BEACHES_BY_SLUG.get(slug)
     if not beach:
         raise HTTPException(status_code=404)
+    now = datetime.now()
     return templates.TemplateResponse(
         "beach.html",
         {
             "request": request,
             "beach": beach,
             "monthly_avg": BEACH_MONTHLY_AVG.get(slug, []),
-            "current_month": datetime.now().month,  # 1-indexed for Jinja
-            "gyg_link": get_gyg_url(slug),  # gyg link
+            "current_month": now.month,
+            "current_month_name": now.strftime("%B"),
+            "gyg_link": get_gyg_url(slug),
         },
     )
 
