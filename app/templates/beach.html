@@ -670,6 +670,17 @@
             background: rgba(255, 255, 255, 0.06);
         }
 
+        .seo-month-current {
+            border-color: rgba(56, 189, 248, 0.5) !important;
+            background: rgba(56, 189, 248, 0.08) !important;
+            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3);
+        }
+
+        .seo-month-current .seo-month-name {
+            color: var(--accent) !important;
+            font-weight: 500;
+        }
+
         .seo-month-name {
             font-size: 9px;
             letter-spacing: 2px;
@@ -820,7 +831,7 @@
                 {% set month_short = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
                 {% for temp in monthly_avg %}
                 {% if temp %}
-                <div class="seo-month-item">
+                <div class="seo-month-item {% if loop.index == current_month %}seo-month-current{% endif %}">
                     <div class="seo-month-name">{{ month_short[loop.index0] }}</div>
                     <div class="seo-month-temp" style="color:
                         {%- if temp >= 26 %}#ef4444
