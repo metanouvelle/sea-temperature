@@ -26,7 +26,7 @@ from app.services.sst_cache import (
     tile_exists,
     tile_id_for,
 )
-
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -363,3 +363,6 @@ def robots_head():
         status_code=200,
         media_type="text/plain",
     )
+
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
