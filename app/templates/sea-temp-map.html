@@ -2,16 +2,6 @@
 <html lang="en">
 
 <head>
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q3NYKPGQ"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-
-        gtag('config', 'G-D3Q3NYKPGQ');
-    </script>
     <meta charset="utf-8" />
     <title>Ocean Temperature Map — SwimTemp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -423,18 +413,13 @@
         /* ── Mobile ── */
         @media (max-width: 768px) {
 
-            /* Search bar — full width below nav pills */
+            /* Search bar — narrow, between nav pills */
             #search-container {
-                top: 60px;
-                left: 12px;
-                right: 12px;
-                width: auto;
-                transform: none;
-            }
-
-            /* Push info panel down to account for search bar */
-            #info-panel {
-                bottom: 0;
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: calc(100vw - 220px);
+                max-width: 260px;
             }
 
             /* Info panel — compact bottom sheet */
@@ -489,6 +474,46 @@
                 bottom: 40vh;
                 right: 8px;
             }
+        }
+
+
+        /* ── GYG link in panel ── */
+        .panel-gyg {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .panel-gyg:hover {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: rgba(56, 189, 248, 0.35);
+        }
+
+        .panel-gyg-text {
+            flex: 1;
+            font-size: 11px;
+            color: #0369a1;
+            letter-spacing: 0.3px;
+            line-height: 1.4;
+        }
+
+        .panel-gyg-arrow {
+            font-size: 12px;
+            color: #0369a1;
+        }
+
+        .panel-gyg-disc {
+            font-size: 9px;
+            color: var(--soft);
+            margin-top: 6px;
+            letter-spacing: 0.3px;
         }
 
         /* ── Accessibility ── */
@@ -712,11 +737,47 @@
                 <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
                     <span aria-hidden="true">${band.emoji}</span><span>${band.label}</span>
                 </div>
-                <p class="temp-meta">${tempResult.date}</p>`;
+                <p class="temp-meta">${tempResult.date}</p>
+                ${gygHtml(tempResult.mean_c, placeName || name)}`;
             marker = currentMarker;
         }
 
         // ── Map ───────────────────────────────────────────────────────────────────────
+
+        const GYG_PARTNER_ID = 'XWCA45N';
+
+        function buildGygUrl(placeName) {
+            return `https://www.getyourguide.com/s/?q=${encodeURIComponent(placeName)}&partner_id=${GYG_PARTNER_ID}&utm_medium=online_publisher`;
+        }
+
+        function gygHtml(temp, placeName) {
+            if (!placeName || placeName.includes('Ocean') || placeName.includes('Sea')) return '';
+            const city = placeName.split(',')[0].trim();
+            let label, query;
+            if (temp >= 26) {
+                label = `Snorkeling & diving tours in ${city}`;
+                query = `${city} snorkeling diving`;
+            } else if (temp >= 23) {
+                label = `Boat trips & water sports in ${city}`;
+                query = `${city} boat trip water sports`;
+            } else if (temp >= 20) {
+                label = `Kayaking & sailing in ${city}`;
+                query = `${city} kayaking sailing`;
+            } else if (temp >= 17) {
+                label = `Coastal boat tours in ${city}`;
+                query = `${city} boat tour`;
+            } else {
+                label = `Explore tours in ${city}`;
+                query = city;
+            }
+            const url = `https://www.getyourguide.com/s/?q=${encodeURIComponent(query)}&partner_id=${GYG_PARTNER_ID}&utm_medium=online_publisher`;
+            return `<a href="${url}" class="panel-gyg" target="_blank" rel="noopener noreferrer sponsored">
+                    <span class="panel-gyg-text">${label}</span>
+                    <span class="panel-gyg-arrow">→</span>
+                </a>
+                <p class="panel-gyg-disc">* Affiliate link</p>`;
+        }
+
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://tiles.openfreemap.org/styles/liberty',
@@ -787,7 +848,8 @@
                 <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
                     <span aria-hidden="true">${band.emoji}</span><span>${band.label}</span>
                 </div>
-                <p class="temp-meta">${tempResult.date}</p>`;
+                <p class="temp-meta">${tempResult.date}</p>
+                ${gygHtml(tempResult.mean_c, placeName)}`;
         });
     </script>
 </body>
