@@ -413,16 +413,16 @@
         /* ── Mobile ── */
         @media (max-width: 768px) {
 
-            /* Search bar — narrow, between nav pills */
+            /* Search bar — full width below nav on second row */
             #search-container {
-                top: 10px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: calc(100vw - 220px);
-                max-width: 260px;
+                top: 62px;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                transform: none;
             }
 
-            /* Info panel — compact bottom sheet */
+            /* Info panel — compact bottom sheet, auto height */
             #info-panel {
                 top: auto;
                 bottom: 0;
@@ -431,12 +431,12 @@
                 width: 100%;
                 border-radius: 20px 20px 0 0;
                 border-bottom: none;
-                max-height: 38vh;
+                max-height: 50vh;
                 overflow-y: auto;
             }
 
             #info-content {
-                padding: 16px 20px;
+                padding: 16px 20px 20px;
             }
 
             .panel-eyebrow {
@@ -448,15 +448,24 @@
             }
 
             .temp-value {
-                font-size: 52px;
+                font-size: 48px;
             }
 
-            /* Legend — hidden by default, shown via toggle */
+            /* Hide GYG link on mobile to save space */
+            .panel-gyg {
+                display: none;
+            }
+
+            .panel-gyg-disc {
+                display: none;
+            }
+
+            /* Legend — hidden by default */
             #legend-panel {
-                top: auto;
-                bottom: 40vh;
+                top: 120px;
+                bottom: auto;
                 right: 12px;
-                width: 170px;
+                width: 160px;
                 padding: 12px 12px 10px;
                 display: none;
             }
@@ -465,13 +474,16 @@
                 display: block;
             }
 
-            /* Show legend toggle button */
+            /* Legend toggle — top right, below nav */
             #legend-toggle {
                 display: flex;
+                bottom: auto;
+                top: 62px;
+                right: 12px;
             }
 
             .maplibregl-ctrl-bottom-right {
-                bottom: 40vh;
+                bottom: 8px;
                 right: 8px;
             }
         }
