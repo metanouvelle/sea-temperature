@@ -631,6 +631,75 @@
             }
         }
 
+
+        /* ── Wave conditions card ── */
+        .wave-card {
+            margin-bottom: 16px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.45s;
+        }
+
+        .wave-card-inner {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 24px;
+        }
+
+        .wave-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .wave-stat-icon {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .wave-stat-value {
+            font-family: 'Fraunces', serif;
+            font-size: 22px;
+            font-weight: 300;
+            color: var(--text);
+            letter-spacing: -0.5px;
+        }
+
+        .wave-stat-label {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .wave-stat-sub {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 0.3px;
+        }
+
+        .wave-state-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 640px) {
+            .wave-stats {
+                gap: 10px;
+            }
+
+            .wave-stat-value {
+                font-size: 18px;
+            }
+        }
+
         /* ── SEO text section ── */
         .seo-section {
             margin-bottom: 40px;
@@ -805,6 +874,34 @@
             </div>
         </div>
 
+
+        <!-- Wave conditions from Open-Meteo -->
+        <div class="wave-card" id="wave-card" style="display:none" aria-label="Current ocean conditions">
+            <div class="wave-card-inner">
+                <div class="section-label">Current ocean conditions</div>
+                <div class="wave-stats">
+                    <div class="wave-stat">
+                        <div class="wave-stat-icon">🌊</div>
+                        <div class="wave-stat-value" id="wave-height">—</div>
+                        <div class="wave-stat-label">Wave height</div>
+                        <div class="wave-stat-sub" id="wave-period"></div>
+                    </div>
+                    <div class="wave-stat">
+                        <div class="wave-stat-icon">🌬</div>
+                        <div class="wave-stat-value" id="swell-height">—</div>
+                        <div class="wave-stat-label">Swell</div>
+                        <div class="wave-stat-sub" id="swell-period"></div>
+                    </div>
+                    <div class="wave-stat">
+                        <div class="wave-stat-icon">💨</div>
+                        <div class="wave-stat-value" id="current-speed">—</div>
+                        <div class="wave-stat-label">Current</div>
+                        <div class="wave-stat-sub" id="current-dir"></div>
+                    </div>
+                </div>
+                <div class="wave-state-badge" id="wave-state-badge"></div>
+            </div>
+        </div>
 
         <!-- SEO: Static text for Google indexing -->
         <section class="seo-section" aria-labelledby="seo-heading">
@@ -1071,6 +1168,56 @@
         }
 
         // ── Load current temperature ──────────────────────────────────────────────────
+        // ── Wave conditions ───────────────────────────────────────────────────────────
+        // Beach coordinates passed from server
+        const BEACH_LAT = {{ beach.lat | tojson }};
+        const BEACH_LON = {{ beach.lon | tojson }};
+
+        async function loadWaveConditions() {
+            try {
+                const lat = BEACH_LAT;
+                const lon = BEACH_LON;
+                const res = await fetch(
+                    `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=wave_height,wave_period,swell_wave_height,swell_wave_period,ocean_current_velocity,ocean_current_direction`
+                );
+                if (!res.ok) return;
+                const data = await res.json();
+                const c = data.current;
+                if (!c || (c.wave_height === null && c.swell_wave_height === null)) return;
+
+                document.getElementById('wave-card').style.display = 'block';
+
+                if (c.wave_height !== null) {
+                    document.getElementById('wave-height').textContent = c.wave_height.toFixed(1) + 'm';
+                    if (c.wave_period) document.getElementById('wave-period').textContent = c.wave_period.toFixed(0) + 's period';
+                }
+                if (c.swell_wave_height !== null) {
+                    document.getElementById('swell-height').textContent = c.swell_wave_height.toFixed(1) + 'm';
+                    if (c.swell_wave_period) document.getElementById('swell-period').textContent = c.swell_wave_period.toFixed(0) + 's period';
+                }
+                if (c.ocean_current_velocity !== null) {
+                    document.getElementById('current-speed').textContent = (c.ocean_current_velocity * 1.944).toFixed(1) + ' kn';
+                    if (c.ocean_current_direction !== null) {
+                        const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+                        document.getElementById('current-dir').textContent = dirs[Math.round(c.ocean_current_direction / 45) % 8];
+                    }
+                }
+
+                const wh = c.wave_height || 0;
+                const badge = document.getElementById('wave-state-badge');
+                let label, color;
+                if (wh >= 2.0) { label = '🏄 Good surf conditions'; color = '#3b82f6'; }
+                else if (wh >= 1.0) { label = '🌊 Moderate waves'; color = '#0ea5e9'; }
+                else if (wh >= 0.3) { label = '😊 Light waves — good for swimming'; color = '#22c55e'; }
+                else { label = '🏊 Calm — ideal for swimming'; color = '#22c55e'; }
+                badge.textContent = label;
+                badge.style.background = color + '18';
+                badge.style.color = color;
+                badge.style.border = `1px solid ${color}33`;
+
+            } catch (e) { /* silently fail */ }
+        }
+
         async function loadTemp() {
             try {
                 const res = await fetch('/api/beach/{{ beach.slug }}');
@@ -1117,6 +1264,7 @@
         }
 
         loadTemp();
+        loadWaveConditions();
         window.addEventListener('resize', () => drawChart(null));
     </script>
 

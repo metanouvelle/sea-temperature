@@ -489,6 +489,45 @@
         }
 
 
+        /* ── Wave conditions in panel ── */
+        .panel-waves {
+            margin-top: 10px;
+            padding: 10px 0 0;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .panel-wave-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .panel-wave-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 300;
+            color: var(--navy);
+            letter-spacing: -0.3px;
+        }
+
+        .panel-wave-label {
+            font-size: 9px;
+            color: var(--soft);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .panel-wave-state {
+            font-size: 10px;
+            color: var(--soft);
+            margin-top: 6px;
+            letter-spacing: 0.5px;
+            grid-column: 1 / -1;
+        }
+
         /* ── GYG link in panel ── */
         .panel-gyg {
             display: flex;
@@ -725,9 +764,10 @@
                 if (currentMarker) currentMarker.remove();
             }, 10000);
 
-            const [tempResult, placeName] = await Promise.all([
+            const [tempResult, placeName, waves] = await Promise.all([
                 fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=25`).then(r => r.ok ? r.json() : null).catch(() => null),
                 getPlaceName(lat, lon),
+                fetchWaveConditions(lat, lon),
             ]);
 
             clearTimeout(timeoutId);
@@ -750,11 +790,55 @@
                     <span aria-hidden="true">${band.emoji}</span><span>${band.label}</span>
                 </div>
                 <p class="temp-meta">${tempResult.date}</p>
+                ${waveHtml(waves)}
                 ${gygHtml(tempResult.mean_c, placeName || name)}`;
             marker = currentMarker;
         }
 
         // ── Map ───────────────────────────────────────────────────────────────────────
+
+        // ── Wave conditions ──────────────────────────────────────────────────────────
+        async function fetchWaveConditions(lat, lon) {
+            try {
+                const res = await fetch(
+                    `https://marine-api.open-meteo.com/v1/marine?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&current=wave_height,wave_period,swell_wave_height,ocean_current_velocity`
+                );
+                if (!res.ok) return null;
+                const data = await res.json();
+                return data.current || null;
+            } catch { return null; }
+        }
+
+        function waveStateLabel(wh) {
+            if (wh === null || wh === undefined) return '';
+            if (wh >= 2.0) return '🏄 Good surf conditions';
+            if (wh >= 1.0) return '🌊 Moderate waves';
+            if (wh >= 0.3) return '😊 Light waves';
+            return '🏊 Calm — ideal for swimming';
+        }
+
+        function waveHtml(waves) {
+            if (!waves) return '';
+            const wh = waves.wave_height;
+            const sh = waves.swell_wave_height;
+            const cv = waves.ocean_current_velocity;
+            if (wh === null && sh === null) return '';
+            return `<div class="panel-waves">
+                <div class="panel-wave-stat">
+                    <div class="panel-wave-value">${wh !== null ? wh.toFixed(1) + 'm' : '—'}</div>
+                    <div class="panel-wave-label">🌊 Waves</div>
+                </div>
+                <div class="panel-wave-stat">
+                    <div class="panel-wave-value">${sh !== null ? sh.toFixed(1) + 'm' : '—'}</div>
+                    <div class="panel-wave-label">🌬 Swell</div>
+                </div>
+                <div class="panel-wave-stat">
+                    <div class="panel-wave-value">${cv !== null ? (cv * 1.944).toFixed(1) + 'kn' : '—'}</div>
+                    <div class="panel-wave-label">💨 Current</div>
+                </div>
+                <div class="panel-wave-state">${waveStateLabel(wh)}</div>
+            </div>`;
+        }
 
         const GYG_PARTNER_ID = 'XWCA45N';
 
@@ -836,9 +920,10 @@
                 if (marker) marker.remove();
             }, 10000);
 
-            const [tempResult, placeName] = await Promise.all([
+            const [tempResult, placeName, waves] = await Promise.all([
                 fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=10`).then(r => r.ok ? r.json() : null).catch(() => null),
                 getPlaceName(lat, lon),
+                fetchWaveConditions(lat, lon),
             ]);
 
             clearTimeout(timeoutId);
@@ -861,6 +946,7 @@
                     <span aria-hidden="true">${band.emoji}</span><span>${band.label}</span>
                 </div>
                 <p class="temp-meta">${tempResult.date}</p>
+                ${waveHtml(waves)}
                 ${gygHtml(tempResult.mean_c, placeName)}`;
         });
     </script>
