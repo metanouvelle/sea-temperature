@@ -388,6 +388,87 @@
             transform: translateX(4px);
         }
 
+
+        /* ── Embed CTA ── */
+        .embed-cta {
+            margin-bottom: 24px;
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.72s;
+        }
+
+        .embed-cta-inner {
+            background: rgba(56, 189, 248, 0.05);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 16px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            transition: all 0.2s;
+        }
+
+        .embed-cta-inner:hover {
+            background: rgba(56, 189, 248, 0.09);
+            border-color: rgba(56, 189, 248, 0.35);
+        }
+
+        .embed-cta-text {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .embed-cta-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .embed-cta-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .embed-cta-title {
+            font-family: 'Fraunces', serif;
+            font-size: 16px;
+            font-weight: 300;
+            color: var(--text);
+            letter-spacing: -0.2px;
+        }
+
+        .embed-cta-desc {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 0.3px;
+            line-height: 1.5;
+        }
+
+        .embed-cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: var(--deep);
+            border-radius: 100px;
+            text-decoration: none;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.25s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .embed-cta-btn:hover {
+            background: #7dd3fc;
+            transform: translateY(-2px);
+        }
+
         /* ── CTA ── */
         .cta-section {
             padding: 32px;
@@ -1013,6 +1094,28 @@
             </div>
         </section>
 
+        <!-- Embed widget CTA -->
+        <div class="embed-cta">
+            <div class="embed-cta-inner">
+                <div class="embed-cta-text">
+                    <div class="embed-cta-icon">🌊</div>
+                    <div class="embed-cta-copy">
+                        <div class="embed-cta-title">Add this beach to your website</div>
+                        <div class="embed-cta-desc">Free embeddable widget — sea temperature &amp; wave conditions. One
+                            line of code.</div>
+                    </div>
+                </div>
+                <a href="/embed?lat={{ beach.lat }}&lon={{ beach.lon }}&name={{ beach.name | urlencode }}"
+                    class="embed-cta-btn">
+                    Get widget
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+
         <div class="cta-section">
             <span class="cta-text">See the full ocean picture.</span>
             <a href="/map" class="cta-btn">
@@ -1286,6 +1389,12 @@
                     <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
                     <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA
                         WOA23</a>
+                    <a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank"
+                        rel="noopener">Open-Meteo Marine</a>
+                </div>
+                <div class="footer-col">
+                    <div class="footer-col-label">Tools</div>
+                    <a href="/embed">Embed Widget</a>
                 </div>
                 <div class="footer-col">
                     <div class="footer-col-label">Legal</div>

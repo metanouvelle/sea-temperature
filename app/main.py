@@ -349,6 +349,47 @@ def privacy(request: Request):
     return templates.TemplateResponse("privacy.html", {"request": request})
 
 
+@app.get("/embed", response_class=HTMLResponse)
+def embed_page(request: Request):
+    return templates.TemplateResponse("embed.html", {"request": request})
+
+
+@app.get("/widget/{slug}", response_class=HTMLResponse)
+def widget_slug(request: Request, slug: str):
+    beach = BEACHES_BY_SLUG.get(slug)
+    if not beach:
+        raise HTTPException(status_code=404)
+    return templates.TemplateResponse(
+        "widget.html",
+        {
+            "request": request,
+            "name": beach["name"],
+            "lat": beach["lat"],
+            "lon": beach["lon"],
+            "slug": slug,
+        },
+    )
+
+
+@app.get("/widget", response_class=HTMLResponse)
+def widget_coords(
+    request: Request,
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    name: str = Query("Sea Temperature"),
+):
+    return templates.TemplateResponse(
+        "widget.html",
+        {
+            "request": request,
+            "name": name,
+            "lat": lat,
+            "lon": lon,
+            "slug": "",
+        },
+    )
+
+
 @app.head("/sitemap.xml")
 def sitemap_head():
     return Response(

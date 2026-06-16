@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ name }} Sea Temperature — SwimTemp</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Mono', monospace;
+            background: transparent;
+            color: #0d1b2a;
+            min-height: 100vh;
+            display: flex;
+            align-items: stretch;
+        }
+
+        .widget {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+            margin: 8px;
+        }
+
+        /* ── Header ── */
+        .widget-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .widget-name {
+            font-family: 'Fraunces', serif;
+            font-size: 17px;
+            font-weight: 700;
+            color: #0d1b2a;
+            letter-spacing: -0.3px;
+            line-height: 1.1;
+        }
+
+        .widget-live {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #64748b;
+            flex-shrink: 0;
+        }
+
+        .widget-live::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 6px #4ade80;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* ── Temperature ── */
+        .widget-temp-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .widget-temp-main {
+            display: flex;
+            align-items: baseline;
+            gap: 2px;
+        }
+
+        .widget-temp-value {
+            font-family: 'Fraunces', serif;
+            font-size: 56px;
+            font-weight: 300;
+            letter-spacing: -4px;
+            line-height: 1;
+            color: #0d1b2a;
+            transition: color 0.5s;
+            min-width: 80px;
+        }
+
+        .widget-temp-unit {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+
+        .widget-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 100px;
+            font-family: 'Fraunces', serif;
+            font-style: italic;
+            font-size: 13px;
+            font-weight: 300;
+            background: rgba(56, 189, 248, 0.1);
+            color: #0369a1;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            transition: all 0.5s;
+        }
+
+        .widget-date {
+            font-size: 9px;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        /* ── Divider ── */
+        .widget-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        /* ── Wave conditions ── */
+        .widget-waves {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .widget-wave-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .widget-wave-value {
+            font-family: 'Fraunces', serif;
+            font-size: 16px;
+            font-weight: 300;
+            color: #0d1b2a;
+            letter-spacing: -0.3px;
+        }
+
+        .widget-wave-label {
+            font-size: 9px;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .widget-wave-state {
+            font-size: 10px;
+            color: #475569;
+            margin-top: 6px;
+            letter-spacing: 0.3px;
+            grid-column: 1 / -1;
+        }
+
+        /* ── Footer ── */
+        .widget-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .widget-powered {
+            font-size: 9px;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .widget-powered:hover {
+            color: #38bdf8;
+        }
+
+        .widget-powered strong {
+            color: #38bdf8;
+            font-weight: 400;
+        }
+
+        .widget-cta {
+            font-size: 9px;
+            color: #38bdf8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 4px 10px;
+            border-radius: 100px;
+            transition: all 0.2s;
+        }
+
+        .widget-cta:hover {
+            background: #38bdf8;
+            color: #fff;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="widget">
+
+        <div class="widget-header">
+            <div class="widget-name" id="widget-name">{{ name }}</div>
+            <div class="widget-live">Live</div>
+        </div>
+
+        <div>
+            <div class="widget-temp-row">
+                <div class="widget-temp-main">
+                    <span class="widget-temp-value" id="temp-value"><span class="spinner"></span></span>
+                    <span class="widget-temp-unit" id="temp-unit"></span>
+                </div>
+                <div class="widget-badge" id="temp-badge">Loading...</div>
+            </div>
+            <div class="widget-date" id="temp-date"></div>
+        </div>
+
+        <div class="widget-divider"></div>
+
+        <div class="widget-waves" id="wave-section" style="display:none">
+            <div class="widget-wave-stat">
+                <div class="widget-wave-value" id="wave-height">—</div>
+                <div class="widget-wave-label">🌊 Waves</div>
+            </div>
+            <div class="widget-wave-stat">
+                <div class="widget-wave-value" id="swell-height">—</div>
+                <div class="widget-wave-label">🌬 Swell</div>
+            </div>
+            <div class="widget-wave-stat">
+                <div class="widget-wave-value" id="current-speed">—</div>
+                <div class="widget-wave-label">💨 Current</div>
+            </div>
+            <div class="widget-wave-state" id="wave-state"></div>
+        </div>
+
+        <div class="widget-divider"></div>
+
+        <div class="widget-footer">
+            <a href="https://swimtemp.com" target="_blank" rel="noopener" class="widget-powered">
+                Powered by <strong>SwimTemp</strong>
+            </a>
+            <a href="https://swimtemp.com/map" target="_blank" rel="noopener" class="widget-cta" id="widget-map-link">
+                Explore map →
+            </a>
+        </div>
+
+    </div>
+
+    <script>
+        const BANDS = [
+            { label: 'Cold', emoji: '🥶', min: -99, max: 17, color: '#2563eb' },
+            { label: 'Brave', emoji: '🤿', min: 17, max: 20, color: '#0ea5e9' },
+            { label: 'Nice', emoji: '😊', min: 20, max: 23, color: '#22c55e' },
+            { label: 'Perfect', emoji: '🏊', min: 23, max: 26, color: '#f59e0b' },
+            { label: 'Very Warm', emoji: '🔥', min: 26, max: 999, color: '#ef4444' },
+        ];
+
+        function getBand(t) {
+            return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1];
+        }
+
+        // Values passed from server
+        const LAT = {{ lat | tojson }};
+        const LON = {{ lon | tojson }};
+        const SLUG = {{ slug | tojson }};
+
+        // If we have a slug, link to beach page; otherwise link to map
+        if (SLUG) {
+            document.getElementById('widget-map-link').href = `https://swimtemp.com/beach/${SLUG}`;
+            document.getElementById('widget-map-link').textContent = 'Full details →';
+        }
+
+        async function loadTemp() {
+            try {
+                // Use slug endpoint if available, otherwise use point API
+                const url = SLUG
+                    ? `/api/beach/${SLUG}`
+                    : `/api/point?lat=${LAT}&lon=${LON}&radius_km=25`;
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+
+                const temp = SLUG ? data.temp_c : data.mean_c;
+                const date = data.date;
+
+                if (temp === null || temp === undefined) {
+                    document.getElementById('temp-value').textContent = '—';
+                    document.getElementById('temp-badge').textContent = 'No data';
+                    return;
+                }
+
+                const band = getBand(temp);
+                document.getElementById('temp-value').textContent = temp.toFixed(1);
+                document.getElementById('temp-unit').textContent = '°C';
+                document.getElementById('temp-value').style.color = band.color;
+
+                const badge = document.getElementById('temp-badge');
+                badge.innerHTML = `${band.emoji} ${band.label}`;
+                badge.style.background = band.color + '15';
+                badge.style.color = band.color;
+                badge.style.borderColor = band.color + '30';
+
+                if (date) document.getElementById('temp-date').textContent = `Updated ${date}`;
+
+            } catch {
+                document.getElementById('temp-value').textContent = '—';
+                document.getElementById('temp-badge').textContent = 'Unavailable';
+            }
+        }
+
+        async function loadWaves() {
+            try {
+                const res = await fetch(
+                    `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=wave_height,swell_wave_height,ocean_current_velocity`
+                );
+                if (!res.ok) return;
+                const data = await res.json();
+                const c = data.current;
+                if (!c || c.wave_height === null) return;
+
+                document.getElementById('wave-section').style.display = 'grid';
+                document.getElementById('wave-height').textContent = c.wave_height.toFixed(1) + 'm';
+                document.getElementById('swell-height').textContent = c.swell_wave_height !== null ? c.swell_wave_height.toFixed(1) + 'm' : '—';
+                document.getElementById('current-speed').textContent = c.ocean_current_velocity !== null ? (c.ocean_current_velocity * 1.944).toFixed(1) + 'kn' : '—';
+
+                const wh = c.wave_height;
+                let state;
+                if (wh >= 2.0) state = '🏄 Good surf conditions';
+                else if (wh >= 1.0) state = '🌊 Moderate waves';
+                else if (wh >= 0.3) state = '😊 Light waves — good for swimming';
+                else state = '🏊 Calm — ideal for swimming';
+                document.getElementById('wave-state').textContent = state;
+
+            } catch { /* silently fail */ }
+        }
+
+        loadTemp();
+        loadWaves();
+    </script>
+</body>
+
+</html>
