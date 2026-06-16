@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <title>Ocean Temperature Map — SwimTemp</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Cormorant+Garamond:wght@300;400;600&display=swap"
@@ -413,7 +413,12 @@
         /* ── Mobile ── */
         @media (max-width: 768px) {
 
-            /* Search bar — full width below nav on second row */
+            /* Fix iOS auto-zoom on search input focus */
+            #search-input {
+                font-size: 16px !important;
+            }
+
+            /* Search bar — full width, second row */
             #search-container {
                 top: 62px;
                 left: 12px;
@@ -422,21 +427,48 @@
                 transform: none;
             }
 
-            /* Info panel — compact bottom sheet, auto height */
+            /* Info panel — collapsible bottom sheet */
             #info-panel {
+                position: fixed;
                 top: auto;
-                bottom: 0;
                 left: 0;
                 right: 0;
+                bottom: 0;
                 width: 100%;
                 border-radius: 20px 20px 0 0;
                 border-bottom: none;
-                max-height: 50vh;
+                max-height: 55vh;
                 overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+                transform: translateY(0);
+                z-index: 10;
+            }
+
+            /* Collapsed state — only handle visible */
+            #info-panel.collapsed {
+                transform: translateY(calc(100% - 44px));
+            }
+
+            /* Drag handle */
+            #panel-handle {
+                display: flex;
+                justify-content: center;
+                padding: 10px 0 4px;
+                cursor: pointer;
+                touch-action: none;
+            }
+
+            #panel-handle::before {
+                content: '';
+                width: 36px;
+                height: 4px;
+                border-radius: 2px;
+                background: rgba(0, 0, 0, 0.15);
             }
 
             #info-content {
-                padding: 16px 20px 20px;
+                padding: 8px 18px 20px;
             }
 
             .panel-eyebrow {
@@ -444,27 +476,67 @@
             }
 
             .panel-title {
-                font-size: 16px;
+                font-size: 15px;
             }
 
             .temp-value {
-                font-size: 48px;
+                font-size: 42px;
             }
 
-            /* Hide GYG link on mobile to save space */
+            .temp-place {
+                font-size: 10px;
+                margin-top: 8px;
+            }
+
+            .temp-badge {
+                font-size: 10px;
+                padding: 3px 10px;
+            }
+
+            .temp-meta {
+                font-size: 10px;
+            }
+
+            /* Wave + GYG compact */
+            .panel-waves {
+                gap: 4px;
+                margin-top: 8px;
+                padding-top: 8px;
+            }
+
+            .panel-wave-value {
+                font-size: 13px;
+            }
+
+            .panel-wave-label {
+                font-size: 8px;
+            }
+
+            .panel-wave-state {
+                font-size: 9px;
+            }
+
             .panel-gyg {
-                display: none;
+                padding: 8px 12px;
+                margin-top: 8px;
             }
 
-            .panel-gyg-disc {
-                display: none;
+            .panel-gyg-text {
+                font-size: 10px;
+            }
+
+            /* Map controls above collapsed panel handle */
+            .maplibregl-ctrl-bottom-right {
+                bottom: 52px;
+                right: 8px;
             }
 
             /* Legend — hidden by default */
             #legend-panel {
-                top: 120px;
-                bottom: auto;
+                bottom: 52px;
+                top: auto;
                 right: 12px;
+                left: auto;
                 width: 160px;
                 padding: 12px 12px 10px;
                 display: none;
@@ -474,17 +546,13 @@
                 display: block;
             }
 
-            /* Legend toggle — top right, below nav */
+            /* Legend toggle — bottom right above map controls */
             #legend-toggle {
                 display: flex;
-                bottom: auto;
-                top: 62px;
-                right: 12px;
-            }
-
-            .maplibregl-ctrl-bottom-right {
-                bottom: 8px;
-                right: 8px;
+                position: fixed;
+                bottom: 52px;
+                right: 60px;
+                top: auto;
             }
         }
 
@@ -630,6 +698,7 @@
 
     <!-- Info panel -->
     <section class="panel" id="info-panel" aria-label="Temperature information">
+        <div id="panel-handle" role="button" aria-label="Toggle panel" tabindex="0"></div>
         <div id="info-color-bar" aria-hidden="true"></div>
         <div id="info-content">
             <div class="panel-eyebrow">Ocean conditions</div>
@@ -783,6 +852,7 @@
             const bar = document.getElementById('info-color-bar');
             bar.style.display = 'block';
             bar.style.background = `linear-gradient(90deg, ${band.color}, ${band.color}99)`;
+            if (isMobile) expandPanel();
             document.getElementById('info-body').innerHTML = `
                 <p class="temp-place">${placeName || name}</p>
                 <div class="temp-display"><span class="temp-value">${tempResult.mean_c.toFixed(1)}</span><span class="temp-unit">°C</span></div>
@@ -939,6 +1009,7 @@
             const bar = document.getElementById('info-color-bar');
             bar.style.display = 'block';
             bar.style.background = `linear-gradient(90deg, ${band.color}, ${band.color}99)`;
+            if (isMobile) expandPanel();
             document.getElementById('info-body').innerHTML = `
                 <p class="temp-place">${placeName || 'Open Ocean'}</p>
                 <div class="temp-display"><span class="temp-value">${tempResult.mean_c.toFixed(1)}</span><span class="temp-unit">°C</span></div>
@@ -949,6 +1020,55 @@
                 ${waveHtml(waves)}
                 ${gygHtml(tempResult.mean_c, placeName)}`;
         });
+
+        // ── Mobile bottom sheet collapse/expand ──────────────────────────────────────
+        const infoPanel = document.getElementById('info-panel');
+        const panelHandle = document.getElementById('panel-handle');
+        let isMobile = window.innerWidth <= 768;
+        let isCollapsed = false;
+
+        function collapsePanel() {
+            isCollapsed = true;
+            infoPanel.classList.add('collapsed');
+        }
+
+        function expandPanel() {
+            isCollapsed = false;
+            infoPanel.classList.remove('collapsed');
+        }
+
+        // Toggle on handle click
+        if (panelHandle) {
+            panelHandle.addEventListener('click', () => {
+                if (isCollapsed) expandPanel();
+                else collapsePanel();
+            });
+        }
+
+        // Auto-expand when temperature loads
+        const origSetInfoBody = function (html) {
+            document.getElementById('info-body').innerHTML = html;
+            if (isMobile) expandPanel();
+        };
+
+        // Collapse panel when map is clicked (but not on panel)
+        document.getElementById('map').addEventListener('click', (e) => {
+            if (!e.target.closest('#info-panel') && isMobile && !isCollapsed) {
+                // Don't collapse — user is clicking map to check temp
+            }
+        });
+
+        // Start collapsed on mobile
+        window.addEventListener('load', () => {
+            isMobile = window.innerWidth <= 768;
+            if (isMobile) collapsePanel();
+        });
+
+        window.addEventListener('resize', () => {
+            isMobile = window.innerWidth <= 768;
+            if (!isMobile) expandPanel();
+        });
+
     </script>
 </body>
 
