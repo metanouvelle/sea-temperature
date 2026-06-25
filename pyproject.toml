@@ -22,6 +22,9 @@ netcdf4 = "^1.7.4"
 weasyprint = "^69.0"
 pyyaml = "^6.0.3"
 qrcode = {extras = ["pil"], version = "^8.2"}
+pymupdf = "^1.27.2.3"
+httpx = "^0.28.1"
+pytest-asyncio = "^1.4.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.4"
