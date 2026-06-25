@@ -1034,8 +1034,9 @@
                 <div class="seo-faq-item">
                     <div class="seo-faq-q">When is the best time to swim at {{ beach.name }}?</div>
                     <div class="seo-faq-a">
-                        {% if monthly_avg %}
-                        {% set max_temp = monthly_avg | max %}
+                        {% set valid_temps = monthly_avg | select('ne', none) | list %}
+                        {% if valid_temps %}
+                        {% set max_temp = valid_temps | max %}
                         {% set month_names =
                         ['January','February','March','April','May','June','July','August','September','October','November','December']
                         %}
@@ -1360,10 +1361,16 @@
         if (MONTHLY_AVG.length === 12) {
             const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'];
-            const maxTemp = Math.max(...MONTHLY_AVG.filter(t => t !== null));
-            const bestIdx = MONTHLY_AVG.indexOf(maxTemp);
-            document.getElementById('best-month').textContent = MONTH_NAMES[bestIdx];
-            document.getElementById('best-temp').textContent = `avg ${maxTemp}°C`;
+            const validTemps = MONTHLY_AVG.filter(t => t !== null);
+            if (validTemps.length > 0) {
+                const maxTemp = Math.max(...validTemps);
+                const bestIdx = MONTHLY_AVG.indexOf(maxTemp);
+                document.getElementById('best-month').textContent = MONTH_NAMES[bestIdx];
+                document.getElementById('best-temp').textContent = `avg ${maxTemp}°C`;
+            } else {
+                document.getElementById('best-month').textContent = '—';
+                document.getElementById('best-temp').textContent = 'No data';
+            }
         }
 
         loadTemp();
@@ -1389,8 +1396,6 @@
                     <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
                     <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA
                         WOA23</a>
-                    <a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank"
-                        rel="noopener">Open-Meteo Marine</a>
                 </div>
                 <div class="footer-col">
                     <div class="footer-col-label">Tools</div>
@@ -1403,6 +1408,12 @@
                 <div class="footer-col">
                     <div class="footer-col-label">Contact</div>
                     <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
+                </div>
+                <div class="footer-col">
+                    <div class="footer-col-label">Follow</div>
+                    <a href="https://www.instagram.com/swimtemp/" target="_blank" rel="noopener">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>Instagram
+                    </a>
                 </div>
             </div>
         </div>
