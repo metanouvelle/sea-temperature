@@ -26,3 +26,5 @@ jobs:
             -f
           echo "Prewarm triggered — running in background on Fly"
           echo "Check status at https://swimtemp.com/api/status"
+      - name: Validate beaches
+        run: python3 tests/test_beaches.py

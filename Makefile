@@ -60,3 +60,6 @@ download-historical-data:
 
 check-log:
 	fly logs -a sea-temperature --no-tail | grep "Progress" | tail -3
+
+tests:
+	pytest tests/test_urls.py -v
