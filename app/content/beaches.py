@@ -5,10 +5,11 @@ Curated list of ~50 famous beaches worldwide.
 Each beach has a slug (URL), name, location, lat/lon for SST lookup.
 """
 
-import urllib.parse
-from dotenv import load_dotenv
 import os
+import urllib.parse
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ENV_PATH = BASE_DIR / ".env"
@@ -1070,18 +1071,18 @@ BEACH_MONTHLY_AVG = {
         24.9,
     ],
     "aqaba-beach": [
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
+        22.0,
+        21.0,
+        22.0,
+        24.0,
+        26.0,
+        28.0,
+        29.0,
+        30.0,
+        29.0,
+        27.0,
+        25.0,
+        23.0,
     ],
     "cape-town-camps-bay": [
         17.1,

@@ -2,15 +2,18 @@
 
 import json
 import os
+import sqlite3
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, Response
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.content.beaches import BEACH_MONTHLY_AVG, BEACHES, BEACHES_BY_SLUG, get_gyg_url
@@ -26,8 +29,6 @@ from app.services.sst_cache import (
     tile_exists,
     tile_id_for,
 )
-from fastapi.staticfiles import StaticFiles
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -404,6 +405,257 @@ def robots_head():
         status_code=200,
         media_type="text/plain",
     )
+
+
+@app.get("/api/sst-history")
+async def sst_history(lat: float, lon: float):
+    """
+    Returns ~1 year of daily SST history (REP + NRT merged) plus a 7-day
+    Open-Meteo Marine SST forecast for the given coordinates.
+
+    Results are cached in SQLite for 24 h, keyed to 0.1° rounded lat/lon.
+    """
+    import httpx
+
+    from app.services.sst_cache import fetch_nrt_history, fetch_rep_history
+
+    # Round to 0.1° for cache key
+    lat_r = round(lat, 1)
+    lon_r = round(lon, 1)
+    cache_key = f"sst_history_{lat_r}_{lon_r}"
+
+    # ── 1. Check SQLite cache ──────────────────────────────────────────────
+    db_path = os.environ.get("SST_DB_PATH", "/data/sst.sqlite")
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS sst_history_cache (
+            cache_key TEXT PRIMARY KEY,
+            data      TEXT NOT NULL,
+            cached_at TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+
+    cur.execute(
+        "SELECT data, cached_at FROM sst_history_cache WHERE cache_key = ?",
+        (cache_key,),
+    )
+    row = cur.fetchone()
+    if row:
+        cached_at = datetime.fromisoformat(row["cached_at"])
+        if datetime.now(timezone.utc) - cached_at < timedelta(hours=24):
+            conn.close()
+            return json.loads(row["data"])
+
+    # ── 2. Fetch historical SST (REP + NRT) ───────────────────────────────
+    today = datetime.now(timezone.utc).date()
+    year_ago = today - timedelta(days=365)
+
+    try:
+        rep_points = await fetch_rep_history(lat_r, lon_r, year_ago, today)
+    except Exception:
+        rep_points = []
+
+    try:
+        nrt_points = await fetch_nrt_history(lat_r, lon_r, year_ago, today)
+    except Exception:
+        nrt_points = []
+
+    # Merge: prefer NRT for recent dates (NRT wins on duplicates)
+    merged: dict[str, float] = {}
+    for pt in rep_points:
+        merged[pt["date"]] = pt["sst"]
+    for pt in nrt_points:
+        merged[pt["date"]] = pt["sst"]  # NRT overwrites REP for same date
+
+    history = [{"date": d, "sst": round(merged[d], 2)} for d in sorted(merged)]
+
+    # ── 3. Fetch 7-day SST forecast from Open-Meteo Marine ────────────────
+    forecast = []
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(
+                "https://marine-api.open-meteo.com/v1/marine",
+                params={
+                    "latitude": lat_r,
+                    "longitude": lon_r,
+                    "daily": "sea_surface_temperature_max",
+                    "timezone": "UTC",
+                    "forecast_days": 7,
+                },
+            )
+            resp.raise_for_status()
+            marine = resp.json()
+            dates = marine["daily"]["time"]
+            ssts = marine["daily"]["sea_surface_temperature_max"]
+            forecast = [
+                {"date": d, "sst": round(s, 2)}
+                for d, s in zip(dates, ssts)
+                if s is not None
+            ]
+    except Exception:
+        forecast = []
+
+    # ── 4. Build response ─────────────────────────────────────────────────
+    result = {
+        "lat": lat_r,
+        "lon": lon_r,
+        "history": history,  # solid line
+        "forecast": forecast,  # dashed line
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    # ── 5. Cache in SQLite ────────────────────────────────────────────────
+    cur.execute(
+        """
+        INSERT INTO sst_history_cache (cache_key, data, cached_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(cache_key) DO UPDATE SET data=excluded.data, cached_at=excluded.cached_at
+        """,
+        (cache_key, json.dumps(result), datetime.now(timezone.utc).isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+    return result
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ADD TO app/main.py  —  Auth + Saves API stubs
+#
+# These endpoints are intentionally minimal stubs. They:
+#   - Return 501 Not Implemented so the frontend can detect "not yet live"
+#   - Have correct route signatures so no URL changes are needed when implemented
+#   - Include the full docstring spec so the implementer knows exactly what to build
+#
+# Implementation order when ready:
+#   1. /api/auth/register  — email + password, send verification email
+#   2. /api/auth/login     — return session token in httpOnly cookie
+#   3. /api/auth/me        — used by frontend to hydrate saved/liked state on load
+#   4. /api/saves/*        — the actual save/like toggle endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+from fastapi import Cookie
+from fastapi.responses import JSONResponse
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+
+
+@app.post("/api/auth/register")
+async def auth_register(request: Request):
+    """
+    Register with email + password.
+    Body: { email, password }
+    - Hash password with bcrypt
+    - Insert into users table
+    - Send verification email (use SendGrid or Resend)
+    - Return 201 with { message: "Check your email" }
+    - On duplicate email: 409
+    """
+    return JSONResponse({"detail": "Coming soon"}, status_code=501)
+
+
+@app.post("/api/auth/login")
+async def auth_login(request: Request):
+    """
+    Login with email + password.
+    Body: { email, password }
+    - Verify password hash
+    - Create session row, set httpOnly cookie 'st_session'
+    - Return { user: { id, email, display_name, tier } }
+    """
+    return JSONResponse({"detail": "Coming soon"}, status_code=501)
+
+
+@app.post("/api/auth/logout")
+async def auth_logout(request: Request):
+    """
+    Delete session row, clear cookie.
+    """
+    return JSONResponse({"detail": "Coming soon"}, status_code=501)
+
+
+@app.get("/api/auth/me")
+async def auth_me(request: Request):
+    """
+    Return current user + their saved/liked beach slugs.
+    Called on page load to hydrate UI state.
+    Response: {
+        user: { id, email, display_name, tier } | null,
+        saved: ["slug1", "slug2", ...],
+        liked: ["slug3", ...]
+    }
+    If not logged in: { user: null, saved: [], liked: [] }
+    This shape means the frontend never needs to branch on auth state
+    for rendering — it just gets empty arrays when logged out.
+    """
+    return JSONResponse({"user": None, "saved": [], "liked": []}, status_code=200)
+
+
+@app.get("/api/auth/verify")
+async def auth_verify(token: str):
+    """
+    Verify email address from link in verification email.
+    - Look up auth_tokens row, check not expired/used
+    - Set users.verified = 1
+    - Mark token used
+    - Redirect to /map?verified=1
+    """
+    return JSONResponse({"detail": "Coming soon"}, status_code=501)
+
+
+# ── Saves ─────────────────────────────────────────────────────────────────────
+
+
+@app.post("/api/saves/beach/{slug}")
+async def save_beach(slug: str, request: Request):
+    """
+    Toggle saved status for a beach.
+    Body: { action: "save" | "unsave" | "like" | "unlike" }
+    - Requires valid session cookie
+    - Upsert user_saved_beaches row
+    - Return { saved: bool, liked: bool }
+    Frontend calls this on heart/bookmark icon click.
+    If not authenticated: 401 — frontend shows login modal.
+    """
+    return JSONResponse({"detail": "Login required"}, status_code=401)
+
+
+@app.get("/api/saves/beaches")
+async def get_saved_beaches(request: Request):
+    """
+    Return all saved + liked beaches for current user, with live SST.
+    Response: {
+        saved: [{ ...beach, temp_c, saved_at }],
+        liked: [{ ...beach, temp_c, liked_at }]
+    }
+    This powers a "My beaches" page or panel.
+    """
+    return JSONResponse({"saved": [], "liked": []}, status_code=200)
+
+
+@app.post("/api/saves/point")
+async def save_point(request: Request):
+    """
+    Save an arbitrary map point.
+    Body: { lat, lon, label? }
+    - Requires valid session
+    - Insert into user_saved_points
+    - Return { id, lat, lon, label }
+    """
+    return JSONResponse({"detail": "Login required"}, status_code=401)
+
+
+@app.delete("/api/saves/point/{point_id}")
+async def delete_saved_point(point_id: str, request: Request):
+    """
+    Delete a saved map point.
+    - Requires valid session + ownership check
+    """
+    return JSONResponse({"detail": "Login required"}, status_code=401)
 
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

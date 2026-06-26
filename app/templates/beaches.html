@@ -17,10 +17,10 @@
         gtag('config', 'G-D3Q3NYKPGQ');
     </script>
     <meta charset="UTF-8">
-    <title>Beaches — SwimTemp</title>
+    <title>50 Top Beaches by Sea Temperature — SwimTemp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Find the warmest beaches in the world right now. Real-time sea surface temperature for 50 famous beaches worldwide.">
+        content="50 handpicked beaches ranked by live sea temperature. Find where the water is warm right now — updated daily from satellite data.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
@@ -499,9 +499,10 @@
     <main class="page" id="main-content">
         <div class="page-header">
             <div class="header-left">
-                <div class="page-eyebrow" aria-hidden="true">Updated daily</div>
-                <h1 class="page-title">Where is the sea<br><em>warm right now?</em></h1>
-                <p class="page-subtitle" id="subtitle">Loading temperatures for 50 beaches...</p>
+                <div class="page-eyebrow" aria-hidden="true">50 handpicked beaches · Updated daily</div>
+                <h1 class="page-title">Where is the water<br><em>warm right now?</em></h1>
+                <p class="page-subtitle" id="subtitle">50 handpicked beaches · Daily satellite temperature · Live wave
+                    conditions.</p>
             </div>
             <div class="filter-bar region-bar" role="group" aria-label="Filter beaches by region">
                 <button class="filter-btn active" data-region="all" aria-pressed="true">All Regions</button>
@@ -568,7 +569,7 @@
                 const data = await res.json();
                 allBeaches = data.beaches;
                 document.getElementById('subtitle').textContent =
-                    `${allBeaches.filter(b => b.temp_c !== null).length} beaches with live data`;
+                    `50 beaches · satellite SST · live waves & current`;
                 renderGrid();
             } catch {
                 const grid = document.getElementById('beach-grid');
@@ -660,7 +661,7 @@
         <div class="footer-inner">
             <div class="footer-brand">
                 <a href="/" class="footer-logo">SwimTemp</a>
-                <p class="footer-tagline">Daily updated sea temperature<br>for swimmers &amp; travelers.</p>
+                <p class="footer-tagline">Satellite sea temperature &amp; live ocean conditions for swimmers &amp; travelers.</p>
             </div>
             <div class="footer-links">
                 <div class="footer-col">
@@ -692,7 +693,13 @@
                 <div class="footer-col">
                     <div class="footer-col-label">Follow</div>
                     <a href="https://www.instagram.com/swimtemp/" target="_blank" rel="noopener">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>Instagram
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="vertical-align:middle;margin-right:6px">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                        </svg>Instagram
                     </a>
                 </div>
             </div>

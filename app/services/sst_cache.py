@@ -393,3 +393,86 @@ def point_temperature(date: str, lat: float, lon: float, radius_km: float) -> di
         "cells_used": len(temps),
         "debug": {"tile_id": t_id, "tile_fetched_now": fetched},
     }
+
+
+# ── SST History (REP + NRT) ───────────────────────────────────────────────────
+
+import asyncio  # noqa: E402 — imported here to keep it near its users
+
+
+async def fetch_rep_history(lat: float, lon: float, start, end) -> list[dict]:
+    """Daily SST from the reprocessed (REP) dataset — covers up to ~6 months ago."""
+    return await asyncio.to_thread(
+        _fetch_copernicus_history, lat, lon, start, end, "REP"
+    )
+
+
+async def fetch_nrt_history(lat: float, lon: float, start, end) -> list[dict]:
+    """Daily SST from the near-real-time (NRT) dataset — covers the last few days/weeks."""
+    return await asyncio.to_thread(
+        _fetch_copernicus_history, lat, lon, start, end, "NRT"
+    )
+
+
+def _fetch_copernicus_history(
+    lat: float, lon: float, start, end, dataset: str
+) -> list[dict]:
+    """
+    Synchronous Copernicus fetch for a full date range.
+    Runs inside a thread pool via asyncio.to_thread so it never blocks the
+    FastAPI event loop.
+
+    Returns a list of {"date": "YYYY-MM-DD", "sst": float} dicts.
+    """
+    DATASET_MAP = {
+        "REP": "METOFFICE-GLO-SST-L4-REP-OBS-SST",
+        "NRT": DATASET_ID,  # METOFFICE-GLO-SST-L4-NRT-OBS-SST-V2
+    }
+    dataset_id = DATASET_MAP[dataset]
+    kwargs = _copernicus_kwargs()
+
+    # Small bounding box around the point (±0.1°)
+    delta = 0.1
+    try:
+        ds = copernicusmarine.open_dataset(
+            dataset_id=dataset_id,
+            variables=["analysed_sst"],
+            minimum_longitude=lon - delta,
+            maximum_longitude=lon + delta,
+            minimum_latitude=lat - delta,
+            maximum_latitude=lat + delta,
+            start_datetime=(
+                start.isoformat() if hasattr(start, "isoformat") else str(start)
+            ),
+            end_datetime=end.isoformat() if hasattr(end, "isoformat") else str(end),
+            **kwargs,
+        )
+    except Exception as exc:
+        log.warning(
+            "Copernicus %s history fetch failed for %.1f,%.1f: %s",
+            dataset,
+            lat,
+            lon,
+            exc,
+        )
+        return []
+
+    results = []
+    try:
+        ds = ds.load()
+        sst_var = _pick_sst_var(ds)
+        sst_da = ds[sst_var]
+        for t in ds["time"].values:
+            day_data = sst_da.sel(time=t)
+            raw = np.nanmean(day_data.values)
+            if np.isnan(raw):
+                continue
+            val = _to_celsius(np.array([raw]), sst_da.attrs.get("units"))[0]
+            dt_str = str(t)[:10]  # "YYYY-MM-DD"
+            results.append({"date": dt_str, "sst": round(float(val), 2)})
+    except Exception as exc:
+        log.warning("Copernicus %s history parse failed: %s", dataset, exc)
+    finally:
+        ds.close()
+
+    return results

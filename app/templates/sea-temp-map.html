@@ -16,7 +16,7 @@
             --navy: #0d1b2a;
             --glass: rgba(255, 255, 255, 0.95);
             --muted: #475569;
-            --soft: #64748b;
+            --soft: #334155;
             --accent: #38bdf8;
         }
 
@@ -95,7 +95,7 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 20;
-            width: 340px;
+            width: 480px;
             pointer-events: all;
         }
 
@@ -516,15 +516,6 @@
                 font-size: 9px;
             }
 
-            .panel-gyg {
-                padding: 8px 12px;
-                margin-top: 8px;
-            }
-
-            .panel-gyg-text {
-                font-size: 10px;
-            }
-
             /* Map controls above collapsed panel handle */
             .maplibregl-ctrl-bottom-right {
                 bottom: 52px;
@@ -574,66 +565,31 @@
         }
 
         .panel-wave-value {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 300;
+            font-family: 'DM Mono', monospace;
+            font-size: 15px;
+            font-weight: 400;
             color: var(--navy);
             letter-spacing: -0.3px;
         }
 
         .panel-wave-label {
             font-size: 9px;
-            color: var(--soft);
+            color: var(--navy);
+            font-weight: 500;
             letter-spacing: 1px;
             text-transform: uppercase;
         }
 
         .panel-wave-state {
-            font-size: 10px;
-            color: var(--soft);
+            font-size: 11px;
+            color: var(--navy);
+            font-weight: 500;
             margin-top: 6px;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             grid-column: 1 / -1;
         }
 
-        /* ── GYG link in panel ── */
-        .panel-gyg {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 12px;
-            padding: 10px 14px;
-            background: rgba(56, 189, 248, 0.08);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 10px;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .panel-gyg:hover {
-            background: rgba(56, 189, 248, 0.15);
-            border-color: rgba(56, 189, 248, 0.35);
-        }
-
-        .panel-gyg-text {
-            flex: 1;
-            font-size: 11px;
-            color: #0369a1;
-            letter-spacing: 0.3px;
-            line-height: 1.4;
-        }
-
-        .panel-gyg-arrow {
-            font-size: 12px;
-            color: #0369a1;
-        }
-
-        .panel-gyg-disc {
-            font-size: 9px;
-            color: var(--soft);
-            margin-top: 6px;
-            letter-spacing: 0.3px;
-        }
+        /* GYG link moved to forecast panel chart section */
 
         /* ── Accessibility ── */
         .skip-link {
@@ -669,6 +625,402 @@
                 animation-duration: 0.01ms !important;
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* ── Forecast overlay ── */
+        #forecast-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 30;
+            display: none;
+            align-items: flex-end;
+            justify-content: flex-start;
+        }
+
+        #forecast-overlay.visible {
+            display: flex;
+        }
+
+        #forecast-panel {
+            background: var(--glass);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 4px 40px rgba(0, 0, 0, 0.15);
+            width: 480px;
+            max-height: 85vh;
+            overflow-y: auto;
+            margin: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+
+
+        .forecast-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            position: sticky;
+            top: 0;
+            background: var(--glass);
+            backdrop-filter: blur(24px);
+            z-index: 1;
+        }
+
+        .forecast-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--navy);
+            letter-spacing: -0.3px;
+        }
+
+        .forecast-subtitle {
+            font-size: 10px;
+            color: var(--soft);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .forecast-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--muted);
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .forecast-close:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .forecast-body {
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* ── Block 1: Forecast card ── */
+        .fp-block {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+        }
+
+        .fp-block-heading {
+            margin-bottom: 14px;
+        }
+
+        .fp-block-heading-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--navy);
+            letter-spacing: -0.2px;
+            line-height: 1.1;
+        }
+
+        .fp-block-heading-sub {
+            font-family: 'DM Mono', monospace;
+            font-size: 9px;
+            font-weight: 400;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--soft);
+            margin-top: 2px;
+        }
+
+        .forecast-days {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 0;
+        }
+
+        .forecast-days--7col {
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .forecast-day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 8px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .forecast-day-name {
+            font-family: 'DM Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--soft);
+            font-weight: 500;
+        }
+
+        .forecast-day-temp {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
+
+        /* ── Block 2: Waves card ── */
+        .forecast-table {
+            display: grid;
+            grid-template-columns: auto repeat(3, 1fr);
+            gap: 6px;
+            font-size: 11px;
+        }
+
+        .forecast-table--7col {
+            grid-template-columns: auto repeat(7, 1fr);
+        }
+
+        .forecast-row-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            color: var(--soft);
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            padding-right: 8px;
+            white-space: nowrap;
+        }
+
+        .forecast-cell {
+            text-align: center;
+            padding: 7px 4px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            color: var(--navy);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        /* ── Block 3: History ── */
+        .fp-history-block {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+        }
+
+        /* ── Block 4: Activities CTA ── */
+        .fp-cta-block {
+            padding: 16px 20px 20px;
+        }
+
+        .forecast-loading {
+            text-align: center;
+            padding: 40px 24px;
+            font-size: 11px;
+            color: var(--soft);
+            letter-spacing: 1px;
+        }
+
+        /* ── More details button ── */
+        .more-details-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 14px;
+            padding: 11px 16px;
+            background: rgba(56, 189, 248, 0.07);
+            border: 1px solid rgba(56, 189, 248, 0.18);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #0369a1;
+            font-family: 'DM Mono', monospace;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .more-details-btn::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border-right: 1.5px solid #0369a1;
+            border-bottom: 1.5px solid #0369a1;
+            border-radius: 0 0 3px 0;
+            transform: rotate(45deg) translate(-4px, -4px);
+            flex-shrink: 0;
+        }
+
+        .more-details-btn:hover {
+            background: rgba(56, 189, 248, 0.14);
+            border-color: rgba(56, 189, 248, 0.35);
+        }
+
+        /* ── SST History Chart ── */
+        .sst-history-section {
+            margin: 0;
+        }
+
+        .sst-history-header {
+            margin-bottom: 10px;
+        }
+
+        .sst-history-title {
+            font-family: 'DM Mono', monospace;
+            font-size: 9px;
+            font-weight: 500;
+            color: var(--soft);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0 0 12px 0;
+            display: block;
+        }
+
+        /* Dark card wrapping the canvas — matches beaches.html dark bg */
+        .sst-history-chart-wrap {
+            position: relative;
+            background: #0d1b2a;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 12px 8px;
+            cursor: crosshair;
+        }
+
+        .sst-history-chart-wrap canvas {
+            width: 100%;
+            display: block;
+        }
+
+        /* Floating tooltip above hovered dot */
+        .sst-history-tooltip {
+            position: absolute;
+            pointer-events: none;
+            display: none;
+            background: #0d1b2a;
+            color: #e2e8f0;
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            line-height: 1.4;
+            padding: 5px 9px;
+            border-radius: 6px;
+            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            transform: translateX(-50%);
+        }
+
+        .sst-history-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .sst-history-gyg a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: #0d1b2a;
+            border-radius: 14px;
+            padding: 16px 18px;
+            text-decoration: none;
+            color: #ffffff;
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            transition: background 0.15s;
+        }
+
+        .sst-history-gyg a:hover {
+            background: #162638;
+        }
+
+        .sst-history-gyg a::after {
+            content: '→';
+            font-size: 18px;
+            color: #38bdf8;
+            flex-shrink: 0;
+        }
+
+        .sst-history-gyg-label {
+            display: block;
+            font-size: 8px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.45);
+            margin-bottom: 4px;
+        }
+
+        .sst-history-source {
+            font-size: 9px;
+            color: var(--soft);
+            letter-spacing: 0.3px;
+            margin-top: 8px;
+        }
+
+        @keyframes sst-pulse {
+
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* Mobile forecast */
+        @media (max-width: 768px) {
+            #forecast-panel {
+                width: 100%;
+                margin: 0;
+                border-radius: 20px 20px 0 0;
+                max-height: 75vh;
+            }
+
+            #forecast-overlay {
+                align-items: flex-end;
+                justify-content: center;
+            }
+
+            .forecast-days {
+                grid-template-columns: repeat(7, 1fr);
+                gap: 3px;
+            }
+
+            .forecast-day {
+                padding: 6px 2px;
+            }
+
+            .forecast-day-temp {
+                font-size: 13px;
             }
         }
     </style>
@@ -717,6 +1069,22 @@
 
     <!-- Legend toggle (mobile only) -->
     <button id="legend-toggle" aria-label="Toggle temperature legend">🌡</button>
+
+
+    <!-- Forecast overlay -->
+    <div id="forecast-overlay" role="dialog" aria-label="7-day ocean forecast" aria-modal="true">
+        <div id="forecast-panel">
+            <div class="forecast-header">
+                <div>
+                    <div class="forecast-title" id="forecast-place">Ocean Forecast</div>
+                </div>
+                <button class="forecast-close" id="forecast-close" aria-label="Close forecast">✕</button>
+            </div>
+            <div class="forecast-body" id="forecast-body">
+                <div class="forecast-loading">Loading forecast...</div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // ── Legend toggle ─────────────────────────────────────────────────────────────
@@ -847,6 +1215,9 @@
                 return;
             }
 
+            forecastLat = lat;
+            forecastLon = lon;
+            forecastPlace = placeName || name;
             const band = getBand(tempResult.mean_c);
             el.style.borderColor = band.color;
             const bar = document.getElementById('info-color-bar');
@@ -861,7 +1232,7 @@
                 </div>
                 <p class="temp-meta">${tempResult.date}</p>
                 ${waveHtml(waves)}
-                ${gygHtml(tempResult.mean_c, placeName || name)}`;
+                <button class="more-details-btn" onclick="showForecast()">More information</button>`;
             marker = currentMarker;
         }
 
@@ -916,33 +1287,41 @@
             return `https://www.getyourguide.com/s/?q=${encodeURIComponent(placeName)}&partner_id=${GYG_PARTNER_ID}&utm_medium=online_publisher`;
         }
 
-        function gygHtml(temp, placeName) {
-            if (!placeName || placeName.includes('Ocean') || placeName.includes('Sea')) return '';
+        // Builds a location + temperature aware GYG query and label
+        function buildGygContent(temp, placeName) {
+            if (!placeName || placeName.includes('Ocean') || placeName.includes('Sea')) {
+                return null;
+            }
             const city = placeName.split(',')[0].trim();
-            let label, query;
+            let label, query, emoji;
+
             if (temp >= 26) {
                 label = `Snorkeling & diving tours in ${city}`;
                 query = `${city} snorkeling diving`;
+                emoji = '🐠';
             } else if (temp >= 23) {
                 label = `Boat trips & water sports in ${city}`;
                 query = `${city} boat trip water sports`;
+                emoji = '⛵';
             } else if (temp >= 20) {
                 label = `Kayaking & sailing in ${city}`;
                 query = `${city} kayaking sailing`;
+                emoji = '🏄';
             } else if (temp >= 17) {
                 label = `Coastal boat tours in ${city}`;
                 query = `${city} boat tour`;
+                emoji = '🌊';
             } else {
-                label = `Explore tours in ${city}`;
-                query = city;
+                label = `Things to do in ${city}`;
+                query = `${city} outdoor activities`;
+                emoji = '🧭';
             }
-            const url = `https://www.getyourguide.com/s/?q=${encodeURIComponent(query)}&partner_id=${GYG_PARTNER_ID}&utm_medium=online_publisher`;
-            return `<a href="${url}" class="panel-gyg" target="_blank" rel="noopener noreferrer sponsored">
-                    <span class="panel-gyg-text">${label}</span>
-                    <span class="panel-gyg-arrow">→</span>
-                </a>
-                <p class="panel-gyg-disc">* Affiliate link</p>`;
+
+            const url = `https://www.getyourguide.com/s/?q=${encodeURIComponent(query)}&partner_id=${GYG_PARTNER_ID}&utm_source=swimtemp&utm_medium=map_forecast`;
+            return { label, emoji, url };
         }
+
+        function gygHtml() { return ''; } // left panel GYG removed (handled in forecast panel)
 
         const map = new maplibregl.Map({
             container: 'map',
@@ -1004,6 +1383,9 @@
                 return;
             }
 
+            forecastLat = lat;
+            forecastLon = lon;
+            forecastPlace = placeName || 'Open Ocean';
             const band = getBand(tempResult.mean_c);
             el.style.borderColor = band.color;
             const bar = document.getElementById('info-color-bar');
@@ -1018,8 +1400,446 @@
                 </div>
                 <p class="temp-meta">${tempResult.date}</p>
                 ${waveHtml(waves)}
-                ${gygHtml(tempResult.mean_c, placeName)}`;
+                <button class="more-details-btn" onclick="showForecast()">More information</button>`;
         });
+
+
+        // ── Forecast state ───────────────────────────────────────────────────────────
+        let forecastLat = null;
+        let forecastLon = null;
+        let forecastPlace = null;
+
+        // Store coords when temp loads
+        const _origSearch = selectSearchResult;
+        // We'll capture coords differently — see showForecast()
+
+        function showForecast() {
+            // Get current marker coords
+            const lat = forecastLat;
+            const lon = forecastLon;
+            if (!lat || !lon) return;
+
+            document.getElementById('forecast-overlay').classList.add('visible');
+            document.getElementById('forecast-place').textContent = forecastPlace || 'Ocean Forecast';
+            document.getElementById('forecast-body').innerHTML = '<div class="forecast-loading">Loading details...</div>';
+
+            loadForecast(lat, lon);
+        }
+
+        document.getElementById('forecast-close').addEventListener('click', () => {
+            document.getElementById('forecast-overlay').classList.remove('visible');
+        });
+
+        // Close on backdrop click
+        document.getElementById('forecast-overlay').addEventListener('click', e => {
+            if (e.target === document.getElementById('forecast-overlay')) {
+                document.getElementById('forecast-overlay').classList.remove('visible');
+            }
+        });
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // FORECAST CONFIG
+        // ─────────────────────────────────────────────────────────────────────────
+        // BACKLOG (target: 2 weeks):
+        //   - Add a "7-day" toggle in the forecast panel UI
+        //   - Gate extended forecast behind canAccessExtendedForecast()
+        //   - canAccessExtendedForecast() should check session/JWT for a paid tier
+        //   - On toggle click: if !canAccessExtendedForecast(), show paywall modal
+        //     (email capture → Stripe checkout → unlock 7-day for session/account)
+        //   - API already fetches 7 days; just change FORECAST_DAYS_FREE to 7
+        //     and slice accordingly once the user is authenticated
+        // ─────────────────────────────────────────────────────────────────────────
+        const FORECAST_DAYS_FREE = 3;   // shown by default (free tier)
+        const FORECAST_DAYS_EXTENDED = 7;   // gated behind subscription (backlog)
+
+        // Stub: replace with real auth check when paywall is implemented
+        function canAccessExtendedForecast() {
+            return false; // TODO: check user session/subscription status
+        }
+
+        // Smart date label: index 0 = Tomorrow (today skipped), then precise dates
+        function forecastDayLabel(dateStr, index) {
+            if (index === 0) return 'Tomorrow';
+            return new Date(dateStr + 'T00:00:00Z').toLocaleDateString('en', {
+                month: 'short', day: 'numeric', timeZone: 'UTC'
+            });
+        }
+
+        const dirArrow = (deg) => {
+            if (deg === null || deg === undefined) return '—';
+            const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
+            return arrows[Math.round(deg / 45) % 8];
+        };
+
+        async function loadForecast(lat, lon) {
+            const apiDays = FORECAST_DAYS_EXTENDED;
+            const displayDays = canAccessExtendedForecast()
+                ? FORECAST_DAYS_EXTENDED
+                : FORECAST_DAYS_FREE;
+
+            try {
+                const [marineRes, windRes] = await Promise.all([
+                    fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&daily=wave_height_max,swell_wave_height_max,sea_surface_temperature_max&forecast_days=${apiDays}&timezone=auto`),
+                    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&daily=wind_speed_10m_max,wind_direction_10m_dominant&forecast_days=${apiDays}&timezone=auto`)
+                ]);
+
+                const marine = await marineRes.json();
+                const wind = await windRes.json();
+
+                // Skip today (index 0) — SST today comes from Copernicus in the left panel.
+                const allDays = marine.daily?.time || [];
+                const days = allDays.slice(1, displayDays + 1);
+                const sst = (marine.daily?.sea_surface_temperature_max || []).slice(1, displayDays + 1);
+                const waveMax = (marine.daily?.wave_height_max || []).slice(1, displayDays + 1);
+                const swellMax = (marine.daily?.swell_wave_height_max || []).slice(1, displayDays + 1);
+                const windSpeed = (wind.daily?.wind_speed_10m_max || []).slice(1, displayDays + 1);
+                const windDir = (wind.daily?.wind_direction_10m_dominant || []).slice(1, displayDays + 1);
+
+                // ── Coverage detection ────────────────────────────────────
+                // Open-Meteo Marine doesn't cover all water bodies (Caspian,
+                // Black Sea edges, some inland seas). Detect by checking if
+                // ALL values for a variable are null.
+                const hasSSTData = sst.some(v => v != null);
+                const hasWaveData = waveMax.some(v => v != null);
+                const hasWindData = windSpeed.some(v => v != null);
+
+                // If no days at all came back, marine API failed entirely
+                if (days.length === 0) {
+                    document.getElementById('forecast-body').innerHTML = `
+                        <div class="forecast-loading">
+                            Marine forecast not available for this location.
+                        </div>
+                        <!-- Still show history -->
+                        <div class="fp-history-block">
+                            <div class="sst-history-section">
+                                <div class="sst-history-header">
+                                    <div class="fp-block-heading" style="margin-bottom:12px">
+                                        <div class="fp-block-heading-title">Historical</div>
+                                        <div class="fp-block-heading-sub">Copernicus Marine satellite data · last 12 months</div>
+                                    </div>
+                                </div>
+                                <div class="sst-history-chart-wrap" id="sstChartWrap">
+                                    <div style="height:200px;display:flex;align-items:center;justify-content:center;">
+                                        <span style="font-family:'DM Mono',monospace;font-size:11px;color:#38bdf8;animation:sst-pulse 1.5s ease-in-out infinite">Loading temperature history…</span>
+                                    </div>
+                                    <div class="sst-history-tooltip" id="sstTooltip"></div>
+                                </div>
+                            </div>
+                        </div>`;
+                    loadSSTHistory(lat, lon, null, forecastPlace);
+                    return;
+                }
+
+                // ── No-coverage notice (shown inside affected blocks) ─────
+                const noMarineNotice = `
+                    <p style="font-family:'DM Mono',monospace;font-size:10px;color:var(--soft);
+                               margin:0;padding:10px 0;letter-spacing:0.3px;">
+                        Marine model doesn't cover this area —
+                        <a href="https://open-meteo.com/en/docs/marine-weather-api"
+                           target="_blank" rel="noopener"
+                           style="color:#38bdf8;text-decoration:none;">Open-Meteo coverage map ↗</a>
+                    </p>`;
+
+                let html = `
+                    <!-- Block 1: Sea surface temperature forecast -->
+                    <div class="fp-block">
+                        <div class="fp-block-heading">
+                            <div class="fp-block-heading-title">Forecast</div>
+                            <div class="fp-block-heading-sub">Open-Meteo Marine · real-time · next 3 days</div>
+                        </div>
+                        ${hasSSTData ? `
+                        <div class="forecast-days forecast-days--${displayDays}col">
+                            ${days.map((d, i) => {
+                    const band = sst[i] != null ? getBand(sst[i]) : null;
+                    const temp = sst[i] != null ? sst[i].toFixed(1) + '°' : '—';
+                    const dateLabel = forecastDayLabel(d, i);
+                    return `<div class="forecast-day">
+                                            <div class="forecast-day-name">${dateLabel}</div>
+                                            <div class="forecast-day-temp" style="color:${band ? band.color : '#0d1b2a'}">${temp}</div>
+                                        </div>`;
+                }).join('')}
+                        </div>` : noMarineNotice}
+                    </div>
+
+                    <!-- Block 2: Conditions -->
+                    <div class="fp-block">
+                        <div class="fp-block-heading">
+                            <div class="fp-block-heading-title">Conditions</div>
+                            <div class="fp-block-heading-sub">Open-Meteo Marine · real-time · next 3 days</div>
+                        </div>
+                        <div class="forecast-table forecast-table--${displayDays}col">
+                            ${hasWaveData ? `
+                            <div class="forecast-row-label">🌊 Wave</div>
+                            ${days.map((d, i) => `<div class="forecast-cell">${waveMax[i] != null ? waveMax[i].toFixed(1) + 'm' : '—'}</div>`).join('')}
+                            <div class="forecast-row-label">🌬 Swell</div>
+                            ${days.map((d, i) => `<div class="forecast-cell">${swellMax[i] != null ? swellMax[i].toFixed(1) + 'm' : '—'}</div>`).join('')}
+                            ` : `<div style="grid-column:1/-1">${noMarineNotice}</div>`}
+                            ${hasWindData ? `
+                            <div class="forecast-row-label">💨 Wind</div>
+                            ${days.map((d, i) => `<div class="forecast-cell">${windSpeed[i] != null ? Math.round(windSpeed[i]) + 'km' : '—'}</div>`).join('')}
+                            <div class="forecast-row-label">⬆ Dir</div>
+                            ${days.map((d, i) => `<div class="forecast-cell">${dirArrow(windDir[i])}</div>`).join('')}
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Block 3: 12-month history -->
+                    <div class="fp-history-block">
+                        <div class="sst-history-section">
+                            <div class="sst-history-header">
+                                <div class="fp-block-heading" style="margin-bottom:12px">
+                                    <div class="fp-block-heading-title">Historical</div>
+                                    <div class="fp-block-heading-sub">Copernicus Marine satellite data · last 12 months</div>
+                                </div>
+                            </div>
+                            <div class="sst-history-chart-wrap" id="sstChartWrap">
+                                <div style="height:200px;display:flex;align-items:center;justify-content:center;">
+                                    <span style="font-family:'DM Mono',monospace;font-size:11px;color:#38bdf8;
+                                                 animation:sst-pulse 1.5s ease-in-out infinite">
+                                        Loading temperature history…
+                                    </span>
+                                </div>
+                                <div class="sst-history-tooltip" id="sstTooltip"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Block 4: Activities CTA — only shown when marine data exists -->
+                    ${hasSSTData ? `
+                    <div class="fp-cta-block">
+                        <div class="fp-block-heading" style="margin-bottom:12px">
+                            <div class="fp-block-heading-title">Explore</div>
+                            <div class="fp-block-heading-sub">Activities & experiences nearby</div>
+                        </div>
+                        <div class="sst-history-gyg" id="sstGYG"></div>
+                    </div>` : ''}
+                `;
+
+                document.getElementById('forecast-body').innerHTML = html;
+
+                window._lastSSTLat = lat; window._lastSSTLon = lon;
+                loadSSTHistory(lat, lon, hasSSTData ? sst[0] : null, forecastPlace);
+
+            } catch (e) {
+                document.getElementById('forecast-body').innerHTML = '<div class="forecast-loading">Could not load forecast. Try again.</div>';
+            }
+        }
+
+        // ── SST History chart ─────────────────────────────────────────────────────────
+        const BAND_COLORS_HIST = [
+            { max: 17, color: '#2563eb' },
+            { max: 20, color: '#0ea5e9' },
+            { max: 23, color: '#22c55e' },
+            { max: 26, color: '#f59e0b' },
+            { max: Infinity, color: '#ef4444' },
+        ];
+        function histBandColor(sst) {
+            return (BAND_COLORS_HIST.find(b => sst < b.max) || BAND_COLORS_HIST.at(-1)).color;
+        }
+
+        async function loadSSTHistory(lat, lon, currentSST, placeName) {
+            const wrap = document.getElementById('sstChartWrap');
+            if (!wrap) return;
+
+            let data;
+            try {
+                const res = await fetch(`/api/sst-history?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                data = await res.json();
+            } catch (err) {
+                wrap.innerHTML = `<div style="height:180px;display:flex;align-items:center;justify-content:center;">
+                    <span style="font-family:'DM Mono',monospace;font-size:11px;color:#ef4444">
+                        Could not load history
+                    </span></div>`;
+                return;
+            }
+
+            const { history, forecast } = data;
+            if (!history.length) return;
+
+            // ── Downsample history to monthly averages ────────────────────
+            // Group daily points by YYYY-MM, average each month
+            const byMonth = {};
+            for (const pt of history) {
+                const key = pt.date.slice(0, 7); // "YYYY-MM"
+                if (!byMonth[key]) byMonth[key] = [];
+                byMonth[key].push(pt.sst);
+            }
+            const monthlyHistory = Object.keys(byMonth).sort().map(key => ({
+                date: key + '-15', // midpoint of month for x-positioning
+                monthKey: key,
+                sst: parseFloat((byMonth[key].reduce((a, b) => a + b, 0) / byMonth[key].length).toFixed(1)),
+            }));
+
+            // Forecast: keep daily but we'll show as dashed extension
+            const fcPoints = forecast.slice(0, 7);
+
+            // Build canvas
+            wrap.innerHTML = '<canvas id="sstCanvas"></canvas><div class="sst-history-tooltip" id="sstTooltip"></div>';
+            const canvas = document.getElementById('sstCanvas');
+            const tooltip = document.getElementById('sstTooltip');
+            const dpr = window.devicePixelRatio || 1;
+            const W = wrap.clientWidth || 280;
+            const H = 200;
+            canvas.width = W * dpr;
+            canvas.height = H * dpr;
+            canvas.style.width = W + 'px';
+            canvas.style.height = H + 'px';
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const pad = { top: 28, right: 28, bottom: 34, left: 42 };
+            const allSST = monthlyHistory.map(p => p.sst);
+            const minSST = Math.floor(Math.min(...allSST)) - 1;
+            const maxSST = Math.ceil(Math.max(...allSST)) + 1;
+
+            // X: span from first monthly point to last forecast point
+            const allDates = monthlyHistory.map(p => p.date).sort();
+            const dateMin = allDates.at(0);
+            const dateMax = allDates.at(-1);
+            const totalMs = new Date(dateMax) - new Date(dateMin) || 1;
+            const plotW = W - pad.left - pad.right;
+            const plotH = H - pad.top - pad.bottom;
+
+            const xOf = d => pad.left + (new Date(d) - new Date(dateMin)) / totalMs * plotW;
+            const yOf = v => pad.top + (1 - (v - minSST) / (maxSST - minSST)) * plotH;
+
+            // Current hovered point
+            const allPoints = monthlyHistory;
+
+            let hoveredIdx = null; // index into allPoints
+
+            function drawChart() {
+                ctx.clearRect(0, 0, W, H);
+
+                // ── Grid lines + Y labels ──────────────────────────────────
+                const step = (maxSST - minSST) <= 8 ? 1 : 2;
+                for (let t = Math.ceil(minSST); t <= maxSST; t += step) {
+                    const y = yOf(t);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + plotW, y); ctx.stroke();
+                    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                    ctx.font = '11px DM Mono, monospace';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(`${t}°`, pad.left - 5, y + 3);
+                }
+
+                // ── X-axis: month labels ──────────────────────────────────
+                ctx.font = '10px DM Mono, monospace';
+                ctx.textAlign = 'center';
+                for (const pt of monthlyHistory) {
+                    const d = new Date(pt.date + 'T00:00:00Z');
+                    const mo = d.toLocaleString('en', { month: 'short', timeZone: 'UTC' }).toUpperCase();
+                    const x = xOf(pt.date);
+                    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+                    ctx.fillText(mo, x, pad.top + plotH + 22);
+                }
+
+
+
+                // ── History connecting lines (band-coloured) ───────────────
+                if (monthlyHistory.length > 1) {
+                    for (let i = 0; i < monthlyHistory.length - 1; i++) {
+                        const a = monthlyHistory[i], b = monthlyHistory[i + 1];
+                        ctx.beginPath();
+                        ctx.moveTo(xOf(a.date), yOf(a.sst));
+                        ctx.lineTo(xOf(b.date), yOf(b.sst));
+                        ctx.strokeStyle = histBandColor((a.sst + b.sst) / 2);
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+                }
+
+
+                // ── Draw all dots (history then forecast) ──────────────────
+                allPoints.forEach((pt, i) => {
+                    const x = xOf(pt.date), y = yOf(pt.sst);
+                    const col = histBandColor(pt.sst);
+                    const isHovered = hoveredIdx === i;
+                    const r = isHovered ? 5 : 3.5;
+
+                    // Glow ring on hover
+                    if (isHovered) {
+                        ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2);
+                        ctx.fillStyle = col + '28'; ctx.fill();
+                    }
+
+                    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = isHovered ? col : '#0d1b2a';
+                    ctx.strokeStyle = col;
+                    ctx.lineWidth = isHovered ? 0 : 2;
+                    ctx.fill();
+                    if (!isHovered) ctx.stroke();
+
+                    // Value label above hovered dot
+                    if (isHovered) {
+                        ctx.fillStyle = col;
+                        ctx.font = 'bold 13px DM Mono, monospace';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(`${pt.sst.toFixed(1)}°`, x, y - 11);
+                    }
+                });
+            }
+
+            drawChart();
+            // ── Hover: snap to nearest dot across history + forecast ───────
+            canvas.addEventListener('mousemove', e => {
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                let bestIdx = null, bestD = Infinity;
+                allPoints.forEach((pt, i) => {
+                    const d = Math.abs(xOf(pt.date) - mx);
+                    if (d < bestD) { bestD = d; bestIdx = i; }
+                });
+
+                const snapThresh = plotW / allPoints.length * 1.2;
+                if (bestIdx === null || bestD > snapThresh) {
+                    if (hoveredIdx !== null) { hoveredIdx = null; drawChart(); }
+                    tooltip.style.display = 'none';
+                    return;
+                }
+
+                if (hoveredIdx !== bestIdx) { hoveredIdx = bestIdx; drawChart(); }
+
+                const pt = allPoints[bestIdx];
+                const x = xOf(pt.date);
+                const y = yOf(pt.sst);
+                const col = histBandColor(pt.sst);
+                const dateLabel = new Date(pt.date + 'T00:00:00Z').toLocaleDateString('en', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+                tooltip.innerHTML =
+                    `<span style="color:rgba(255,255,255,0.45);font-size:9px;letter-spacing:1px;text-transform:uppercase">${dateLabel}</span><br>` +
+                    `<span style="color:${col};font-size:14px;font-weight:700">${pt.sst.toFixed(1)} °C</span>`;
+                tooltip.style.display = 'block';
+                const tipLeft = Math.max(44, Math.min(x, W - 64));
+                tooltip.style.left = tipLeft + 'px';
+                tooltip.style.top = (y - 48) + 'px';
+            });
+
+            canvas.addEventListener('mouseleave', () => {
+                hoveredIdx = null;
+                tooltip.style.display = 'none';
+                drawChart();
+            });
+
+            // ── GYG link ──────────────────────────────────────────────────
+            // ── GYG link — location + temperature aware ───────────────
+            const gygEl = document.getElementById('sstGYG');
+            if (gygEl && currentSST !== null && currentSST !== undefined && placeName) {
+                const gyg = buildGygContent(parseFloat(currentSST), placeName);
+                if (gyg) {
+                    gygEl.innerHTML = `<a href="${gyg.url}" target="_blank" rel="noopener noreferrer sponsored">
+                        <span>
+                            <span class="sst-history-gyg-label">Activities nearby</span>
+                            ${gyg.emoji} ${gyg.label}
+                        </span>
+                    </a>`;
+                } else {
+                    gygEl.innerHTML = '';
+                }
+            }
+        }
 
         // ── Mobile bottom sheet collapse/expand ──────────────────────────────────────
         const infoPanel = document.getElementById('info-panel');
@@ -1068,6 +1888,9 @@
             isMobile = window.innerWidth <= 768;
             if (!isMobile) expandPanel();
         });
+
+
+
 
     </script>
 </body>
