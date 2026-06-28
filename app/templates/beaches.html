@@ -22,19 +22,18 @@
     <meta name="description"
         content="50 handpicked beaches ranked by live sea temperature. Find where the water is warm right now — updated daily from satellite data.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link <link rel="stylesheet" href="/static/shared-tokens.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
         rel="stylesheet">
     <style>
+        /* Page-specific aliases — maps to shared-tokens.css */
         :root {
-            --deep: #060f1a;
-            --navy: #0d1b2a;
+            --text: var(--on-dark);
+            --muted: var(--on-dark-2);
+            --soft: var(--on-dark-2);
             --card: rgba(255, 255, 255, 0.04);
-            --border: rgba(255, 255, 255, 0.08);
-            --text: #e8f4f8;
-            --muted: rgba(255, 255, 255, 0.60);
-            --soft: rgba(255, 255, 255, 0.72);
-            --accent: #38bdf8;
+            --border: var(--border-dark);
         }
 
         * {
@@ -45,7 +44,7 @@
 
         body {
             font-family: 'DM Mono', monospace;
-            background: var(--deep);
+            background: var(--bg);
             color: var(--text);
             min-height: 100vh;
         }
@@ -185,7 +184,7 @@
         .filter-btn.active,
         .filter-btn[aria-pressed="true"] {
             background: var(--accent);
-            color: var(--deep);
+            color: var(--bg);
             border-color: var(--accent);
             font-weight: 500;
         }
@@ -353,7 +352,7 @@
             z-index: 1000;
             padding: 8px 16px;
             background: var(--accent);
-            color: var(--deep);
+            color: var(--bg);
             font-size: 13px;
             font-weight: 500;
             border-radius: 0 0 8px 8px;
@@ -661,7 +660,8 @@
         <div class="footer-inner">
             <div class="footer-brand">
                 <a href="/" class="footer-logo">SwimTemp</a>
-                <p class="footer-tagline">Satellite sea temperature &amp; live ocean conditions for swimmers &amp; travelers.</p>
+                <p class="footer-tagline">Satellite sea temperature &amp; live ocean conditions for swimmers &amp;
+                    travelers.</p>
             </div>
             <div class="footer-links">
                 <div class="footer-col">

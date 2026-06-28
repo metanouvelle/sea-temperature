@@ -7,17 +7,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
-        href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Cormorant+Garamond:wght@300;400;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="/static/shared-tokens.css">
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
         :root {
+            /* Core palette */
             --navy: #0d1b2a;
+            --navy-hover: var(--navy-hover);
+            --bg: var(--bg);
             --glass: rgba(255, 255, 255, 0.95);
-            --muted: #475569;
             --soft: #334155;
+            --muted: #475569;
             --accent: #38bdf8;
+            --link: var(--link);
+
+            /* White on dark — 3 levels only */
+            --on-dark: rgba(255, 255, 255, 0.90);
+            --on-dark-2: rgba(255, 255, 255, 0.55);
+            --on-dark-3: rgba(255, 255, 255, 0.30);
+
+            /* Navy transparency — 3 levels only */
+            --navy-90: var(--navy-90);
+            --navy-95: var(--navy-95);
+            --navy-98: var(--navy-98);
+
+            /* Border on dark */
+            --border-dark: rgba(255, 255, 255, 0.08);
+            --border-dark-2: var(--border-dark-2);
         }
 
         * {
@@ -55,37 +74,43 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(13, 27, 42, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 100px;
             padding: 8px 18px;
-            color: rgba(255, 255, 255, 0.85);
+            color: var(--navy);
             text-decoration: none;
             font-size: 12px;
             letter-spacing: 0.5px;
             pointer-events: all;
             transition: all 0.2s;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
         }
 
         .nav-pill:hover {
-            background: rgba(13, 27, 42, 0.95);
-            border-color: rgba(255, 255, 255, 0.25);
-            color: #fff;
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.14);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.16);
         }
 
         .nav-pill-brand {
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Fraunces', serif;
             font-size: 15px;
             font-weight: 600;
+            color: var(--navy);
         }
 
         .nav-pill-link {
             font-size: 11px;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--text-panel-soft);
+        }
+
+        .nav-pill-link:hover {
+            color: var(--navy);
         }
 
         /* ── Search bar ── */
@@ -105,52 +130,56 @@
 
         #search-input {
             width: 100%;
-            padding: 10px 40px 10px 16px;
-            background: rgba(13, 27, 42, 0.90);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 11px 44px 11px 18px;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 100px;
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--navy);
             font-family: 'DM Mono', monospace;
-            font-size: 12px;
+            font-size: 13px;
             letter-spacing: 0.3px;
             outline: none;
             transition: all 0.2s;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
         }
 
         #search-input::placeholder {
-            color: rgba(255, 255, 255, 0.35);
+            color: var(--text-panel-muted);
         }
 
         #search-input:focus {
-            border-color: rgba(56, 189, 248, 0.5);
-            background: rgba(13, 27, 42, 0.95);
+            border-color: var(--accent);
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.16), 0 0 0 3px rgba(56, 189, 248, 0.15);
         }
 
         #search-icon {
             position: absolute;
-            right: 14px;
+            right: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.35);
+            color: var(--text-panel-muted);
             pointer-events: none;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         #search-results {
             position: absolute;
-            top: calc(100% + 6px);
+            top: calc(100% + 8px);
             left: 0;
             right: 0;
-            background: rgba(13, 27, 42, 0.97);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 16px;
             overflow: hidden;
             display: none;
-            max-height: 240px;
+            max-height: 260px;
             overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
         }
 
         #search-results.visible {
@@ -158,9 +187,9 @@
         }
 
         .search-result-item {
-            padding: 12px 16px;
+            padding: 12px 18px;
             cursor: pointer;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
             transition: background 0.15s;
         }
 
@@ -169,19 +198,20 @@
         }
 
         .search-result-item:hover {
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(56, 189, 248, 0.06);
         }
 
         .search-result-name {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.9);
-            letter-spacing: 0.3px;
+            font-size: 13px;
+            color: var(--navy);
+            letter-spacing: 0.2px;
             margin-bottom: 2px;
+            font-weight: 500;
         }
 
         .search-result-type {
             font-size: 10px;
-            color: rgba(255, 255, 255, 0.35);
+            color: var(--text-panel-muted);
             letter-spacing: 0.5px;
             text-transform: uppercase;
         }
@@ -190,7 +220,7 @@
             padding: 16px;
             text-align: center;
             font-size: 11px;
-            color: rgba(255, 255, 255, 0.4);
+            color: var(--text-panel-muted);
             letter-spacing: 1px;
             text-transform: uppercase;
         }
@@ -239,7 +269,7 @@
         }
 
         .panel-title {
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Fraunces', serif;
             font-size: 20px;
             font-weight: 600;
             color: var(--navy);
@@ -274,7 +304,7 @@
         }
 
         .temp-value {
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Fraunces', serif;
             font-size: 68px;
             font-weight: 300;
             letter-spacing: -5px;
@@ -364,7 +394,7 @@
         .legend-name {
             font-size: 11px;
             font-weight: 500;
-            color: #1e293b;
+            color: var(--navy-hover);
             flex: 1;
         }
 
@@ -383,9 +413,9 @@
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            background: rgba(13, 27, 42, 0.90);
+            background: var(--navy-90);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid var(--border-dark-2);
             color: white;
             font-size: 16px;
             cursor: pointer;
@@ -396,12 +426,12 @@
         }
 
         #legend-toggle:hover {
-            background: rgba(13, 27, 42, 0.98);
+            background: var(--navy-98);
         }
 
         /* ── Desktop ── */
         .maplibregl-ctrl-attrib {
-            background: rgba(255, 255, 255, 0.75) !important;
+            background: var(--on-dark) !important;
             font-size: 10px !important;
         }
 
@@ -573,7 +603,7 @@
         }
 
         .panel-wave-label {
-            font-size: 9px;
+            font-size: 10px;
             color: var(--navy);
             font-weight: 500;
             letter-spacing: 1px;
@@ -599,7 +629,7 @@
             z-index: 1000;
             padding: 8px 16px;
             background: var(--accent);
-            color: #060f1a;
+            color: var(--bg);
             font-size: 13px;
             font-weight: 500;
             border-radius: 0 0 8px 8px;
@@ -675,7 +705,7 @@
         }
 
         .forecast-title {
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Fraunces', serif;
             font-size: 18px;
             font-weight: 600;
             color: var(--navy);
@@ -728,7 +758,7 @@
         }
 
         .fp-block-heading-title {
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Fraunces', serif;
             font-size: 17px;
             font-weight: 600;
             color: var(--navy);
@@ -738,7 +768,7 @@
 
         .fp-block-heading-sub {
             font-family: 'DM Mono', monospace;
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 400;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -772,7 +802,7 @@
 
         .forecast-day-name {
             font-family: 'DM Mono', monospace;
-            font-size: 9px;
+            font-size: 10px;
             letter-spacing: 1.5px;
             text-transform: uppercase;
             color: var(--soft);
@@ -780,7 +810,7 @@
         }
 
         .forecast-day-temp {
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Fraunces', serif;
             font-size: 22px;
             font-weight: 600;
             line-height: 1;
@@ -855,7 +885,7 @@
             font-size: 10px;
             letter-spacing: 1.5px;
             text-transform: uppercase;
-            color: #0369a1;
+            color: var(--link);
             font-family: 'DM Mono', monospace;
             transition: all 0.2s;
             width: 100%;
@@ -865,8 +895,8 @@
             content: '';
             width: 16px;
             height: 16px;
-            border-right: 1.5px solid #0369a1;
-            border-bottom: 1.5px solid #0369a1;
+            border-right: 1.5px solid var(--link);
+            border-bottom: 1.5px solid var(--link);
             border-radius: 0 0 3px 0;
             transform: rotate(45deg) translate(-4px, -4px);
             flex-shrink: 0;
@@ -888,7 +918,7 @@
 
         .sst-history-title {
             font-family: 'DM Mono', monospace;
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 500;
             color: var(--soft);
             letter-spacing: 2px;
@@ -902,7 +932,7 @@
             position: relative;
             background: #0d1b2a;
             border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-dark);
             padding: 12px 12px 8px;
             cursor: crosshair;
         }
@@ -925,7 +955,7 @@
             padding: 5px 9px;
             border-radius: 6px;
             white-space: nowrap;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid var(--border-dark-2);
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
             z-index: 10;
             transform: translateX(-50%);
@@ -938,7 +968,7 @@
             left: 50%;
             transform: translateX(-50%);
             border: 5px solid transparent;
-            border-top-color: rgba(255, 255, 255, 0.12);
+            border-top-color: var(--border-dark-2);
         }
 
         .sst-history-gyg a {
@@ -958,7 +988,7 @@
         }
 
         .sst-history-gyg a:hover {
-            background: #162638;
+            background: var(--navy-hover);
         }
 
         .sst-history-gyg a::after {
@@ -970,10 +1000,10 @@
 
         .sst-history-gyg-label {
             display: block;
-            font-size: 8px;
+            font-size: 10px;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.45);
+            color: var(--on-dark-2);
             margin-bottom: 4px;
         }
 
@@ -1189,7 +1219,7 @@
 
             if (currentMarker) currentMarker.remove();
             const el = document.createElement('div');
-            el.style.cssText = `width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #0ea5e9;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;`;
+            el.style.cssText = `width:14px;height:14px;border-radius:50%;background:#ffffff;border:3px solid #0ea5e9;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;`;
             currentMarker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lon, lat]).addTo(map);
 
             document.getElementById('info-body').innerHTML = `<div class="spinner" role="status"></div>`;
@@ -1357,7 +1387,7 @@
 
             if (marker) marker.remove();
             const el = document.createElement('div');
-            el.style.cssText = `width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #0ea5e9;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;`;
+            el.style.cssText = `width:14px;height:14px;border-radius:50%;background:#ffffff;border:3px solid #0ea5e9;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;`;
             marker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lon, lat]).addTo(map);
 
             document.getElementById('info-body').innerHTML = `<div class="spinner" role="status" aria-label="Loading temperature data"></div>`;
@@ -1716,10 +1746,10 @@
                 const step = (maxSST - minSST) <= 8 ? 1 : 2;
                 for (let t = Math.ceil(minSST); t <= maxSST; t += step) {
                     const y = yOf(t);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                    ctx.strokeStyle = 'var(--border-dark)';
                     ctx.lineWidth = 1;
                     ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + plotW, y); ctx.stroke();
-                    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                    ctx.fillStyle = 'rgba(255,255,255,0.70)';
                     ctx.font = '11px DM Mono, monospace';
                     ctx.textAlign = 'right';
                     ctx.fillText(`${t}°`, pad.left - 5, y + 3);
@@ -1732,7 +1762,7 @@
                     const d = new Date(pt.date + 'T00:00:00Z');
                     const mo = d.toLocaleString('en', { month: 'short', timeZone: 'UTC' }).toUpperCase();
                     const x = xOf(pt.date);
-                    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+                    ctx.fillStyle = 'rgba(255,255,255,0.70)';
                     ctx.fillText(mo, x, pad.top + plotH + 22);
                 }
 
@@ -1809,7 +1839,7 @@
                 const dateLabel = new Date(pt.date + 'T00:00:00Z').toLocaleDateString('en', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 
                 tooltip.innerHTML =
-                    `<span style="color:rgba(255,255,255,0.45);font-size:9px;letter-spacing:1px;text-transform:uppercase">${dateLabel}</span><br>` +
+                    `<span style="color:rgba(255,255,255,0.70);font-size:10px;letter-spacing:1px;text-transform:uppercase">${dateLabel}</span><br>` +
                     `<span style="color:${col};font-size:14px;font-weight:700">${pt.sst.toFixed(1)} °C</span>`;
                 tooltip.style.display = 'block';
                 const tipLeft = Math.max(44, Math.min(x, W - 64));

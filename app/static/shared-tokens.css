@@ -1,0 +1,60 @@
+/*
+ * shared-tokens.css
+ * SwimTemp — single source of truth for all design tokens.
+ *
+ * Import in every HTML template BEFORE any page-specific styles:
+ *   <link rel="stylesheet" href="/static/shared-tokens.css">
+ *
+ * Page-specific overrides go in each file's own <style> block.
+ * Never redefine these tokens locally — change them here.
+ *
+ * Last updated: 2026-06
+ */
+
+:root {
+
+  /* ── Backgrounds (dark pages: landing, beaches) ── */
+  --bg:          #060f1a;   /* page canvas */
+  --navy:        #0d1b2a;   /* elevated surface / card */
+  --navy-mid:    #0e2d4a;   /* deeper card level */
+  --navy-hover:  #162638;   /* hover state on dark surfaces */
+
+  /* ── Backgrounds (light panel: map forecast panel) ── */
+  --glass:       rgba(255, 255, 255, 0.95);
+
+  /* ── Text on dark backgrounds ── */
+  --on-dark:     rgba(255, 255, 255, 0.90);  /* primary   */
+  --on-dark-2:   rgba(255, 255, 255, 0.60);  /* secondary */
+  --on-dark-3:   rgba(255, 255, 255, 0.30);  /* muted     */
+
+  /* ── Text on light backgrounds (panel) ── */
+  --text-panel:        #0d1b2a;   /* primary   — same as --navy */
+  --text-panel-soft:   #334155;   /* secondary                  */
+  --text-panel-muted:  #475569;   /* muted                      */
+
+  /* ── Borders ── */
+  --border-dark:    rgba(255, 255, 255, 0.08);   /* subtle on dark  */
+  --border-dark-2:  rgba(255, 255, 255, 0.14);   /* emphasis on dark */
+  --border-panel:   rgba(0, 0, 0, 0.08);          /* on light panel  */
+  --border-panel-2: rgba(0, 0, 0, 0.15);          /* emphasis on panel */
+
+  /* ── Brand ── */
+  --accent:  #38bdf8;   /* sky blue — interactive highlight     */
+  --link:    #0369a1;   /* darker blue — links on light bg      */
+
+  /* ── Temperature band colors (map, chart, badges) ── */
+  --band-cold:      #2563eb;   /* < 17°C  */
+  --band-brave:     #0ea5e9;   /* 17–20°C */
+  --band-nice:      #22c55e;   /* 20–23°C */
+  --band-perfect:   #f59e0b;   /* 23–26°C */
+  --band-warm:      #ef4444;   /* > 26°C  */
+
+  /* ── Typography ── */
+  /* Serif: Fraunces everywhere (landing, beaches, map panel headings) */
+  /* Body/mono: DM Mono everywhere */
+
+  /* ── Misc ── */
+  --navy-90:  rgba(13, 27, 42, 0.90);   /* map overlays  */
+  --navy-95:  rgba(13, 27, 42, 0.95);   /* map popups    */
+  --navy-98:  rgba(13, 27, 42, 0.98);   /* map tooltips  */
+}

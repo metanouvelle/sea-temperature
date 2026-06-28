@@ -19,17 +19,17 @@
     <meta name="description"
         content="Sea temperature at {{ beach.name }}, {{ beach.city }} today: updated daily from satellite data. Monthly averages, best time to swim, and local activities.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="/static/shared-tokens.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
         rel="stylesheet">
     <style>
+        /* Page-specific aliases — see /static/shared-tokens.css */
         :root {
-            --deep: #060f1a;
-            --border: rgba(255, 255, 255, 0.08);
-            --text: #e8f4f8;
-            --muted: rgba(255, 255, 255, 0.60);
-            --soft: rgba(255, 255, 255, 0.72);
-            --accent: #38bdf8;
+            --text: var(--on-dark);
+            --muted: var(--on-dark-2);
+            --soft: var(--on-dark-2);
+            --border: var(--border-dark);
         }
 
         * {
@@ -40,7 +40,7 @@
 
         body {
             font-family: 'DM Mono', monospace;
-            background: var(--deep);
+            background: var(--bg);
             color: var(--text);
             min-height: 100vh;
         }
@@ -234,7 +234,7 @@
         }
 
         .chart-container {
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--border-dark);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 28px 24px 20px;
@@ -283,7 +283,7 @@
         }
 
         .info-card {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--border-dark);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 24px;
@@ -320,7 +320,7 @@
         }
 
         .gyg-affiliate-card {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--border-dark);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 24px;
@@ -334,7 +334,7 @@
 
         .gyg-affiliate-card:hover {
             border-color: rgba(56, 189, 248, 0.3);
-            background: rgba(255, 255, 255, 0.04);
+            background: var(--border-dark);
         }
 
         .gyg-card-content {
@@ -375,7 +375,7 @@
 
         .gyg-card-btn:hover {
             background: var(--accent);
-            color: var(--deep);
+            color: var(--bg);
             border-color: var(--accent);
             transform: translateY(-2px);
         }
@@ -453,7 +453,7 @@
             gap: 8px;
             padding: 10px 20px;
             background: var(--accent);
-            color: var(--deep);
+            color: var(--bg);
             border-radius: 100px;
             text-decoration: none;
             font-size: 10px;
@@ -465,7 +465,7 @@
         }
 
         .embed-cta-btn:hover {
-            background: #7dd3fc;
+            background: var(--accent);
             transform: translateY(-2px);
         }
 
@@ -473,7 +473,7 @@
         .cta-section {
             padding: 32px;
             border-radius: 20px;
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--border-dark);
             border: 1px solid var(--border);
             display: flex;
             align-items: center;
@@ -498,7 +498,7 @@
             gap: 10px;
             padding: 12px 24px;
             background: var(--accent);
-            color: var(--deep);
+            color: var(--bg);
             border-radius: 100px;
             text-decoration: none;
             font-size: 11px;
@@ -509,7 +509,7 @@
         }
 
         .cta-btn:hover {
-            background: #7dd3fc;
+            background: var(--accent);
             transform: translateY(-2px);
         }
 
@@ -582,7 +582,7 @@
             z-index: 1000;
             padding: 8px 16px;
             background: var(--accent);
-            color: var(--deep);
+            color: var(--bg);
             font-size: 13px;
             font-weight: 500;
             border-radius: 0 0 8px 8px;
@@ -690,7 +690,7 @@
             flex-wrap: wrap;
             gap: 8px;
             padding-top: 24px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid var(--border-dark);
             font-size: 11px;
             color: var(--muted);
             letter-spacing: 1px;
@@ -721,7 +721,7 @@
         }
 
         .wave-card-inner {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--border-dark);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 20px 24px;
@@ -809,7 +809,7 @@
         }
 
         .seo-month-item {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--border-dark);
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 10px 12px;
@@ -817,7 +817,7 @@
         }
 
         .seo-month-item:hover {
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--border-dark);
         }
 
         .seo-month-current {
@@ -859,7 +859,7 @@
         }
 
         .seo-faq-item {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--border-dark);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 18px 20px;
@@ -1382,7 +1382,8 @@
         <div class="footer-inner">
             <div class="footer-brand">
                 <a href="/" class="footer-logo">SwimTemp</a>
-                <p class="footer-tagline">Satellite sea temperature &amp; live ocean conditions for swimmers &amp; travelers.</p>
+                <p class="footer-tagline">Satellite sea temperature &amp; live ocean conditions for swimmers &amp;
+                    travelers.</p>
             </div>
             <div class="footer-links">
                 <div class="footer-col">
@@ -1412,7 +1413,13 @@
                 <div class="footer-col">
                     <div class="footer-col-label">Follow</div>
                     <a href="https://www.instagram.com/swimtemp/" target="_blank" rel="noopener">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>Instagram
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="vertical-align:middle;margin-right:6px">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                        </svg>Instagram
                     </a>
                 </div>
             </div>

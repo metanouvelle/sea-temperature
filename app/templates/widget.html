@@ -6,10 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ name }} Sea Temperature — SwimTemp</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="/static/shared-tokens.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
         rel="stylesheet">
     <style>
+        /* Widget light-surface local tokens */
+        :root {
+            --text-main: var(--navy);
+            /* #0d1b2a */
+            --text-sub: var(--text-panel-soft);
+            /* #334155 */
+            --text-dim: var(--text-panel-muted);
+            /* #475569 */
+            --text-faint: #94a3b8;
+            /* faintest — captions */
+            --border-w: rgba(0, 0, 0, 0.08);
+            --live-green: #4ade80;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -19,7 +34,7 @@
         body {
             font-family: 'DM Mono', monospace;
             background: transparent;
-            color: #0d1b2a;
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             align-items: stretch;
@@ -31,9 +46,9 @@
             display: flex;
             flex-direction: column;
             gap: 14px;
-            border: 1px solid rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-w);
             border-radius: 16px;
-            background: #fff;
+            background: #ffffff;
             box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
             margin: 8px;
         }
@@ -50,7 +65,7 @@
             font-family: 'Fraunces', serif;
             font-size: 17px;
             font-weight: 700;
-            color: #0d1b2a;
+            color: var(--text-main);
             letter-spacing: -0.3px;
             line-height: 1.1;
         }
@@ -62,7 +77,7 @@
             font-size: 9px;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: #64748b;
+            color: var(--text-sub);
             flex-shrink: 0;
         }
 
@@ -71,8 +86,8 @@
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #4ade80;
-            box-shadow: 0 0 6px #4ade80;
+            background: var(--live-green);
+            box-shadow: 0 0 6px var(--live-green);
             animation: pulse 2s ease-in-out infinite;
         }
 
@@ -108,14 +123,14 @@
             font-weight: 300;
             letter-spacing: -4px;
             line-height: 1;
-            color: #0d1b2a;
+            color: var(--text-main);
             transition: color 0.5s;
             min-width: 80px;
         }
 
         .widget-temp-unit {
             font-size: 16px;
-            color: #64748b;
+            color: var(--text-sub);
             margin-bottom: 6px;
         }
 
@@ -130,14 +145,14 @@
             font-size: 13px;
             font-weight: 300;
             background: rgba(56, 189, 248, 0.1);
-            color: #0369a1;
+            color: var(--link);
             border: 1px solid rgba(56, 189, 248, 0.2);
             transition: all 0.5s;
         }
 
         .widget-date {
             font-size: 9px;
-            color: #94a3b8;
+            color: var(--text-faint);
             letter-spacing: 1px;
             text-transform: uppercase;
             margin-top: 2px;
@@ -146,7 +161,7 @@
         /* ── Divider ── */
         .widget-divider {
             height: 1px;
-            background: rgba(0, 0, 0, 0.06);
+            background: var(--border-w);
         }
 
         /* ── Wave conditions ── */
@@ -166,20 +181,20 @@
             font-family: 'Fraunces', serif;
             font-size: 16px;
             font-weight: 300;
-            color: #0d1b2a;
+            color: var(--text-main);
             letter-spacing: -0.3px;
         }
 
         .widget-wave-label {
             font-size: 9px;
-            color: #94a3b8;
+            color: var(--text-faint);
             letter-spacing: 1px;
             text-transform: uppercase;
         }
 
         .widget-wave-state {
             font-size: 10px;
-            color: #475569;
+            color: var(--text-dim);
             margin-top: 6px;
             letter-spacing: 0.3px;
             grid-column: 1 / -1;
@@ -194,7 +209,7 @@
 
         .widget-powered {
             font-size: 9px;
-            color: #94a3b8;
+            color: var(--text-faint);
             letter-spacing: 1px;
             text-transform: uppercase;
             text-decoration: none;
@@ -202,17 +217,17 @@
         }
 
         .widget-powered:hover {
-            color: #38bdf8;
+            color: var(--accent);
         }
 
         .widget-powered strong {
-            color: #38bdf8;
+            color: var(--accent);
             font-weight: 400;
         }
 
         .widget-cta {
             font-size: 9px;
-            color: #38bdf8;
+            color: var(--accent);
             letter-spacing: 1px;
             text-transform: uppercase;
             text-decoration: none;
@@ -224,14 +239,14 @@
 
         .widget-cta:hover {
             background: #38bdf8;
-            color: #fff;
+            color: #ffffff;
         }
 
         .spinner {
             width: 16px;
             height: 16px;
-            border: 2px solid rgba(0, 0, 0, 0.08);
-            border-top-color: #38bdf8;
+            border: 2px solid var(--border-w);
+            border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 0.7s linear infinite;
             display: inline-block;

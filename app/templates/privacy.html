@@ -17,17 +17,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Privacy Policy for SwimTemp — real-time sea temperature data.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="/static/shared-tokens.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
         rel="stylesheet">
     <style>
+        /* Page-specific aliases — see /static/shared-tokens.css */
         :root {
-            --deep: #060f1a;
-            --border: rgba(255, 255, 255, 0.08);
-            --text: #e8f4f8;
-            --muted: rgba(255, 255, 255, 0.60);
-            --soft: rgba(255, 255, 255, 0.72);
-            --accent: #38bdf8;
+            --text: var(--on-dark);
+            --muted: var(--on-dark-2);
+            --soft: var(--on-dark-2);
+            --border: var(--border-dark);
         }
 
         * {
@@ -38,7 +38,7 @@
 
         body {
             font-family: 'DM Mono', monospace;
-            background: var(--deep);
+            background: var(--bg);
             color: var(--text);
             min-height: 100vh;
         }
@@ -251,7 +251,7 @@
             flex-wrap: wrap;
             gap: 8px;
             padding-top: 24px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid var(--border-dark);
             font-size: 11px;
             color: var(--muted);
             letter-spacing: 1px;
@@ -399,7 +399,8 @@
         <div class="footer-inner">
             <div class="footer-brand">
                 <a href="/" class="footer-logo">SwimTemp</a>
-                <p class="footer-tagline">Satellite sea temperature &amp; live ocean conditions for swimmers &amp; travelers.</p>
+                <p class="footer-tagline">Satellite sea temperature &amp; live ocean conditions for swimmers &amp;
+                    travelers.</p>
             </div>
             <div class="footer-links">
                 <div class="footer-col">
@@ -431,7 +432,13 @@
                 <div class="footer-col">
                     <div class="footer-col-label">Follow</div>
                     <a href="https://www.instagram.com/swimtemp/" target="_blank" rel="noopener">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>Instagram
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="vertical-align:middle;margin-right:6px">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                        </svg>Instagram
                     </a>
                 </div>
             </div>

@@ -22,18 +22,20 @@
     <meta name="description"
         content="Satellite-based sea temperature data for every ocean. Find where the water is perfect.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link <link rel="stylesheet" href="/static/shared-tokens.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
         rel="stylesheet">
     <style>
+        /* Page-specific aliases — maps to shared-tokens.css */
         :root {
-            --deep: #060f1a;
-            --ocean: #0a1f35;
-            --mid: #0e2d4a;
-            --foam: rgba(255, 255, 255, 0.06);
-            --text: #e8f4f8;
-            --muted: rgba(255, 255, 255, 0.60);
-            --accent: #38bdf8;
+            --text: var(--on-dark);
+            --muted: var(--on-dark-2);
+            --ocean: var(--navy);
+            --mid: var(--navy-mid);
+            --foam: var(--border-dark);
+            --soft: var(--on-dark-3);
+            --border: var(--border-dark);
         }
 
         * {
@@ -49,7 +51,7 @@
 
         body {
             font-family: 'DM Mono', monospace;
-            background: var(--deep);
+            background: var(--bg);
             color: var(--text);
             cursor: default;
             overflow-x: hidden;
@@ -165,7 +167,7 @@
 
         .cta-primary {
             background: var(--accent);
-            color: var(--deep);
+            color: var(--bg);
             box-shadow: 0 0 40px rgba(56, 189, 248, 0.25);
         }
 
@@ -454,7 +456,7 @@
             z-index: 1000;
             padding: 8px 16px;
             background: var(--accent);
-            color: var(--deep);
+            color: var(--bg);
             font-size: 13px;
             font-weight: 500;
             border-radius: 0 0 8px 8px;
