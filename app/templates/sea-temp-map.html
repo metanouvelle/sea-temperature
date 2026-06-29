@@ -16,13 +16,13 @@
         :root {
             /* Core palette */
             --navy: #0d1b2a;
-            --navy-hover: var(--navy-hover);
-            --bg: var(--bg);
+            --navy-hover: #162638;
+            --bg: #060f1a;
             --glass: rgba(255, 255, 255, 0.95);
             --soft: #334155;
             --muted: #475569;
             --accent: #38bdf8;
-            --link: var(--link);
+            --link: #0369a1;
 
             /* White on dark — 3 levels only */
             --on-dark: rgba(255, 255, 255, 0.90);
@@ -30,13 +30,13 @@
             --on-dark-3: rgba(255, 255, 255, 0.30);
 
             /* Navy transparency — 3 levels only */
-            --navy-90: var(--navy-90);
-            --navy-95: var(--navy-95);
-            --navy-98: var(--navy-98);
+            --navy-90: rgba(13, 27, 42, 0.90);
+            --navy-95: rgba(13, 27, 42, 0.95);
+            --navy-98: rgba(13, 27, 42, 0.98);
 
             /* Border on dark */
             --border-dark: rgba(255, 255, 255, 0.08);
-            --border-dark-2: var(--border-dark-2);
+            --border-dark-2: rgba(255, 255, 255, 0.12);
         }
 
         * {
@@ -967,24 +967,33 @@
             border-top-color: var(--border-dark-2);
         }
 
-        .sst-history-gyg a {
+        .sst-history-gyg a,
+        .sst-history-gyg a:link,
+        .sst-history-gyg a:visited,
+        .sst-history-gyg a:hover,
+        .sst-history-gyg a:active {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            background: #0d1b2a;
             border-radius: 14px;
             padding: 16px 18px;
             text-decoration: none;
-            color: #ffffff;
+            color: #ffffff !important;
             font-family: 'DM Mono', monospace;
             font-size: 12px;
             line-height: 1.5;
-            transition: background 0.15s;
         }
 
-        .sst-history-gyg a:hover {
-            background: var(--navy-hover);
+        .sst-history-gyg a,
+        .sst-history-gyg a:link,
+        .sst-history-gyg a:visited {
+            background: #0d1b2a;
+        }
+
+        .sst-history-gyg a:hover,
+        .sst-history-gyg a:active {
+            background: #162638;
         }
 
         .sst-history-gyg a::after {
@@ -1154,6 +1163,8 @@
             <div class="forecast-header">
                 <div>
                     <div class="forecast-title" id="forecast-place">Ocean Forecast</div>
+                    <div id="forecast-coords" style="font-family:'DM Mono',monospace;font-size:10px;
+                         color:var(--text-panel-muted);letter-spacing:1px;margin-top:3px"></div>
                 </div>
                 <button class="forecast-close" id="forecast-close" aria-label="Close forecast">✕</button>
             </div>
@@ -1184,19 +1195,55 @@
         // ── Reverse geocoding ─────────────────────────────────────────────────────────
         async function getPlaceName(lat, lon) {
             try {
-                const res = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=8`,
+                // Strategy: reverse geocode first, then if we only get a country,
+                // do a nearby city search to get something precise.
+                const reverseRes = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=14&addressdetails=1`,
                     { headers: { 'Accept-Language': 'en' } }
                 );
-                if (!res.ok) return null;
-                const d = await res.json();
+                if (!reverseRes.ok) return null;
+                const d = await reverseRes.json();
                 const a = d.address || {};
+
+                // Named body of water — use it directly
                 if (a.sea) return a.sea;
                 if (a.ocean) return a.ocean;
-                const place = a.city || a.town || a.village || a.county || a.state || '';
+                if (a.bay) return a.bay + (a.country ? ', ' + a.country : '');
+                if (a.gulf) return a.gulf + (a.country ? ', ' + a.country : '');
+
+                const city = a.city || a.town || a.village || a.municipality || '';
+                const county = a.county || a.state_district || '';
+                const state = a.state || '';
                 const country = a.country || '';
-                if (place && country) return `${place}, ${country}`;
-                if (country) return country;
+
+                // If we got a precise city, use it
+                if (city) {
+                    const parts = [city, state, country].filter(Boolean);
+                    const unique = parts.filter((p, i) => p !== parts[i - 1]);
+                    return unique.slice(0, 3).join(', ');
+                }
+
+                // Only got country/state — try to find nearest city via search
+                if (country) {
+                    try {
+                        const nearbyRes = await fetch(
+                            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(country)}&format=json&limit=1&featuretype=city&viewbox=${(lon - 0.5).toFixed(3)},${(lat + 0.5).toFixed(3)},${(lon + 0.5).toFixed(3)},${(lat - 0.5).toFixed(3)}&bounded=1`,
+                            { headers: { 'Accept-Language': 'en' } }
+                        );
+                        if (nearbyRes.ok) {
+                            const nearby = await nearbyRes.json();
+                            if (nearby.length > 0) {
+                                const name = nearby[0].display_name.split(',').slice(0, 2).join(',').trim();
+                                return name;
+                            }
+                        }
+                    } catch { /* fall through */ }
+
+                    // Last resort: use state + country
+                    const parts = [county || state, country].filter(Boolean);
+                    return parts.join(', ') || country;
+                }
+
                 return null;
             } catch { return null; }
         }
@@ -1387,7 +1434,16 @@
             if (!placeName || placeName.includes('Ocean') || placeName.includes('Sea')) {
                 return null;
             }
-            const city = placeName.split(',')[0].trim();
+            const parts = placeName.split(',').map(p => p.trim()).filter(Boolean);
+            // Skip very generic single-word country names as the query city
+            // Use the most specific part that isn't a country name alone
+            // e.g. "Catania, Sicily, Italy" → use "Catania"
+            // e.g. "Italy" → skip (too generic)
+            if (parts.length === 1 && parts[0].length > 0) {
+                // Only a country name — not specific enough for GYG
+                return null;
+            }
+            const city = parts[0];
             let label, query, emoji;
 
             if (temp >= 26) {
@@ -1527,15 +1583,22 @@
         // We'll capture coords differently — see showForecast()
 
         function showForecast() {
-            // Get current marker coords
             const lat = forecastLat;
             const lon = forecastLon;
             if (!lat || !lon) return;
 
             document.getElementById('forecast-overlay').classList.add('visible');
             document.getElementById('forecast-place').textContent = forecastPlace || 'Ocean Forecast';
-            document.getElementById('forecast-body').innerHTML = '<div class="forecast-loading">Loading details...</div>';
 
+            // Show coordinates below title
+            const coordEl = document.getElementById('forecast-coords');
+            if (coordEl) {
+                const latStr = Math.abs(lat).toFixed(4) + '°' + (lat >= 0 ? 'N' : 'S');
+                const lonStr = Math.abs(lon).toFixed(4) + '°' + (lon >= 0 ? 'E' : 'W');
+                coordEl.textContent = `${latStr}  ${lonStr}`;
+            }
+
+            document.getElementById('forecast-body').innerHTML = '<div class="forecast-loading">Loading details...</div>';
             loadForecast(lat, lon);
         }
 
