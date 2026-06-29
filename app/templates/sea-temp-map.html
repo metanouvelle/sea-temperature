@@ -552,31 +552,27 @@
                 right: 8px;
             }
 
-            /* Legend — hidden by default */
+            /* Legend panel — hidden on mobile (inline version used instead) */
             #legend-panel {
-                bottom: 52px;
-                top: auto;
-                right: 12px;
-                left: auto;
-                width: 160px;
-                padding: 12px 12px 10px;
-                display: none;
+                display: none !important;
             }
 
-            #legend-panel.visible {
-                display: block;
-            }
-
-            /* Legend toggle — bottom right above map controls */
             #legend-toggle {
-                display: flex;
-                position: fixed;
-                bottom: 52px;
-                right: 60px;
-                top: auto;
+                display: none;
             }
         }
 
+
+        /* Scale button — mobile only */
+        .legend-scale-btn {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .legend-scale-btn {
+                display: inline-flex;
+            }
+        }
 
         /* ── Wave conditions in panel ── */
         .panel-waves {
@@ -1032,7 +1028,7 @@
                 width: 100%;
                 margin: 0;
                 border-radius: 20px 20px 0 0;
-                max-height: 75vh;
+                max-height: 80vh;
             }
 
             #forecast-overlay {
@@ -1040,17 +1036,68 @@
                 justify-content: center;
             }
 
+            /* ── Mobile forecast cards: horizontal rows, not tiny columns ── */
             .forecast-days {
-                grid-template-columns: repeat(7, 1fr);
-                gap: 3px;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
             }
 
             .forecast-day {
-                padding: 6px 2px;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 14px 16px;
+                border-radius: 12px;
+                text-align: left;
+                gap: 0;
+            }
+
+            .forecast-day-name {
+                font-size: 11px;
+                letter-spacing: 1px;
+                min-width: 100px;
             }
 
             .forecast-day-temp {
-                font-size: 13px;
+                font-size: 26px;
+                letter-spacing: -0.5px;
+            }
+
+            /* ── Mobile conditions table: tighten ── */
+            .forecast-table {
+                gap: 4px;
+            }
+
+            .forecast-cell {
+                font-size: 12px;
+                padding: 8px 4px;
+            }
+
+            .forecast-row-label {
+                font-size: 11px;
+            }
+
+            /* ── Mobile block padding ── */
+            .fp-block {
+                padding: 14px 16px;
+            }
+
+            .fp-history-block {
+                padding: 14px 16px;
+            }
+
+            .fp-cta-block {
+                padding: 14px 16px 20px;
+            }
+
+            /* ── Mobile block heading ── */
+            .fp-block-heading-title {
+                font-size: 20px;
+            }
+
+            .fp-block-heading-sub {
+                font-size: 9px;
             }
         }
     </style>
@@ -1257,8 +1304,26 @@
             document.getElementById('info-body').innerHTML = `
                 <p class="temp-place">${placeName || name}</p>
                 <div class="temp-display"><span class="temp-value">${tempResult.mean_c.toFixed(1)}</span><span class="temp-unit">°C</span></div>
-                <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
-                    <span aria-hidden="true">${band.emoji}</span><span>${band.label}</span>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
+                        <span aria-hidden="true">${band.emoji}</span><span>${band.label}</span>
+                    </div>
+                    <button class="legend-scale-btn" onclick="var el=document.getElementById('inline-legend');el.style.display=el.style.display==='none'?'block':'none'"
+                        aria-label="Toggle temperature scale"
+                        style="align-items:center;gap:4px;padding:4px 10px;
+                               border-radius:100px;border:1px solid rgba(0,0,0,0.1);
+                               background:rgba(0,0,0,0.04);cursor:pointer;font-size:10px;
+                               font-family:'DM Mono',monospace;letter-spacing:0.5px;color:var(--soft);">
+                        🌡 Scale
+                    </button>
+                </div>
+                <div id="inline-legend" style="display:none;margin-top:8px;padding:8px 10px;
+                     background:rgba(0,0,0,0.03);border-radius:10px;border:1px solid rgba(0,0,0,0.06)">
+                    ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0">
+                        <div style="width:18px;height:5px;border-radius:3px;background:${b.color};flex-shrink:0"></div>
+                        <span style="font-size:11px;font-weight:500;color:#0d1b2a;flex:1">${b.label}</span>
+                        <span style="font-size:10px;color:#475569">${b.range}</span>
+                    </div>`).join('')}
                 </div>
                 <p class="temp-meta">${tempResult.date}</p>
                 ${waveHtml(waves)}
@@ -1425,8 +1490,26 @@
             document.getElementById('info-body').innerHTML = `
                 <p class="temp-place">${placeName || 'Open Ocean'}</p>
                 <div class="temp-display"><span class="temp-value">${tempResult.mean_c.toFixed(1)}</span><span class="temp-unit">°C</span></div>
-                <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
-                    <span aria-hidden="true">${band.emoji}</span><span>${band.label}</span>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <div class="temp-badge" style="background:${band.color}18;color:${band.color};border:1.5px solid ${band.color}33">
+                        <span aria-hidden="true">${band.emoji}</span><span>${band.label}</span>
+                    </div>
+                    <button class="legend-scale-btn" onclick="var el=document.getElementById('inline-legend');el.style.display=el.style.display==='none'?'block':'none'"
+                        aria-label="Toggle temperature scale"
+                        style="align-items:center;gap:4px;padding:4px 10px;
+                               border-radius:100px;border:1px solid rgba(0,0,0,0.1);
+                               background:rgba(0,0,0,0.04);cursor:pointer;font-size:10px;
+                               font-family:'DM Mono',monospace;letter-spacing:0.5px;color:var(--soft);">
+                        🌡 Scale
+                    </button>
+                </div>
+                <div id="inline-legend" style="display:none;margin-top:8px;padding:8px 10px;
+                     background:rgba(0,0,0,0.03);border-radius:10px;border:1px solid rgba(0,0,0,0.06)">
+                    ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0">
+                        <div style="width:18px;height:5px;border-radius:3px;background:${b.color};flex-shrink:0"></div>
+                        <span style="font-size:11px;font-weight:500;color:#0d1b2a;flex:1">${b.label}</span>
+                        <span style="font-size:10px;color:#475569">${b.range}</span>
+                    </div>`).join('')}
                 </div>
                 <p class="temp-meta">${tempResult.date}</p>
                 ${waveHtml(waves)}
