@@ -615,6 +615,262 @@
             grid-column: 1 / -1;
         }
 
+        /* ── Nearby beaches button (inside info panel) ── */
+        .nearby-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--soft);
+            font-family: 'DM Mono', monospace;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .nearby-btn:hover {
+            background: rgba(56, 189, 248, 0.06);
+            border-color: rgba(56, 189, 248, 0.2);
+            color: var(--link);
+        }
+
+        /* ── Nearby beaches overlay ── */
+        #nearby-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 30;
+            display: none;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+
+        #nearby-overlay.visible {
+            display: flex;
+        }
+
+        #nearby-panel {
+            background: var(--glass);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 4px 40px rgba(0, 0, 0, 0.15);
+            width: 480px;
+            max-height: 85vh;
+            overflow-y: auto;
+            margin: 20px;
+        }
+
+        .nearby-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px 14px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            position: sticky;
+            top: 0;
+            background: var(--glass);
+            backdrop-filter: blur(24px);
+            z-index: 1;
+        }
+
+        .nearby-header-title {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--navy);
+        }
+
+        .nearby-header-sub {
+            font-family: 'DM Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--soft);
+            margin-top: 2px;
+        }
+
+        .nearby-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--muted);
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .nearby-close:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .nearby-body {
+            padding: 12px 16px 20px;
+        }
+
+
+
+        /* Beach cards */
+        /* Numbered beach marker on map */
+        .beach-num-marker {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2.5px solid #0ea5e9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            color: #0d1b2a;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            transition: transform 0.15s, box-shadow 0.15s;
+            user-select: none;
+        }
+
+        .beach-num-marker.active {
+            color: #ffffff;
+            transform: scale(1.2);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Number badge in the card */
+        .nearby-beach-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #0d1b2a;
+            color: #ffffff;
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .nearby-beach-card--active .nearby-beach-num {
+            background: var(--accent);
+        }
+
+        .nearby-beach-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            background: rgba(0, 0, 0, 0.02);
+            margin-bottom: 8px;
+            text-decoration: none;
+            transition: all 0.15s;
+            cursor: pointer;
+        }
+
+        .nearby-beach-card:hover {
+            border-color: rgba(56, 189, 248, 0.25);
+            background: rgba(56, 189, 248, 0.04);
+        }
+
+        .nearby-beach-temp {
+            font-family: 'Fraunces', serif;
+            font-size: 28px;
+            font-weight: 300;
+            line-height: 1;
+            letter-spacing: -1px;
+            min-width: 70px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .nearby-beach-temp-unit {
+            font-size: 12px;
+            font-weight: 300;
+        }
+
+        .nearby-beach-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .nearby-beach-name {
+            font-family: 'Fraunces', serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--navy);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nearby-beach-meta {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            color: var(--soft);
+            margin-top: 3px;
+            letter-spacing: 0.5px;
+        }
+
+        .nearby-beach-badge {
+            font-family: 'DM Mono', monospace;
+            font-size: 9px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 99px;
+            margin-top: 4px;
+            display: inline-block;
+            letter-spacing: 0.5px;
+        }
+
+        .nearby-beach-card--active {
+            border-color: var(--accent) !important;
+            background: rgba(56, 189, 248, 0.06) !important;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+
+        .nearby-loading {
+            text-align: center;
+            padding: 32px 16px;
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            color: var(--soft);
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 768px) {
+            #nearby-panel {
+                width: 100%;
+                margin: 0;
+                border-radius: 20px 20px 0 0;
+                max-height: 80vh;
+            }
+
+            #nearby-overlay {
+                align-items: flex-end;
+                justify-content: center;
+            }
+        }
+
         /* GYG link moved to forecast panel chart section */
 
         /* ── Accessibility ── */
@@ -1157,6 +1413,25 @@
     <button id="legend-toggle" aria-label="Toggle temperature legend">🌡</button>
 
 
+    <!-- Nearby beaches overlay -->
+    <div id="nearby-overlay" role="dialog" aria-label="Beaches nearby" aria-modal="true">
+        <div id="nearby-panel">
+            <div class="nearby-header">
+                <div>
+                    <div class="nearby-header-title" id="nearby-title">Beaches nearby</div>
+                    <div class="nearby-header-sub" id="nearby-sub">Loading...</div>
+                </div>
+                <button class="nearby-close" id="nearby-close" aria-label="Close">✕</button>
+            </div>
+            <div class="nearby-body">
+
+                <div id="nearby-content">
+                    <div class="nearby-loading">Loading beaches...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Forecast overlay -->
     <div id="forecast-overlay" role="dialog" aria-label="7-day ocean forecast" aria-modal="true">
         <div id="forecast-panel">
@@ -1374,7 +1649,8 @@
                 </div>
                 <p class="temp-meta">${tempResult.date}</p>
                 ${waveHtml(waves)}
-                <button class="more-details-btn" onclick="showForecast()">More information</button>`;
+                <button class="more-details-btn" onclick="showForecast()">More information</button>
+                <button class="nearby-btn" onclick="showNearbyBeaches(${lat.toFixed(5)}, ${lon.toFixed(5)})">📍 Beaches nearby →</button>`;
             marker = currentMarker;
         }
 
@@ -1498,11 +1774,30 @@
         // ── Click to inspect temperature ──────────────────────────────────────────────
         let marker = null;
 
+        // Clear beach markers only when user clicks a genuinely new ocean point
+        map.on('click', async e => {
+            const t = e.originalEvent.target;
+            if (!t.closest('.panel') &&
+                !t.closest('#map-nav') &&
+                !t.closest('#search-container') &&
+                !t.closest('#legend-toggle') &&
+                !t.closest('.maplibregl-ctrl') &&
+                !t.closest('.maplibregl-ctrl-group') &&
+                !t.closest('.beach-marker-el')) {
+                beachMarkers.forEach(m => m.remove());
+                beachMarkers = [];
+                hideNearbyPanel();
+            }
+        });
+
         map.on('click', async e => {
             if (e.originalEvent.target.closest('.panel') ||
                 e.originalEvent.target.closest('#map-nav') ||
                 e.originalEvent.target.closest('#search-container') ||
-                e.originalEvent.target.closest('#legend-toggle')) return;
+                e.originalEvent.target.closest('#legend-toggle') ||
+                e.originalEvent.target.closest('.beach-marker-el') ||
+                e.originalEvent.target.closest('.maplibregl-ctrl') ||
+                e.originalEvent.target.closest('.maplibregl-ctrl-group')) return;
 
             const { lng: lon, lat } = e.lngLat;
 
@@ -1569,7 +1864,8 @@
                 </div>
                 <p class="temp-meta">${tempResult.date}</p>
                 ${waveHtml(waves)}
-                <button class="more-details-btn" onclick="showForecast()">More information</button>`;
+                <button class="more-details-btn" onclick="showForecast()">More information</button>
+                <button class="nearby-btn" onclick="showNearbyBeaches(${lat.toFixed(5)}, ${lon.toFixed(5)})">📍 Beaches nearby →</button>`;
         });
 
 
@@ -1601,6 +1897,299 @@
             document.getElementById('forecast-body').innerHTML = '<div class="forecast-loading">Loading details...</div>';
             loadForecast(lat, lon);
         }
+
+        // ── Nearby beaches ────────────────────────────────────────────────────────────
+        let nearbyLat = null, nearbyLon = null;
+        let beachMarkers = [];
+
+        function highlightBeachMarker(idx) {
+            // Highlight card
+            document.querySelectorAll('.nearby-beach-card').forEach(c =>
+                c.classList.remove('nearby-beach-card--active')
+            );
+            const card = document.getElementById(`beach-card-${idx}`);
+            if (card) {
+                card.classList.add('nearby-beach-card--active');
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            // Highlight marker — active one fills with its border colour
+            const els = window._beachMarkerEls || [];
+            els.forEach((m, i) => {
+                if (i === idx) {
+                    m.classList.add('active');
+                    m.style.background = m.style.borderColor;
+                    m.style.color = '#ffffff';
+                } else {
+                    m.classList.remove('active');
+                    m.style.background = '#ffffff';
+                    m.style.color = '#0d1b2a';
+                }
+            });
+        }
+
+        function showNearbyBeaches(lat, lon) {
+            nearbyLat = lat; nearbyLon = lon;
+            document.getElementById('nearby-overlay').classList.add('visible');
+            loadNearby();
+        }
+
+        // Close panel only — keep markers on map (user is still browsing)
+        function hideNearbyPanel() {
+            document.getElementById('nearby-overlay').classList.remove('visible');
+        }
+
+        // Close panel AND remove markers — only when explicitly dismissed
+        function hideNearby() {
+            hideNearbyPanel();
+            beachMarkers.forEach(m => m.remove());
+            beachMarkers = [];
+        }
+
+        // X button → full dismiss (remove markers)
+        // Prevent browser page-zoom on trackpad pinch/ctrl+scroll inside any panel.
+        // We preventDefault to stop the browser zooming, but still allow normal
+        // panel scrolling (only block ctrlKey/metaKey combos which = pinch-to-zoom).
+        function preventPageZoom(e) {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+            }
+        }
+        // Apply to all panels so behaviour is consistent
+        ['nearby-panel', 'forecast-panel', 'info-panel', 'legend-panel'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('wheel', preventPageZoom, { passive: false });
+        });
+        // Also block it at the document level — trackpad pinch fires on the whole page
+        document.addEventListener('wheel', e => {
+            if (e.ctrlKey || e.metaKey) e.preventDefault();
+        }, { passive: false });
+
+        document.getElementById('nearby-close').addEventListener('click', hideNearby);
+
+        // Backdrop click → just hide panel, keep markers visible
+        document.getElementById('nearby-overlay').addEventListener('click', e => {
+            if (e.target === document.getElementById('nearby-overlay')) hideNearbyPanel();
+        });
+
+
+
+        const BAND_COLORS_MAP = {
+            'Cold': '#2563eb',
+            'Brave': '#0ea5e9',
+            'Nice': '#22c55e',
+            'Perfect': '#f59e0b',
+            'Very Warm': '#ef4444',
+            'Unknown': '#94a3b8',
+        };
+
+        function bandFromTemp(t) {
+            if (t === null || t === undefined) return { label: '—', color: '#94a3b8' };
+            if (t < 17) return { label: 'Cold', color: '#2563eb' };
+            if (t < 20) return { label: 'Brave', color: '#0ea5e9' };
+            if (t < 23) return { label: 'Nice', color: '#22c55e' };
+            if (t < 26) return { label: 'Perfect', color: '#f59e0b' };
+            return { label: 'Very Warm', color: '#ef4444' };
+        }
+
+        function beachCard(beach, showDist = true) {
+            const temp = beach.temp_c ?? beach.monthly_avg;
+            const band = bandFromTemp(temp);
+            const dist = showDist && beach.distance_km != null
+                ? `${beach.distance_km} km away · ` : '';
+            const source = beach.temp_c != null ? 'Live' : `${beach.month} avg`;
+            const tempStr = temp != null ? temp.toFixed(1) : '—';
+
+            return `<a href="/beach/${beach.slug}" class="nearby-beach-card" target="_blank" rel="noopener">
+                <div class="nearby-beach-info">
+                    <div class="nearby-beach-name">${beach.name}</div>
+                    <div class="nearby-beach-meta">${dist}${source}</div>
+                    <span class="nearby-beach-badge" style="background:${band.color}18;color:${band.color}">${band.label}</span>
+                </div>
+                <div class="nearby-beach-temp" style="color:${band.color}">
+                    ${tempStr}<span class="nearby-beach-temp-unit">°</span>
+                </div>
+            </a>`;
+        }
+
+        const NEARBY_RADIUS_KM = 50;
+
+        async function queryOverpassBeaches(lat, lon, radiusKm) {
+            const radiusM = radiusKm * 1000;
+            // Compact Overpass QL — single line, GET-friendly
+            // OSM uses two main beach tags:
+            // natural=beach  → natural sandy/rocky beach (most common, especially in Italy)
+            // leisure=beach  → managed/built beach structure
+            // leisure=beach_resort → beach resort with facilities
+            const query = `[out:json][timeout:25];(node["natural"="beach"](around:${radiusM},${lat},${lon});way["natural"="beach"](around:${radiusM},${lat},${lon});node["leisure"="beach"](around:${radiusM},${lat},${lon});way["leisure"="beach"](around:${radiusM},${lat},${lon});node["leisure"="beach_resort"](around:${radiusM},${lat},${lon});way["leisure"="beach_resort"](around:${radiusM},${lat},${lon}););out center tags;`;
+
+            console.log('[Overpass] Querying beaches within', radiusKm, 'km of', lat.toFixed(4), lon.toFixed(4));
+
+            // Try multiple Overpass endpoints — some have better CORS support
+            const endpoints = [
+                'https://overpass-api.de/api/interpreter',
+                'https://overpass.kumi.systems/api/interpreter',
+            ];
+
+            let lastErr;
+            for (const endpoint of endpoints) {
+                try {
+                    const url = `${endpoint}?data=${encodeURIComponent(query)}`;
+                    const res = await fetch(url, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' },
+                    });
+                    if (!res.ok) {
+                        console.warn('[Overpass] HTTP', res.status, 'from', endpoint);
+                        lastErr = new Error('HTTP ' + res.status);
+                        continue;
+                    }
+                    const data = await res.json();
+                    console.log('[Overpass] Found', data.elements?.length, 'elements via', endpoint);
+                    return data.elements || [];
+                } catch (err) {
+                    console.warn('[Overpass] Failed on', endpoint, err.message);
+                    lastErr = err;
+                }
+            }
+            throw lastErr;
+        }
+
+        function overpassToBeach(el) {
+            // Normalise node / way / relation into { name, lat, lon }
+            const lat = el.lat ?? el.center?.lat;
+            const lon = el.lon ?? el.center?.lon;
+            if (!lat || !lon) return null;
+            const name = el.tags?.name || el.tags?.['name:en'] || 'Unnamed Beach';
+            return { name, lat, lon };
+        }
+
+        function haversineKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        async function loadNearby() {
+            if (!nearbyLat || !nearbyLon) return;
+            const content = document.getElementById('nearby-content');
+            const sub = document.getElementById('nearby-sub');
+            content.innerHTML = '<div class="nearby-loading">Searching for beaches nearby…</div>';
+            sub.textContent = `Within ${NEARBY_RADIUS_KM} km`;
+
+            try {
+                // 1. Find beaches via OpenStreetMap / Overpass
+                const elements = await queryOverpassBeaches(nearbyLat, nearbyLon, NEARBY_RADIUS_KM);
+
+                console.log('[Nearby] Overpass returned', elements.length, 'elements');
+                if (!elements.length) {
+                    content.innerHTML = `<div class="nearby-loading">No beaches found within ${NEARBY_RADIUS_KM} km.<br>Try clicking closer to a coastline.</div>`;
+                    sub.textContent = 'No results';
+                    return;
+                }
+
+                // 2. Normalise + sort by distance, deduplicate by name
+                const seen = new Set();
+                const beaches = elements
+                    .map(overpassToBeach)
+                    .filter(b => b !== null)
+                    .filter(b => {
+                        if (seen.has(b.name)) return false;
+                        seen.add(b.name);
+                        return true;
+                    })
+                    .map(b => ({ ...b, dist: haversineKm(nearbyLat, nearbyLon, b.lat, b.lon) }))
+                    .sort((a, b) => a.dist - b.dist)
+                    .slice(0, 10);
+
+                sub.textContent = `${beaches.length} beaches within ${NEARBY_RADIUS_KM} km`;
+
+                // 3. Fetch live SST for each beach in parallel
+                content.innerHTML = '<div class="nearby-loading">Loading temperatures…</div>';
+
+                const withTemp = await Promise.all(beaches.map(async b => {
+                    try {
+                        const res = await fetch(
+                            `/api/point?lat=${b.lat.toFixed(5)}&lon=${b.lon.toFixed(5)}&radius_km=5`
+                        );
+                        const data = await res.json();
+                        return {
+                            ...b,
+                            temp_c: data.status === 'ok' ? data.mean_c : null,
+                            status: data.status,
+                        };
+                    } catch {
+                        return { ...b, temp_c: null, status: 'unavailable' };
+                    }
+                }));
+
+                // 4. Clear old beach markers
+                beachMarkers.forEach(m => m.remove());
+                beachMarkers = [];
+
+                // 5. Render numbered markers + cards
+                const markerEls = []; // keep refs to marker elements for highlighting
+
+                content.innerHTML = withTemp.map((b, i) => {
+                    const num = i + 1;
+                    const band = bandFromTemp(b.temp_c);
+                    const dotColor = b.temp_c != null ? band.color : '#94a3b8';
+                    const tempStr = b.temp_c != null ? b.temp_c.toFixed(1) : '—';
+                    const distStr = b.dist.toFixed(1);
+                    const cardId = `beach-card-${i}`;
+
+                    // ── Numbered map marker ──────────────────────────────────
+                    const el = document.createElement('div');
+                    el.className = 'beach-num-marker beach-marker-el';
+                    el.textContent = num;
+                    el.title = b.name;
+                    el.style.borderColor = dotColor;
+                    markerEls.push(el);
+
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        // Open panel if closed
+                        document.getElementById('nearby-overlay').classList.add('visible');
+                        highlightBeachMarker(i);
+                    });
+
+                    const mkr = new maplibregl.Marker({ element: el, anchor: 'center' })
+                        .setLngLat([b.lon, b.lat])
+                        .addTo(map);
+                    beachMarkers.push(mkr);
+
+                    // ── Card ─────────────────────────────────────────────────
+                    return `<div class="nearby-beach-card" id="${cardId}"
+                                 onclick="highlightBeachMarker(${i})"
+                                 style="cursor:pointer;display:flex;align-items:center;gap:12px">
+                        <div class="nearby-beach-num" style="background:${dotColor}">${num}</div>
+                        <div class="nearby-beach-info" style="flex:1;min-width:0">
+                            <div class="nearby-beach-name">${b.name}</div>
+                            <div class="nearby-beach-meta">${distStr} km away · ${b.temp_c != null ? 'Live SST' : 'No data'}</div>
+                            <span class="nearby-beach-badge"
+                                  style="background:${dotColor}18;color:${dotColor}">
+                                ${b.temp_c != null ? band.label : 'No ocean data'}
+                            </span>
+                        </div>
+                        <div class="nearby-beach-temp" style="color:${dotColor}">
+                            ${tempStr}<span class="nearby-beach-temp-unit">°</span>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                // Store marker elements for highlight function
+                window._beachMarkerEls = markerEls;
+
+            } catch (err) {
+                content.innerHTML = '<div class="nearby-loading">Could not load beaches.<br>Check your connection and try again.</div>';
+                sub.textContent = 'Error';
+                console.error('Overpass error:', err);
+            }
+        }
+
+
 
         document.getElementById('forecast-close').addEventListener('click', () => {
             document.getElementById('forecast-overlay').classList.remove('visible');

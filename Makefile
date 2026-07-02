@@ -4,7 +4,7 @@ POETRY_BIN     ?= poetry
 PROJECT_NAME   := sea-temperature
 SRC		       := app
 
-.PHONY: install-python install-poetry setup build-dev activate-shell add-kernel
+.PHONY: install-python install-poetry setup build-dev activate-shell add-kernel test test-api test-urls test-beaches test-all
 
 install-python:
 	# Install pyenv if it doesn't exist
@@ -61,5 +61,27 @@ download-historical-data:
 check-log:
 	fly logs -a sea-temperature --no-tail | grep "Progress" | tail -3
 
-tests:
-	pytest tests/test_urls.py -v
+# ── Fast tests — no network, no live site needed ─────────────────────────────
+
+test: test-api test-beaches
+
+test-api:
+	@echo "→ Running API endpoint tests..."
+	pytest tests/test_api_v2.py -v
+
+test-beaches:
+	@echo "→ Validating beaches.py data..."
+	python3 tests/test_beaches.py
+
+# ── Live tests — hits swimtemp.com ────────────────────────────────────────────
+
+test-urls:
+	@echo "→ Crawling live swimtemp.com URLs..."
+	pytest tests/test_urls.py -v -k "crawler"
+
+test-urls-smoke:
+	@echo "→ Running URL smoke tests (critical pages only)..."
+	pytest tests/test_urls.py -v -k "smoke"
+
+test-all: test-beaches test-api test-urls
+	@echo "✓ All tests complete"

@@ -27,16 +27,19 @@ def init_db() -> None:
     conn = connect()
     cur = conn.cursor()
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS sst_tile (
             date TEXT NOT NULL,
             tile_id TEXT NOT NULL,
             fetched_at TEXT NOT NULL,
             PRIMARY KEY (date, tile_id)
         );
-        """)
+        """
+    )
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS sst_grid (
             date TEXT NOT NULL,
             tile_id TEXT NOT NULL,
@@ -45,7 +48,8 @@ def init_db() -> None:
             temp_c REAL NOT NULL,
             PRIMARY KEY (date, tile_id, lat, lon)
         );
-        """)
+        """
+    )
 
     cur.execute(
         "CREATE INDEX IF NOT EXISTS idx_sst_grid_date_tile ON sst_grid(date, tile_id);"
@@ -58,7 +62,8 @@ def init_db() -> None:
     # All IF NOT EXISTS — safe to run on every startup, no-op if already present.
     # Full implementation: see auth_saves_stubs.py and migration_user_saves.sql
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS users (
             id            TEXT PRIMARY KEY,
             email         TEXT NOT NULL UNIQUE,
@@ -69,9 +74,11 @@ def init_db() -> None:
             last_login_at TEXT,
             verified      INTEGER NOT NULL DEFAULT 0
         );
-    """)
+    """
+    )
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS auth_tokens (
             token      TEXT PRIMARY KEY,
             user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -79,9 +86,11 @@ def init_db() -> None:
             expires_at TEXT NOT NULL,
             used       INTEGER NOT NULL DEFAULT 0
         );
-    """)
+    """
+    )
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS sessions (
             token      TEXT PRIMARY KEY,
             user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -90,9 +99,11 @@ def init_db() -> None:
             user_agent TEXT,
             ip         TEXT
         );
-    """)
+    """
+    )
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS user_saved_beaches (
             user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             beach_slug TEXT NOT NULL,
@@ -102,9 +113,11 @@ def init_db() -> None:
             liked_at   TEXT,
             PRIMARY KEY (user_id, beach_slug)
         );
-    """)
+    """
+    )
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS user_saved_points (
             id         TEXT PRIMARY KEY,
             user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -113,7 +126,8 @@ def init_db() -> None:
             label      TEXT,
             saved_at   TEXT NOT NULL
         );
-    """)
+    """
+    )
 
     cur.execute(
         "CREATE INDEX IF NOT EXISTS idx_user_saved_beaches_user ON user_saved_beaches(user_id);"

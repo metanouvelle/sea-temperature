@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import math
 import os
@@ -396,8 +397,6 @@ def point_temperature(date: str, lat: float, lon: float, radius_km: float) -> di
 
 
 # ── SST History (REP + NRT) ───────────────────────────────────────────────────
-
-import asyncio  # noqa: E402 — imported here to keep it near its users
 
 
 async def fetch_rep_history(lat: float, lon: float, start, end) -> list[dict]:

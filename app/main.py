@@ -11,8 +11,8 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, Response
+from fastapi import Cookie, FastAPI, Header, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -136,22 +136,22 @@ def _background_prewarm():
 
 @app.get("/", response_class=HTMLResponse)
 def landing(request: Request):
-    return templates.TemplateResponse("landing.html", {"request": request})
+    return templates.TemplateResponse(request, "landing.html")
 
 
 @app.get("/map", response_class=HTMLResponse)
 def map_page(request: Request):
-    return templates.TemplateResponse("sea-temp-map.html", {"request": request})
+    return templates.TemplateResponse(request, "sea-temp-map.html")
 
 
 @app.get("/about", response_class=HTMLResponse)
 def about(request: Request):
-    return templates.TemplateResponse("about.html", {"request": request})
+    return templates.TemplateResponse(request, "about.html")
 
 
 @app.get("/beaches", response_class=HTMLResponse)
 def beaches_page(request: Request):
-    return templates.TemplateResponse("beaches.html", {"request": request})
+    return templates.TemplateResponse(request, "beaches.html")
 
 
 @app.get("/beach/{slug}", response_class=HTMLResponse)
@@ -331,11 +331,13 @@ def sitemap_xml():
     ]
 
     for url in urls:
-        xml_parts.append(f"""  <url>
+        xml_parts.append(
+            f"""  <url>
     <loc>{escape(url["loc"])}</loc>
     <changefreq>daily</changefreq>
     <priority>{url["priority"]}</priority>
-  </url>""")
+  </url>"""
+        )
 
     xml_parts.append("</urlset>")
 
@@ -347,12 +349,12 @@ def sitemap_xml():
 
 @app.get("/privacy", response_class=HTMLResponse)
 def privacy(request: Request):
-    return templates.TemplateResponse("privacy.html", {"request": request})
+    return templates.TemplateResponse(request, "privacy.html")
 
 
 @app.get("/embed", response_class=HTMLResponse)
 def embed_page(request: Request):
-    return templates.TemplateResponse("embed.html", {"request": request})
+    return templates.TemplateResponse(request, "embed.html")
 
 
 @app.get("/widget/{slug}", response_class=HTMLResponse)
@@ -430,13 +432,15 @@ async def sst_history(lat: float, lon: float):
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS sst_history_cache (
             cache_key TEXT PRIMARY KEY,
             data      TEXT NOT NULL,
             cached_at TEXT NOT NULL
         )
-    """)
+    """
+    )
     conn.commit()
 
     cur.execute(
@@ -538,8 +542,6 @@ async def sst_history(lat: float, lon: float):
 #   4. /api/saves/*        — the actual save/like toggle endpoints
 # ─────────────────────────────────────────────────────────────────────────────
 
-from fastapi import Cookie
-from fastapi.responses import JSONResponse
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
