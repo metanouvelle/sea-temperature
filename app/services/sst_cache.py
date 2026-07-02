@@ -10,7 +10,7 @@ import threading
 from datetime import datetime, timedelta, timezone
 from typing import Iterable
 
-import copernicusmarine
+# copernicusmarine imported lazily inside functions to avoid blocking startup
 import numpy as np
 from dotenv import load_dotenv
 
@@ -174,6 +174,8 @@ def _open_sst_dataset(
     tile_id: str, date: str, min_lon: float, max_lon: float, bbox: dict
 ):
     """Open a Copernicus SST dataset, falling back to the previous day on any error."""
+    import copernicusmarine  # lazy import — avoids blocking on module load
+
     kwargs = _copernicus_kwargs()
     try:
         return copernicusmarine.open_dataset(
@@ -433,6 +435,8 @@ def _fetch_copernicus_history(
     # Small bounding box around the point (±0.1°)
     delta = 0.1
     try:
+        import copernicusmarine  # lazy import
+
         ds = copernicusmarine.open_dataset(
             dataset_id=dataset_id,
             variables=["analysed_sst"],
