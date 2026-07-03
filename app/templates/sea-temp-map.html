@@ -244,8 +244,13 @@
         #info-panel {
             top: 72px;
             left: 20px;
-            width: 272px;
+            width: 360px;
             overflow: hidden;
+            transition: width 0.25s ease;
+        }
+
+        #info-panel.wide {
+            width: 520px;
         }
 
         #info-color-bar {
@@ -616,6 +621,54 @@
         }
 
         /* ── Nearby beaches button (inside info panel) ── */
+        /* ── Info panel tabs ── */
+        .info-tabs {
+            display: flex;
+            gap: 0;
+            margin-top: 14px;
+            background: rgba(0, 0, 0, 0.04);
+            border-radius: 10px;
+            padding: 3px;
+        }
+
+        .info-tab {
+            flex: 1;
+            padding: 7px 4px;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'DM Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: var(--navy);
+            opacity: 0.45;
+            transition: all 0.15s;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .info-tab.active {
+            background: var(--navy);
+            color: #ffffff;
+            opacity: 1;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .info-tab:hover:not(.active) {
+            opacity: 0.75;
+        }
+
+        .info-tab-content {
+            display: none;
+            margin-top: 0;
+        }
+
+        .info-tab-content.active {
+            display: block;
+        }
+
         .nearby-btn {
             display: flex;
             align-items: center;
@@ -727,52 +780,6 @@
 
 
         /* Beach cards */
-        /* Numbered beach marker on map */
-        .beach-num-marker {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #ffffff;
-            border: 2.5px solid #0ea5e9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'DM Mono', monospace;
-            font-size: 10px;
-            font-weight: 700;
-            color: #0d1b2a;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-            transition: transform 0.15s, box-shadow 0.15s;
-            user-select: none;
-        }
-
-        .beach-num-marker.active {
-            color: #ffffff;
-            transform: scale(1.2);
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Number badge in the card */
-        .nearby-beach-num {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: #0d1b2a;
-            color: #ffffff;
-            font-family: 'DM Mono', monospace;
-            font-size: 10px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .nearby-beach-card--active .nearby-beach-num {
-            background: var(--accent);
-        }
-
         .nearby-beach-card {
             display: flex;
             align-items: center;
@@ -840,6 +847,50 @@
             margin-top: 4px;
             display: inline-block;
             letter-spacing: 0.5px;
+        }
+
+        .beach-num-marker {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2.5px solid #0ea5e9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            color: #0d1b2a;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            transition: transform 0.15s, box-shadow 0.15s;
+            user-select: none;
+        }
+
+        .beach-num-marker.active {
+            color: #ffffff;
+            transform: scale(1.2);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .nearby-beach-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #0d1b2a;
+            color: #ffffff;
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .nearby-beach-card--active .nearby-beach-num {
+            background: var(--accent);
         }
 
         .nearby-beach-card--active {
@@ -1396,7 +1447,17 @@
         <div id="info-color-bar" aria-hidden="true"></div>
         <div id="info-content">
             <div class="panel-eyebrow">Ocean conditions</div>
-            <div class="panel-title">Sea Temperature</div>
+            <div class="panel-title">Sea Conditions</div>
+            <!-- Hero — always visible -->
+            <div id="info-hero"></div>
+            <!-- Tabs -->
+            <div class="info-tabs" id="info-tabs" style="display:none;margin-top:12px">
+                <button class="info-tab active" onclick="showInfoTab('today')">Today</button>
+                <button class="info-tab" onclick="showInfoTab('forecast')">Forecast</button>
+                <button class="info-tab" onclick="showInfoTab('history')">History</button>
+                <button class="info-tab" onclick="showInfoTab('beaches')">Beaches</button>
+            </div>
+            <!-- Tab content -->
             <div id="info-body" aria-live="polite" aria-atomic="true">
                 <p class="info-placeholder">Click anywhere on the ocean to check the water temperature.</p>
             </div>
@@ -1498,23 +1559,32 @@
                     return unique.slice(0, 3).join(', ');
                 }
 
-                // Only got country/state — try to find nearest city via search
+                // Only got country — search for nearest town/city in a wider box
                 if (country) {
                     try {
+                        // Search for place types near the coordinate (1° box)
                         const nearbyRes = await fetch(
-                            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(country)}&format=json&limit=1&featuretype=city&viewbox=${(lon - 0.5).toFixed(3)},${(lat + 0.5).toFixed(3)},${(lon + 0.5).toFixed(3)},${(lat - 0.5).toFixed(3)}&bounded=1`,
+                            `https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=1` +
+                            `&viewbox=${(lon - 1).toFixed(3)},${(lat + 1).toFixed(3)},${(lon + 1).toFixed(3)},${(lat - 1).toFixed(3)}` +
+                            `&bounded=1&q=city`,
                             { headers: { 'Accept-Language': 'en' } }
                         );
                         if (nearbyRes.ok) {
                             const nearby = await nearbyRes.json();
-                            if (nearby.length > 0) {
-                                const name = nearby[0].display_name.split(',').slice(0, 2).join(',').trim();
-                                return name;
+                            // Pick first result that has a city/town in its address
+                            for (const r of nearby) {
+                                const ra = r.address || {};
+                                const rcity = ra.city || ra.town || ra.village || '';
+                                const rstate = ra.state || '';
+                                const rcountry = ra.country || '';
+                                if (rcity) {
+                                    return [rcity, rstate, rcountry].filter(Boolean).slice(0, 3).join(', ');
+                                }
                             }
                         }
                     } catch { /* fall through */ }
 
-                    // Last resort: use state + country
+                    // Last resort: use county/state + country
                     const parts = [county || state, country].filter(Boolean);
                     return parts.join(', ') || country;
                 }
@@ -1598,7 +1668,7 @@
                 timedOut = true;
                 document.getElementById('info-body').innerHTML = `<p class="info-placeholder">No ocean data for this area. Try a coastal location.</p>`;
                 if (currentMarker) currentMarker.remove();
-            }, 10000);
+            }, 30000);
 
             const [tempResult, placeName, waves] = await Promise.all([
                 fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=25`).then(r => r.ok ? r.json() : null).catch(() => null),
@@ -1623,7 +1693,8 @@
             bar.style.display = 'block';
             bar.style.background = `linear-gradient(90deg, ${band.color}, ${band.color}99)`;
             if (isMobile) expandPanel();
-            document.getElementById('info-body').innerHTML = `
+            // ── Render hero ───────────────────────────────────────────────
+            document.getElementById('info-hero').innerHTML = `
                 <p class="temp-place">${placeName || name}</p>
                 <div class="temp-display"><span class="temp-value">${tempResult.mean_c.toFixed(1)}</span><span class="temp-unit">°C</span></div>
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -1632,26 +1703,22 @@
                     </div>
                     <button class="legend-scale-btn" onclick="var el=document.getElementById('inline-legend');el.style.display=el.style.display==='none'?'block':'none'"
                         aria-label="Toggle temperature scale"
-                        style="align-items:center;gap:4px;padding:4px 10px;
-                               border-radius:100px;border:1px solid rgba(0,0,0,0.1);
-                               background:rgba(0,0,0,0.04);cursor:pointer;font-size:10px;
-                               font-family:'DM Mono',monospace;letter-spacing:0.5px;color:var(--soft);">
+                        style="align-items:center;gap:4px;padding:4px 10px;border-radius:100px;border:1px solid rgba(0,0,0,0.1);background:rgba(0,0,0,0.04);cursor:pointer;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:0.5px;color:var(--soft);">
                         🌡 Scale
                     </button>
                 </div>
-                <div id="inline-legend" style="display:none;margin-top:8px;padding:8px 10px;
-                     background:rgba(0,0,0,0.03);border-radius:10px;border:1px solid rgba(0,0,0,0.06)">
+                <div id="inline-legend" style="display:none;margin-top:8px;padding:8px 10px;background:rgba(0,0,0,0.03);border-radius:10px;border:1px solid rgba(0,0,0,0.06)">
                     ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0">
                         <div style="width:18px;height:5px;border-radius:3px;background:${b.color};flex-shrink:0"></div>
                         <span style="font-size:11px;font-weight:500;color:#0d1b2a;flex:1">${b.label}</span>
                         <span style="font-size:10px;color:#475569">${b.range}</span>
                     </div>`).join('')}
-                </div>
-                <p class="temp-meta">${tempResult.date}</p>
-                ${waveHtml(waves)}
-                <button class="more-details-btn" onclick="showForecast()">More information</button>
-                <button class="nearby-btn" onclick="showNearbyBeaches(${lat.toFixed(5)}, ${lon.toFixed(5)})">📍 Beaches nearby →</button>`;
+                </div>`;
+
+            document.getElementById('info-tabs').style.display = 'flex';
             marker = currentMarker;
+            window._infoCtx = { lat, lon, temp: tempResult.mean_c, placeName: placeName || name, waves, date: tempResult.date };
+            showInfoTab('today');
         }
 
         // ── Map ───────────────────────────────────────────────────────────────────────
@@ -1711,14 +1778,10 @@
                 return null;
             }
             const parts = placeName.split(',').map(p => p.trim()).filter(Boolean);
-            // Skip very generic single-word country names as the query city
-            // Use the most specific part that isn't a country name alone
-            // e.g. "Catania, Sicily, Italy" → use "Catania"
-            // e.g. "Italy" → skip (too generic)
-            if (parts.length === 1 && parts[0].length > 0) {
-                // Only a country name — not specific enough for GYG
-                return null;
-            }
+            // Use most specific part available
+            // "Catania, Sicily, Italy" → "Catania"
+            // "Sicily, Italy" → "Sicily"
+            // "Italy" → "Italy" (still show something rather than nothing)
             const city = parts[0];
             let label, query, emoji;
 
@@ -1806,17 +1869,21 @@
             el.style.cssText = `width:14px;height:14px;border-radius:50%;background:#ffffff;border:3px solid #0ea5e9;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:border-color 0.4s;`;
             marker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lon, lat]).addTo(map);
 
-            document.getElementById('info-body').innerHTML = `<div class="spinner" role="status" aria-label="Loading temperature data"></div>`;
+            document.getElementById('info-body').innerHTML = `
+                <div class="spinner" role="status" aria-label="Loading temperature data"></div>
+                <p class="info-placeholder" style="margin-top:8px;font-size:10px">
+                    Fetching ocean data… this may take up to 30s for new areas
+                </p>`;
 
             let timedOut = false;
             const timeoutId = setTimeout(() => {
                 timedOut = true;
                 document.getElementById('info-body').innerHTML = `<p class="info-placeholder">No ocean data for this area. Try clicking closer to a coastline.</p>`;
                 if (marker) marker.remove();
-            }, 10000);
+            }, 30000);
 
             const [tempResult, placeName, waves] = await Promise.all([
-                fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=10`).then(r => r.ok ? r.json() : null).catch(() => null),
+                fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=25`).then(r => r.ok ? r.json() : null).catch(() => null),
                 getPlaceName(lat, lon),
                 fetchWaveConditions(lat, lon),
             ]);
@@ -1838,7 +1905,8 @@
             bar.style.display = 'block';
             bar.style.background = `linear-gradient(90deg, ${band.color}, ${band.color}99)`;
             if (isMobile) expandPanel();
-            document.getElementById('info-body').innerHTML = `
+            // ── Render hero (always visible) ─────────────────────────────
+            document.getElementById('info-hero').innerHTML = `
                 <p class="temp-place">${placeName || 'Open Ocean'}</p>
                 <div class="temp-display"><span class="temp-value">${tempResult.mean_c.toFixed(1)}</span><span class="temp-unit">°C</span></div>
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -1847,25 +1915,26 @@
                     </div>
                     <button class="legend-scale-btn" onclick="var el=document.getElementById('inline-legend');el.style.display=el.style.display==='none'?'block':'none'"
                         aria-label="Toggle temperature scale"
-                        style="align-items:center;gap:4px;padding:4px 10px;
-                               border-radius:100px;border:1px solid rgba(0,0,0,0.1);
-                               background:rgba(0,0,0,0.04);cursor:pointer;font-size:10px;
-                               font-family:'DM Mono',monospace;letter-spacing:0.5px;color:var(--soft);">
+                        style="align-items:center;gap:4px;padding:4px 10px;border-radius:100px;border:1px solid rgba(0,0,0,0.1);background:rgba(0,0,0,0.04);cursor:pointer;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:0.5px;color:var(--soft);">
                         🌡 Scale
                     </button>
                 </div>
-                <div id="inline-legend" style="display:none;margin-top:8px;padding:8px 10px;
-                     background:rgba(0,0,0,0.03);border-radius:10px;border:1px solid rgba(0,0,0,0.06)">
+                <div id="inline-legend" style="display:none;margin-top:8px;padding:8px 10px;background:rgba(0,0,0,0.03);border-radius:10px;border:1px solid rgba(0,0,0,0.06)">
                     ${BANDS.map(b => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0">
                         <div style="width:18px;height:5px;border-radius:3px;background:${b.color};flex-shrink:0"></div>
                         <span style="font-size:11px;font-weight:500;color:#0d1b2a;flex:1">${b.label}</span>
                         <span style="font-size:10px;color:#475569">${b.range}</span>
                     </div>`).join('')}
-                </div>
-                <p class="temp-meta">${tempResult.date}</p>
-                ${waveHtml(waves)}
-                <button class="more-details-btn" onclick="showForecast()">More information</button>
-                <button class="nearby-btn" onclick="showNearbyBeaches(${lat.toFixed(5)}, ${lon.toFixed(5)})">📍 Beaches nearby →</button>`;
+                </div>`;
+
+            // Show tabs
+            document.getElementById('info-tabs').style.display = 'flex';
+
+            // ── Store context for tab switching ───────────────────────────────
+            window._infoCtx = { lat, lon, temp: tempResult.mean_c, placeName: placeName || 'Open Ocean', waves, date: tempResult.date };
+
+            // ── Default: Today tab ────────────────────────────────────────────
+            showInfoTab('today');
         });
 
 
@@ -1877,6 +1946,176 @@
         // Store coords when temp loads
         const _origSearch = selectSearchResult;
         // We'll capture coords differently — see showForecast()
+
+        function showInfoTab(tab) {
+            const ctx = window._infoCtx;
+            if (!ctx) return;
+
+            // Update tab active state
+            document.querySelectorAll('#info-tabs .info-tab').forEach((t, i) => {
+                const tabs = ['today', 'forecast', 'history', 'beaches'];
+                t.classList.toggle('active', tabs[i] === tab);
+            });
+
+            // Widen panel for content-heavy tabs
+            const panel = document.getElementById('info-panel');
+            if (tab === 'today') {
+                panel.classList.remove('wide');
+            } else {
+                panel.classList.add('wide');
+            }
+
+            const body = document.getElementById('info-body');
+
+            if (tab === 'today') {
+                body.innerHTML = `
+                    <p class="temp-meta">${ctx.date}</p>
+                    ${waveHtml(ctx.waves)}
+                    <div id="panel-gyg" style="margin-top:8px"></div>`;
+                setTimeout(() => {
+                    const gyg = buildGygContent(ctx.temp, ctx.placeName);
+                    const el = document.getElementById('panel-gyg');
+                    if (el && gyg) el.innerHTML = '<a href="' + gyg.url + '" target="_blank" rel="noopener noreferrer sponsored" class="nearby-btn" style="text-decoration:none;display:flex;align-items:center;justify-content:space-between"><span>' + gyg.emoji + ' ' + gyg.label + '</span><span style="color:var(--accent)">→</span></a>';
+                }, 0);
+
+            } else if (tab === 'forecast') {
+                body.innerHTML = '<div class="forecast-loading" style="padding:20px 0">Loading forecast…</div>';
+                forecastLat = ctx.lat; forecastLon = ctx.lon; forecastPlace = ctx.placeName;
+                // Render forecast inline
+                loadForecastInline(ctx.lat, ctx.lon);
+
+            } else if (tab === 'history') {
+                body.innerHTML = `
+                    <div class="sst-history-chart-wrap" id="sstChartWrap" style="margin-top:12px">
+                        <div style="height:180px;display:flex;align-items:center;justify-content:center;">
+                            <span style="font-family:'DM Mono',monospace;font-size:11px;color:#38bdf8;animation:sst-pulse 1.5s ease-in-out infinite">Loading history…</span>
+                        </div>
+                        <div class="sst-history-tooltip" id="sstTooltip"></div>
+                    </div>`;
+                loadSSTHistory(ctx.lat, ctx.lon, ctx.temp, ctx.placeName);
+
+            } else if (tab === 'beaches') {
+                body.innerHTML = '<div class="nearby-loading" style="padding:20px 0">Finding beaches…</div>';
+                // Clear old markers
+                beachMarkers.forEach(m => m.remove());
+                beachMarkers = [];
+                // Load beaches inline
+                loadNearbyInline(ctx.lat, ctx.lon);
+            }
+        }
+
+        // Inline forecast — renders forecast blocks into #info-body
+        async function loadForecastInline(lat, lon) {
+            const apiDays = FORECAST_DAYS_EXTENDED;
+            const displayDays = canAccessExtendedForecast() ? FORECAST_DAYS_EXTENDED : FORECAST_DAYS_FREE;
+            try {
+                const [marineRes, windRes] = await Promise.all([
+                    fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&daily=wave_height_max,swell_wave_height_max,sea_surface_temperature_max&forecast_days=${apiDays}&timezone=auto`),
+                    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&daily=wind_speed_10m_max,wind_direction_10m_dominant&forecast_days=${apiDays}&timezone=auto`)
+                ]);
+                const marine = await marineRes.json();
+                const wind = await windRes.json();
+                const days = (marine.daily?.time || []).slice(1, displayDays + 1);
+                const sst = (marine.daily?.sea_surface_temperature_max || []).slice(1, displayDays + 1);
+                const waveMax = (marine.daily?.wave_height_max || []).slice(1, displayDays + 1);
+                const swellMax = (marine.daily?.swell_wave_height_max || []).slice(1, displayDays + 1);
+                const windSpeed = (wind.daily?.wind_speed_10m_max || []).slice(1, displayDays + 1);
+                const windDir = (wind.daily?.wind_direction_10m_dominant || []).slice(1, displayDays + 1);
+                const hasSSTData = sst.some(v => v != null);
+                const hasWaveData = waveMax.some(v => v != null);
+                const hasWindData = windSpeed.some(v => v != null);
+
+                document.getElementById('info-body').innerHTML = `
+                    <div style="margin-top:10px">
+                        <div class="fp-block-heading-sub" style="margin-bottom:10px">Open-Meteo Marine · Next 3 days</div>
+                        ${hasSSTData ? `<div class="forecast-days forecast-days--3col" style="margin-bottom:12px">
+                            ${days.map((d, i) => {
+                    const band = sst[i] != null ? getBand(sst[i]) : null;
+                    return `<div class="forecast-day">
+                                    <div class="forecast-day-name">${forecastDayLabel(d, i)}</div>
+                                    <div class="forecast-day-temp" style="color:${band ? band.color : '#0d1b2a'}">${sst[i] != null ? sst[i].toFixed(1) + '°' : '—'}</div>
+                                </div>`;
+                }).join('')}
+                        </div>` : '<p class="info-placeholder" style="margin:8px 0">No forecast data for this area.</p>'}
+                        <div class="forecast-table forecast-table--3col" style="margin-bottom:8px">
+                            ${hasWaveData ? `
+                            <div class="forecast-row-label">🌊 Wave</div>
+                            ${days.map((d, i) => `<div class="forecast-cell">${waveMax[i] != null ? waveMax[i].toFixed(1) + 'm' : '—'}</div>`).join('')}
+                            <div class="forecast-row-label">🌬 Swell</div>
+                            ${days.map((d, i) => `<div class="forecast-cell">${swellMax[i] != null ? swellMax[i].toFixed(1) + 'm' : '—'}</div>`).join('')}` : ''}
+                            ${hasWindData ? `
+                            <div class="forecast-row-label">💨 Wind</div>
+                            ${days.map((d, i) => `<div class="forecast-cell">${windSpeed[i] != null ? Math.round(windSpeed[i]) + 'km' : '—'}</div>`).join('')}
+                            <div class="forecast-row-label">⬆ Dir</div>
+                            ${days.map((d, i) => `<div class="forecast-cell">${dirArrow(windDir[i])}</div>`).join('')}` : ''}
+                        </div>
+                    </div>`;
+            } catch {
+                document.getElementById('info-body').innerHTML = '<p class="info-placeholder">Could not load forecast.</p>';
+            }
+        }
+
+        // Inline beaches — renders beach list into #info-body
+        async function loadNearbyInline(lat, lon) {
+            const body = document.getElementById('info-body');
+            try {
+                const elements = await queryOverpassBeaches(lat, lon, NEARBY_RADIUS_KM);
+                if (!elements.length) {
+                    body.innerHTML = '<p class="info-placeholder" style="padding:16px 0">No beaches found within ' + NEARBY_RADIUS_KM + ' km.</p>';
+                    return;
+                }
+                const seen = new Set();
+                const beaches = elements
+                    .map(overpassToBeach).filter(b => b !== null)
+                    .filter(b => { if (seen.has(b.name)) return false; seen.add(b.name); return true; })
+                    .map(b => ({ ...b, dist: haversineKm(lat, lon, b.lat, b.lon) }))
+                    .sort((a, b) => a.dist - b.dist).slice(0, 10);
+
+                body.innerHTML = '<div class="nearby-loading" style="padding:8px 0">Loading temperatures…</div>';
+
+                const markerEls = [];
+                const withTemp = await Promise.all(beaches.map(async b => {
+                    try {
+                        const res = await fetch(`/api/point?lat=${b.lat.toFixed(5)}&lon=${b.lon.toFixed(5)}&radius_km=5`);
+                        const data = await res.json();
+                        return { ...b, temp_c: data.status === 'ok' ? data.mean_c : null };
+                    } catch { return { ...b, temp_c: null }; }
+                }));
+
+                body.innerHTML = withTemp.map((b, i) => {
+                    const num = i + 1;
+                    const band = bandFromTemp(b.temp_c);
+                    const dotColor = b.temp_c != null ? band.color : '#94a3b8';
+                    const tempStr = b.temp_c != null ? b.temp_c.toFixed(1) : '—';
+                    const cardId = `beach-card-${i}`;
+
+                    const el = document.createElement('div');
+                    el.className = 'beach-num-marker beach-marker-el';
+                    el.textContent = num;
+                    el.title = b.name;
+                    el.style.borderColor = dotColor;
+                    markerEls.push(el);
+                    el.addEventListener('click', (e) => { e.stopPropagation(); highlightBeachMarker(i); });
+                    const mkr = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([b.lon, b.lat]).addTo(map);
+                    beachMarkers.push(mkr);
+
+                    return `<div class="nearby-beach-card" id="${cardId}" onclick="highlightBeachMarker(${i})" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
+                        <div class="nearby-beach-num" style="background:${dotColor};flex-shrink:0">${num}</div>
+                        <div style="flex:1;min-width:0">
+                            <div class="nearby-beach-name" style="font-size:13px">${b.name}</div>
+                            <div class="nearby-beach-meta">${b.dist.toFixed(1)} km · ${b.temp_c != null ? 'Live SST' : 'No data'}</div>
+                        </div>
+                        <div class="nearby-beach-temp" style="color:${dotColor};font-size:20px">${tempStr}<span style="font-size:11px">°</span></div>
+                    </div>`;
+                }).join('');
+
+                window._beachMarkerEls = markerEls;
+
+            } catch (err) {
+                body.innerHTML = '<p class="info-placeholder">Could not load beaches.</p>';
+                console.error(err);
+            }
+        }
 
         function showForecast() {
             const lat = forecastLat;
@@ -1912,7 +2151,7 @@
                 card.classList.add('nearby-beach-card--active');
                 card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
-            // Highlight marker — active one fills with its border colour
+            // Highlight numbered marker
             const els = window._beachMarkerEls || [];
             els.forEach((m, i) => {
                 if (i === idx) {
@@ -2129,8 +2368,8 @@
                 beachMarkers.forEach(m => m.remove());
                 beachMarkers = [];
 
-                // 5. Render numbered markers + cards
-                const markerEls = []; // keep refs to marker elements for highlighting
+                // 5. Render cards + add palm tree markers to map
+                const markerEls = [];
 
                 content.innerHTML = withTemp.map((b, i) => {
                     const num = i + 1;
@@ -2150,7 +2389,6 @@
 
                     el.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        // Open panel if closed
                         document.getElementById('nearby-overlay').classList.add('visible');
                         highlightBeachMarker(i);
                     });
@@ -2168,8 +2406,7 @@
                         <div class="nearby-beach-info" style="flex:1;min-width:0">
                             <div class="nearby-beach-name">${b.name}</div>
                             <div class="nearby-beach-meta">${distStr} km away · ${b.temp_c != null ? 'Live SST' : 'No data'}</div>
-                            <span class="nearby-beach-badge"
-                                  style="background:${dotColor}18;color:${dotColor}">
+                            <span class="nearby-beach-badge" style="background:${dotColor}18;color:${dotColor}">
                                 ${b.temp_c != null ? band.label : 'No ocean data'}
                             </span>
                         </div>
@@ -2179,7 +2416,6 @@
                     </div>`;
                 }).join('');
 
-                // Store marker elements for highlight function
                 window._beachMarkerEls = markerEls;
 
             } catch (err) {
@@ -2369,15 +2605,7 @@
                         </div>
                     </div>
 
-                    <!-- Block 4: Activities CTA — only shown when marine data exists -->
-                    ${hasSSTData ? `
-                    <div class="fp-cta-block">
-                        <div class="fp-block-heading" style="margin-bottom:12px">
-                            <div class="fp-block-heading-title">Explore</div>
-                            <div class="fp-block-heading-sub">Activities & experiences nearby</div>
-                        </div>
-                        <div class="sst-history-gyg" id="sstGYG"></div>
-                    </div>` : ''}
+                    <!-- Activities CTA moved to first panel -->
                 `;
 
                 document.getElementById('forecast-body').innerHTML = html;
@@ -2590,20 +2818,7 @@
 
             // ── GYG link ──────────────────────────────────────────────────
             // ── GYG link — location + temperature aware ───────────────
-            const gygEl = document.getElementById('sstGYG');
-            if (gygEl && currentSST !== null && currentSST !== undefined && placeName) {
-                const gyg = buildGygContent(parseFloat(currentSST), placeName);
-                if (gyg) {
-                    gygEl.innerHTML = `<a href="${gyg.url}" target="_blank" rel="noopener noreferrer sponsored">
-                        <span>
-                            <span class="sst-history-gyg-label">Activities nearby</span>
-                            ${gyg.emoji} ${gyg.label}
-                        </span>
-                    </a>`;
-                } else {
-                    gygEl.innerHTML = '';
-                }
-            }
+            // GYG is now in the first panel (#panel-gyg) — nothing to do here
         }
 
         // ── Mobile bottom sheet collapse/expand ──────────────────────────────────────
