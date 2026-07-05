@@ -331,13 +331,11 @@ def sitemap_xml():
     ]
 
     for url in urls:
-        xml_parts.append(
-            f"""  <url>
+        xml_parts.append(f"""  <url>
     <loc>{escape(url["loc"])}</loc>
     <changefreq>daily</changefreq>
     <priority>{url["priority"]}</priority>
-  </url>"""
-        )
+  </url>""")
 
     xml_parts.append("</urlset>")
 
@@ -432,15 +430,13 @@ async def sst_history(lat: float, lon: float):
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    cur.execute(
-        """
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS sst_history_cache (
             cache_key TEXT PRIMARY KEY,
             data      TEXT NOT NULL,
             cached_at TEXT NOT NULL
         )
-    """
-    )
+    """)
     conn.commit()
 
     cur.execute(
@@ -658,6 +654,104 @@ async def delete_saved_point(point_id: str, request: Request):
     - Requires valid session + ownership check
     """
     return JSONResponse({"detail": "Login required"}, status_code=401)
+
+
+# ── /api/warmest ──────────────────────────────────────────────────────────────
+@app.get("/api/warmest")
+def api_warmest(
+    region: str = Query("all"),
+    limit: int = Query(20, ge=1, le=50),
+):
+    """
+    Return warmest beaches for a region from the warmest_beaches table.
+    Populated nightly by app/scripts/update_warmest.py.
+    """
+    conn = sqlite3.connect(os.environ.get("SST_DB_PATH", "/data/sst.sqlite"))
+    conn.row_factory = sqlite3.Row
+
+    try:
+        if region.lower() == "all":
+            rows = conn.execute(
+                """
+                SELECT name, lat, lon, temp_c, date, region
+                FROM warmest_beaches
+                WHERE temp_c IS NOT NULL
+                ORDER BY temp_c DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT name, lat, lon, temp_c, date, region
+                FROM warmest_beaches
+                WHERE region = ?
+                  AND temp_c IS NOT NULL
+                ORDER BY temp_c DESC
+                LIMIT ?
+                """,
+                (region.lower(), limit),
+            ).fetchall()
+
+        beaches = [
+            {
+                "name": r["name"],
+                "lat": r["lat"],
+                "lon": r["lon"],
+                "temp_c": r["temp_c"],
+                "date": r["date"],
+                "region": r["region"],
+            }
+            for r in rows
+        ]
+
+        meta = conn.execute(
+            "SELECT MAX(updated_at) as last_updated FROM warmest_beaches"
+        ).fetchone()
+
+        return {
+            "region": region,
+            "beaches": beaches,
+            "last_updated": meta["last_updated"] if meta else None,
+            "count": len(beaches),
+        }
+
+    except sqlite3.OperationalError:
+        return {
+            "region": region,
+            "beaches": [],
+            "message": "Run update_warmest to populate.",
+            "count": 0,
+        }
+    finally:
+        conn.close()
+
+
+# ── /api/admin/update-warmest ─────────────────────────────────────────────────
+@app.post("/api/admin/update-warmest")
+def admin_update_warmest(authorization: str = Header(None)):
+    """Trigger nightly warmest beaches update. Protected by PREWARM_SECRET."""
+    secret = os.environ.get("PREWARM_SECRET", "")
+    if not secret or authorization != f"Bearer {secret}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    import threading
+    from app.scripts.update_warmest import run as run_update
+
+    def _run():
+        try:
+            run_update()
+        except Exception as e:
+            log.error("update_warmest failed: %s", e)
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+
+    return {
+        "status": "started",
+        "message": "Warmest beaches update running in background",
+    }
 
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

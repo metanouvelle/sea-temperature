@@ -3,40 +3,40 @@
 
 <head>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <!-- GetYourGuide Analytics -->
-
     <script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js"
         data-gyg-partner-id="XWCA45N"></script>
-    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q3NYKPGQ"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-
-        gtag('config', 'G-D3Q3NYKPGQ');
-    </script>
+    <script>window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments) } gtag('js', new Date()); gtag('config', 'G-D3Q3NYKPGQ');</script>
     <meta charset="UTF-8">
-    <title>50 Top Beaches by Sea Temperature — SwimTemp</title>
+    <title>Discover Beaches — SwimTemp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="50 handpicked beaches ranked by live sea temperature. Find where the water is warm right now — updated daily from satellite data.">
+        content="Find beaches near you, search any city, or discover the warmest water worldwide. Live sea temperatures powered by satellite data.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link <link rel="stylesheet" href="/static/shared-tokens.css">
+    <link rel="stylesheet" href="/static/shared-tokens.css">
     <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700&family=DM+Mono:wght@300;400;500&display=swap"
         rel="stylesheet">
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
-        /* Page-specific aliases — maps to shared-tokens.css */
         :root {
-            --text: var(--on-dark);
-            --muted: var(--on-dark-2);
-            --soft: var(--on-dark-2);
-            --card: rgba(255, 255, 255, 0.04);
-            --border: var(--border-dark);
+            /* Light surface aliases — maps to shared-tokens.css */
+            --text: var(--navy);
+            --muted: var(--text-panel-muted);
+            --soft: var(--text-panel-soft);
+            --border: var(--border-panel);
+
+            /* Page-specific */
+            --surface-page: #f1f5f9;
+            --surface-card: #ffffff;
+            --surface-input: #f8fafc;
+            --surface-hover: rgba(0, 0, 0, 0.02);
         }
 
-        * {
+        *,
+        *::before,
+        *::after {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -44,50 +44,40 @@
 
         body {
             font-family: 'DM Mono', monospace;
-            background: var(--bg);
+            background: var(--surface-page);
             color: var(--text);
-            min-height: 100vh;
-        }
-
-        /* ── Grain ── */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-            opacity: 0.025;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         /* ── Nav ── */
         nav {
-            position: relative;
-            z-index: 10;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 24px 8vw;
-            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border-panel);
+            background: #ffffff;
+            z-index: 20;
+            flex-shrink: 0;
         }
 
         .nav-brand {
             font-family: 'Fraunces', serif;
             font-size: 16px;
             font-weight: 300;
-            color: var(--text);
+            color: var(--navy);
             text-decoration: none;
         }
 
         .nav-links {
             display: flex;
             gap: 24px;
-            align-items: center;
         }
 
         .nav-link {
-            font-family: 'Fraunces', serif;
-            font-weight: 300;
             font-size: 11px;
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -96,619 +86,1128 @@
             transition: color 0.2s;
         }
 
-        .nav-link:hover {
-            color: var(--text);
-        }
-
+        .nav-link:hover,
         .nav-link.active {
-            color: var(--accent);
-        }
-
-        /* ── Page ── */
-        .page {
-            position: relative;
-            z-index: 1;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 64px 8vw 120px;
-        }
-
-        /* ── Header ── */
-        .page-header {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            margin-bottom: 48px;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .header-left {}
-
-        .page-eyebrow {
-            font-size: 11px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 12px;
-        }
-
-        .page-title {
-            font-family: 'Fraunces', serif;
-            font-size: clamp(36px, 5vw, 56px);
-            font-weight: 700;
-            letter-spacing: -2px;
-            line-height: 1.0;
             color: var(--text);
         }
 
-        .page-title em {
-            font-style: italic;
-            font-weight: 300;
-            color: var(--accent);
+        /* ── Main layout ── */
+        .main {
+            display: grid;
+            grid-template-columns: 480px 1fr;
+            flex: 1;
+            overflow: hidden;
         }
 
-        .page-subtitle {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 12px;
-            letter-spacing: 0.3px;
-        }
-
-        /* ── Filter bar ── */
-        .filter-bar {
+        /* ── Sidebar ── */
+        .sidebar {
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            border-right: 1px solid var(--border-panel);
+            overflow: hidden;
+            background: #ffffff;
         }
 
-        .filter-btn {
-            padding: 8px 16px;
-            border-radius: 100px;
+        /* ── Page tabs ── */
+        .page-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-panel);
+            flex-shrink: 0;
+            background: #ffffff;
+        }
+
+        .page-tab {
+            flex: 1;
+            padding: 14px 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
             font-family: 'DM Mono', monospace;
-            font-size: 11px;
+            font-size: 9px;
             letter-spacing: 1.5px;
             text-transform: uppercase;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--muted);
+            color: var(--text-panel-muted);
+            border-bottom: 2px solid transparent;
             transition: all 0.2s;
-        }
-
-        .filter-btn:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-            color: var(--text);
-        }
-
-        .filter-btn.active,
-        .filter-btn[aria-pressed="true"] {
-            background: var(--accent);
-            color: var(--bg);
-            border-color: var(--accent);
             font-weight: 500;
         }
 
-        /* ── Loading state ── */
-        .loading {
-            text-align: center;
-            padding: 80px 0;
+        .page-tab:hover {
+            color: var(--navy);
+        }
+
+        .page-tab.active {
+            color: var(--navy);
+            border-bottom-color: var(--navy);
+        }
+
+        /* ── Tab panels ── */
+        .tab-panel {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .tab-panel.active {
+            display: flex;
+        }
+
+        /* ── Shared search bar ── */
+        .search-wrap {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--surface-hover);
+            border: 1px solid var(--border-panel);
+            border-radius: 10px;
+            padding: 10px 38px 10px 14px;
+            color: var(--navy);
+            font-family: 'DM Mono', monospace;
+            font-size: 16px;
+            /* prevents iOS zoom */
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-panel-muted);
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+            background: var(--surface-card);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 34px;
+            top: 50%;
+            transform: translateY(-50%);
             color: var(--muted);
+            font-size: 15px;
+            pointer-events: none;
+        }
+
+        .search-drop {
+            position: absolute;
+            top: calc(100% - 4px);
+            left: 20px;
+            right: 20px;
+            background: #ffffff;
+            border: 1px solid var(--border-panel);
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+            z-index: 50;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .search-drop.visible {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-dark);
+            transition: background 0.15s;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        .search-result-name {
             font-size: 12px;
+            color: var(--navy);
+            font-weight: 500;
+        }
+
+        .search-result-type {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        /* ── Beach list ── */
+        .beach-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .list-header {
+            padding: 12px 20px;
+            font-size: 9px;
             letter-spacing: 2px;
             text-transform: uppercase;
+            color: var(--text-panel-muted);
+            border-bottom: 1px solid var(--border-panel);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 1;
         }
 
-        .loading-spinner {
+        .list-count {
+            color: var(--accent);
+            font-size: 9px;
+        }
+
+        .beach-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-panel);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .beach-card:hover {
+            background: var(--surface-hover);
+        }
+
+        .beach-card.active {
+            background: rgba(56, 189, 248, 0.06);
+            border-left: 3px solid var(--accent);
+        }
+
+        .beach-num {
             width: 24px;
             height: 24px;
-            margin: 0 auto 16px;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent);
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            flex-shrink: 0;
+            background: #ffffff;
+            border: 2px solid var(--band-brave);
+            color: var(--navy);
+            transition: all 0.15s;
         }
 
+        .beach-card.active .beach-num {
+            color: #ffffff;
+        }
+
+        .beach-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .beach-name {
+            font-family: 'Fraunces', serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--navy);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .beach-meta {
+            font-size: 10px;
+            color: var(--text-panel-muted);
+            margin-top: 3px;
+        }
+
+        .beach-badge {
+            font-size: 9px;
+            font-weight: 500;
+            padding: 2px 7px;
+            border-radius: 99px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
+        .beach-temp {
+            font-family: 'Fraunces', serif;
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: -1px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        /* ── Near me panel ── */
+        .near-me-empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        .near-me-icon {
+            font-size: 40px;
+        }
+
+        .near-me-title {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--navy);
+        }
+
+        .near-me-sub {
+            font-size: 11px;
+            color: var(--text-panel-muted);
+            line-height: 1.8;
+        }
+
+        .btn-primary {
+            padding: 12px 24px;
+            background: var(--accent);
+            color: var(--navy);
+            border: none;
+            border-radius: 100px;
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent);
+        }
+
+        /* ── Warmest filters ── */
+        .warmest-filters {
+            display: flex;
+            gap: 6px;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-panel);
+            flex-shrink: 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+            background: #ffffff;
+        }
+
+        .warmest-filters::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 99px;
+            border: 1px solid var(--border-panel);
+            background: var(--surface-hover);
+            color: var(--text-panel-muted);
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--navy);
+            color: var(--navy);
+        }
+
+        .filter-btn.active {
+            background: var(--navy);
+            border-color: var(--navy);
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        /* ── Map ── */
+        #discover-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ── Loading ── */
         @keyframes spin {
             to {
                 transform: rotate(360deg);
             }
         }
 
-        /* ── Beach grid ── */
-        .beach-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.3
+            }
+
+            50% {
+                opacity: 0.8
+            }
         }
 
-        /* ── Beach card ── */
-        .beach-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 28px;
-            text-decoration: none;
-            color: inherit;
-            transition: all 0.2s;
-            cursor: pointer;
-            display: block;
-            position: relative;
-            overflow: hidden;
+        .spinner-ring {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
         }
 
-        .beach-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--band-color, transparent);
-            border-radius: 20px 20px 0 0;
-            transition: background 0.3s;
+        .skeleton {
+            background: rgba(0, 0, 0, 0.06);
+            border-radius: 6px;
+            animation: pulse 1.5s ease-in-out infinite;
         }
 
-        .beach-card:hover {
-            border-color: rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.06);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .card-location {
-            font-size: 10px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 10px;
-        }
-
-        .card-name {
-            font-family: 'Fraunces', serif;
-            font-size: 20px;
-            font-weight: 300;
-            color: var(--text);
-            margin-bottom: 20px;
-            line-height: 1.2;
-            letter-spacing: -0.3px;
-        }
-
-        .card-temp-row {
+        .loading-state {
+            padding: 24px 20px;
             display: flex;
-            align-items: baseline;
-            gap: 6px;
-            margin-bottom: 12px;
-        }
-
-        .card-temp {
-            font-family: 'Fraunces', serif;
-            font-size: 48px;
-            font-weight: 300;
-            letter-spacing: -3px;
-            line-height: 1;
-            color: var(--text);
-        }
-
-        .card-unit {
-            font-size: 14px;
-            color: var(--muted);
-            font-weight: 300;
-            margin-bottom: 4px;
-        }
-
-        .card-badge {
-            display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            border-radius: 100px;
             font-size: 11px;
-            font-weight: 500;
+            color: var(--text-panel-muted);
             letter-spacing: 1px;
-            text-transform: uppercase;
         }
 
-        .card-no-data {
-            font-size: 12px;
-            color: var(--muted);
-            padding: 12px 0;
-            letter-spacing: 0.5px;
+        .empty-state {
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--text-panel-muted);
+            font-size: 11px;
+            line-height: 2;
         }
 
-        .card-arrow {
-            position: absolute;
-            bottom: 24px;
-            right: 24px;
-            font-size: 16px;
-            color: var(--muted);
-            transition: all 0.2s;
-            opacity: 0;
-        }
-
-        .beach-card:hover .card-arrow {
-            opacity: 1;
-            transform: translateX(4px);
-        }
-
-        /* ── Date footer ── */
-
-        @media (max-width: 640px) {
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .beach-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* ── Accessibility ── */
-        .skip-link {
-            position: absolute;
-            top: -100%;
-            left: 1rem;
-            z-index: 1000;
-            padding: 8px 16px;
-            background: var(--accent);
-            color: var(--bg);
-            font-size: 13px;
-            font-weight: 500;
-            border-radius: 0 0 8px 8px;
-            text-decoration: none;
-            transition: top 0.2s;
-        }
-
-        .skip-link:focus {
-            top: 0;
-        }
-
-        :focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 3px;
-            border-radius: 4px;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-
-            *,
-            *::before,
-            *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        /* ── Site Footer ── */
-        .site-footer {
-            position: relative;
-            z-index: 1;
-            border-top: 1px solid var(--border);
-            padding: 48px 8vw 32px;
-            margin-top: 80px;
-        }
-
-        .footer-inner {
-            max-width: 860px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            gap: 48px;
-            flex-wrap: wrap;
-            margin-bottom: 40px;
-        }
-
-        .footer-brand {
-            max-width: 200px;
-        }
-
-        .footer-logo {
-            font-family: 'Fraunces', serif;
-            font-size: 18px;
-            font-weight: 300;
-            color: var(--text);
-            text-decoration: none;
+        .empty-state .emoji {
+            font-size: 32px;
             display: block;
             margin-bottom: 12px;
         }
 
-        .footer-tagline {
-            font-size: 11px;
-            color: var(--muted);
-            line-height: 1.8;
-            letter-spacing: 0.3px;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 48px;
-            flex-wrap: wrap;
-        }
-
-        .footer-col {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .footer-col-label {
-            font-size: 9px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 4px;
-        }
-
-        .footer-col a {
-            font-size: 12px;
-            color: var(--soft);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .footer-col a:hover {
-            color: var(--text);
-        }
-
-        .footer-bottom {
-            max-width: 860px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding-top: 24px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 11px;
-            color: var(--muted);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        @media (max-width: 640px) {
-            .footer-inner {
-                flex-direction: column;
-                gap: 32px;
+        /* ── Mobile ── */
+        @media (max-width: 768px) {
+            body {
+                overflow: hidden;
+                height: 100vh;
+                width: 100vw;
             }
 
-            .footer-links {
-                gap: 32px;
+            /* Map fills full screen */
+            .main {
+                display: block;
+                position: relative;
+                height: 100vh;
+                width: 100vw;
+                overflow: hidden;
             }
 
-            .footer-bottom {
+            #discover-map {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 0;
+            }
+
+            /* Bottom sheet */
+            .sidebar {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                z-index: 10;
+                border-right: none;
+                border-top: 1px solid var(--border-panel);
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+                max-height: 75vh;
+                overflow: hidden;
+                display: flex;
                 flex-direction: column;
+                background: #ffffff;
+                box-sizing: border-box;
+                min-height: 200px;
+            }
+
+            /* Drag handle */
+            .sidebar::before {
+                content: '';
+                display: block;
+                width: 36px;
+                height: 4px;
+                background: rgba(0, 0, 0, 0.15);
+                border-radius: 2px;
+                margin: 10px auto 4px;
+                flex-shrink: 0;
+            }
+
+            /* Tabs — all 3 visible, no overflow */
+            .page-tabs {
+                display: flex;
+                width: 100%;
+                overflow: hidden;
+            }
+
+            .page-tab {
+                flex: 1;
+                font-size: 9px;
+                padding: 10px 2px;
+                letter-spacing: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .tab-panel {
+                display: none;
+                flex-direction: column;
+                flex: 1;
+                overflow: hidden;
+                min-height: 0;
+            }
+
+            .tab-panel.active {
+                display: flex;
+            }
+
+            .beach-list {
+                overflow-y: auto;
+                flex: 1;
+                min-height: 0;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Search */
+            .search-wrap {
+                padding: 10px 12px;
+                flex-shrink: 0;
+            }
+
+            .search-drop {
+                left: 12px;
+                right: 12px;
+            }
+
+            /* List */
+            .list-header {
+                padding: 8px 16px;
+            }
+
+            .beach-card {
+                padding: 12px 16px;
+                gap: 10px;
+            }
+
+            .beach-name {
+                font-size: 13px;
+            }
+
+            .beach-temp {
+                font-size: 20px;
+            }
+
+            /* Warmest filters */
+            .warmest-filters {
+                padding: 8px 12px;
+                gap: 6px;
+                flex-shrink: 0;
+            }
+
+            .filter-btn {
+                font-size: 10px;
+                padding: 5px 10px;
+            }
+
+            /* Near me */
+            .near-me-empty {
+                padding: 20px 16px;
+            }
+
+            .near-me-icon {
+                font-size: 32px;
+            }
+
+            .near-me-title {
+                font-size: 16px;
+            }
+
+            .btn-primary {
+                padding: 10px 20px;
+                font-size: 11px;
+            }
+
+            nav {
+                padding: 12px 16px;
             }
         }
     </style>
 </head>
 
 <body>
-    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <nav aria-label="Main navigation">
+    <nav>
         <a href="/" class="nav-brand">SwimTemp</a>
         <div class="nav-links">
-            <a href="/beaches" class="nav-link active" aria-current="page">Beaches</a>
             <a href="/map" class="nav-link">Map</a>
+            <a href="/beaches" class="nav-link active">Beaches</a>
+            <a href="/about" class="nav-link">About</a>
         </div>
     </nav>
 
-    <main class="page" id="main-content">
-        <div class="page-header">
-            <div class="header-left">
-                <div class="page-eyebrow" aria-hidden="true">50 handpicked beaches · Updated daily</div>
-                <h1 class="page-title">Where is the water<br><em>warm right now?</em></h1>
-                <p class="page-subtitle" id="subtitle">50 handpicked beaches · Daily satellite temperature · Live wave
-                    conditions.</p>
-            </div>
-            <div class="filter-bar region-bar" role="group" aria-label="Filter beaches by region">
-                <button class="filter-btn active" data-region="all" aria-pressed="true">All Regions</button>
-                <button class="filter-btn" data-region="europe" aria-pressed="false">🌍 Europe</button>
-                <button class="filter-btn" data-region="asia" aria-pressed="false">🌏 Asia</button>
-                <button class="filter-btn" data-region="caribbean" aria-pressed="false">🏝 Caribbean</button>
-                <button class="filter-btn" data-region="pacific" aria-pressed="false">🌊 Pacific</button>
-                <button class="filter-btn" data-region="indian" aria-pressed="false">☀️ Indian Ocean</button>
-                <button class="filter-btn" data-region="americas" aria-pressed="false">🌎 Americas</button>
-            </div>
-            <div class="filter-bar" role="group" aria-label="Filter beaches by water temperature">
-                <button class="filter-btn active" data-filter="all" aria-pressed="true">All</button>
-                <button class="filter-btn" data-filter="very_warm" aria-pressed="false"><span
-                        aria-hidden="true">🔥</span> Very Warm</button>
-                <button class="filter-btn" data-filter="perfect" aria-pressed="false"><span aria-hidden="true">🏊</span>
-                    Perfect</button>
-                <button class="filter-btn" data-filter="nice" aria-pressed="false"><span aria-hidden="true">😊</span>
-                    Nice</button>
-                <button class="filter-btn" data-filter="brave" aria-pressed="false"><span aria-hidden="true">🤿</span>
-                    Brave</button>
-                <button class="filter-btn" data-filter="cold" aria-pressed="false"><span aria-hidden="true">🥶</span>
-                    Cold</button>
-            </div>
-        </div>
+    <div class="main">
 
-        <div id="beach-grid" class="beach-grid" aria-live="polite" aria-busy="true">
-            <div class="loading" role="status">
-                <div class="loading-spinner" aria-hidden="true"></div>
-                Fetching temperatures...
+        <!-- ── Sidebar ── -->
+        <aside class="sidebar">
+
+            <!-- Page tabs -->
+            <div class="page-tabs">
+                <button class="page-tab active" onclick="switchTab('discover')">🔍 Discover</button>
+                <button class="page-tab" onclick="switchTab('nearme')">📍 Near me</button>
+                <button class="page-tab" onclick="switchTab('warmest')">🌡 Warmest</button>
             </div>
-        </div>
-    </main>
+
+            <!-- ── Tab 1: Discover ── -->
+            <div class="tab-panel active" id="panel-discover">
+                <div class="search-wrap">
+                    <input class="search-input" id="discover-search" type="text" placeholder="Search a city or country…"
+                        autocomplete="off" />
+                    <span class="search-icon">⌕</span>
+                    <div class="search-drop" id="discover-drop"></div>
+                </div>
+                <div class="beach-list" id="discover-list">
+                    <div class="list-header" id="discover-header" style="display:none">
+                        <span id="discover-label"></span>
+                        <span id="discover-count" class="list-count"></span>
+                    </div>
+                    <div id="discover-items"></div>
+                </div>
+            </div>
+
+            <!-- ── Tab 2: Near me ── -->
+            <div class="tab-panel" id="panel-nearme">
+                <div class="beach-list" id="nearme-list">
+                    <div id="nearme-items">
+                        <div class="near-me-empty">
+                            <div class="near-me-icon">📍</div>
+                            <div class="near-me-title">Beaches near you</div>
+                            <div class="near-me-sub">
+                                Find beaches within 50km of your location.<br>
+                                Your location is never stored or shared.
+                            </div>
+                            <button class="btn-primary" onclick="loadNearMe()">
+                                Use my location
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Tab 3: Warmest ── -->
+            <div class="tab-panel" id="panel-warmest">
+                <div class="warmest-filters">
+                    <button class="filter-btn active" onclick="filterWarmest('all', this)">🌍 All</button>
+                    <button class="filter-btn" onclick="filterWarmest('mediterranean', this)">Mediterranean</button>
+                    <button class="filter-btn" onclick="filterWarmest('adriatic', this)">Adriatic</button>
+                    <button class="filter-btn" onclick="filterWarmest('atlantic', this)">Atlantic</button>
+                    <button class="filter-btn" onclick="filterWarmest('pacific', this)">Pacific</button>
+                    <button class="filter-btn" onclick="filterWarmest('indian', this)">Indian Ocean</button>
+                    <button class="filter-btn" onclick="filterWarmest('redsea', this)">Red Sea</button>
+                </div>
+                <div class="beach-list" id="warmest-list">
+                    <div class="list-header">
+                        <span id="warmest-label">Warmest water right now</span>
+                        <span id="warmest-count" class="list-count"></span>
+                    </div>
+                    <div id="warmest-items">
+                        <div class="loading-state">
+                            <span class="spinner-ring"></span> Loading…
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- ── Map ── -->
+        <div id="discover-map"></div>
+
+    </div>
 
     <script>
+        // ── Band colours ──────────────────────────────────────────────────────────────
         const BANDS = [
-            { id: 'cold', label: 'Cold', emoji: '🥶', min: -99, max: 17, color: '#2563eb' },
-            { id: 'brave', label: 'Brave', emoji: '🤿', min: 17, max: 20, color: '#0ea5e9' },
-            { id: 'nice', label: 'Nice', emoji: '😊', min: 20, max: 23, color: '#22c55e' },
-            { id: 'perfect', label: 'Perfect', emoji: '🏊', min: 23, max: 26, color: '#f59e0b' },
-            { id: 'very_warm', label: 'Very Warm', emoji: '🔥', min: 26, max: 999, color: '#ef4444' },
+            { label: 'Cold', color: '#2563eb', emoji: '🥶', min: -99, max: 17 },
+            { label: 'Brave', color: '#0ea5e9', emoji: '🤿', min: 17, max: 20 },
+            { label: 'Nice', color: '#22c55e', emoji: '😊', min: 20, max: 23 },
+            { label: 'Perfect', color: '#f59e0b', emoji: '🏊', min: 23, max: 26 },
+            { label: 'Very Warm', color: '#ef4444', emoji: '🔥', min: 26, max: 999 },
         ];
+        function getBand(t) { return BANDS.find(b => t >= b.min && t < b.max) || BANDS.at(-1); }
 
-        function getBand(t) {
-            return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1];
+        // ── Map ───────────────────────────────────────────────────────────────────────
+        const map = new maplibregl.Map({
+            container: 'discover-map',
+            style: 'https://tiles.openfreemap.org/styles/liberty',
+            center: [14, 36], zoom: 5.5,
+            attributionControl: false,
+        });
+        map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+        map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+        // Prevent browser page-zoom on trackpad pinch
+        document.addEventListener('wheel', e => {
+            if (e.ctrlKey || e.metaKey) e.preventDefault();
+        }, { passive: false });
+
+        // ── Markers ───────────────────────────────────────────────────────────────────
+        let markers = [];
+        let activeMarkerIdx = null;
+
+        function clearMarkers() {
+            markers.forEach(({ mkr }) => mkr.remove());
+            markers = [];
+            activeMarkerIdx = null;
         }
 
-        let allBeaches = [];
-        let activeFilter = 'all';
-        let activeRegion = 'all';
-
-        const REGION_MAP = {
-            europe: ['Spain', 'France', 'Italy', 'Greece', 'Croatia', 'Portugal', 'Malta'],
-            asia: ['Thailand', 'Indonesia', 'Malaysia', 'Philippines', 'Maldives'],
-            caribbean: ['Mexico', 'Barbados', 'Jamaica', 'Bahamas', 'Turks & Caicos', 'St. Lucia'],
-            pacific: ['Australia', 'French Polynesia', 'USA'],
-            indian: ['Tanzania', 'Mauritius', 'Seychelles', 'France'],
-            americas: ['Brazil', 'USA', 'Mexico', 'Costa Rica'],
-        };
-
-        async function loadBeaches() {
-            try {
-                const res = await fetch('/api/beaches');
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                allBeaches = data.beaches;
-                document.getElementById('subtitle').textContent =
-                    `50 beaches · satellite SST · live waves & current`;
-                renderGrid();
-            } catch {
-                const grid = document.getElementById('beach-grid');
-                grid.setAttribute('aria-busy', 'false');
-                grid.innerHTML =
-                    `<div class="loading" role="alert">Could not load temperatures. Try again later.</div>`;
-            }
+        function addMarkers(beaches) {
+            clearMarkers();
+            beaches.forEach((b, i) => {
+                if (!b.lat || !b.lon) return;
+                const color = b.temp_c != null ? getBand(b.temp_c).color : '#94a3b8';
+                const el = document.createElement('div');
+                el.style.cssText = [
+                    'width:24px', 'height:24px', 'border-radius:50%',
+                    'background:#ffffff', `border:2.5px solid ${color}`,
+                    'display:flex', 'align-items:center', 'justify-content:center',
+                    'font-family:DM Mono,monospace', 'font-size:10px', 'font-weight:700',
+                    'color:#0d1b2a', 'cursor:pointer',
+                    'box-shadow:0 2px 6px rgba(0,0,0,0.35)',
+                    'transition:transform 0.15s',
+                ].join(';');
+                el.textContent = i + 1;
+                el.addEventListener('click', () => setActive(i, currentTab));
+                const mkr = new maplibregl.Marker({ element: el, anchor: 'center' })
+                    .setLngLat([b.lon, b.lat]).addTo(map);
+                markers.push({ mkr, el, color });
+            });
         }
 
-        function renderGrid() {
-            let filtered = activeFilter === 'all'
-                ? allBeaches
-                : allBeaches.filter(b => b.temp_c !== null && getBand(b.temp_c).id === activeFilter);
+        function setActive(idx, tab) {
+            // Reset markers
+            markers.forEach(({ el, color }) => {
+                el.style.background = '#ffffff';
+                el.style.color = '#0d1b2a';
+                el.style.transform = 'scale(1)';
+                el.style.borderColor = color;
+            });
+            // Reset cards
+            document.querySelectorAll('.beach-card').forEach(c => c.classList.remove('active'));
 
-            // Apply region filter
-            if (activeRegion !== 'all') {
-                const countries = REGION_MAP[activeRegion] || [];
-                filtered = filtered.filter(b => countries.includes(b.country));
+            if (idx === null) { activeMarkerIdx = null; return; }
+            activeMarkerIdx = idx;
+
+            // Activate marker
+            const { el, color, mkr } = markers[idx];
+            el.style.background = color;
+            el.style.color = '#ffffff';
+            el.style.transform = 'scale(1.3)';
+
+            // Activate card
+            const card = document.getElementById(`bcard-${tab}-${idx}`);
+            if (card) {
+                card.classList.add('active');
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
 
-            const grid = document.getElementById('beach-grid');
-            grid.setAttribute('aria-busy', 'false');
+            // Fly to
+            const ll = mkr.getLngLat();
+            map.flyTo({ center: [ll.lng, ll.lat], zoom: Math.max(map.getZoom(), 10), duration: 800 });
+        }
 
-            if (filtered.length === 0) {
-                grid.innerHTML =
-                    `<div class="loading" role="status">No beaches match this filter right now.</div>`;
+        function fitMapToBeaches(beaches) {
+            const valid = beaches.filter(b => b.lat && b.lon);
+            if (valid.length < 2) {
+                if (valid.length === 1) map.flyTo({ center: [valid[0].lon, valid[0].lat], zoom: 11 });
+                return;
+            }
+            const bounds = valid.reduce((b, beach) => b.extend([beach.lon, beach.lat]),
+                new maplibregl.LngLatBounds([valid[0].lon, valid[0].lat], [valid[0].lon, valid[0].lat]));
+            map.fitBounds(bounds, { padding: 80, maxZoom: 13, duration: 1000 });
+        }
+
+        // ── Render beach cards ────────────────────────────────────────────────────────
+        function renderBeachCards(beaches, containerId, tab, labelEl, countEl, label) {
+            if (labelEl) labelEl.textContent = label;
+            if (countEl) countEl.textContent = beaches.length ? `${beaches.length} beaches` : '';
+
+            const container = document.getElementById(containerId);
+            if (!beaches.length) {
+                container.innerHTML = `<div class="empty-state"><span class="emoji">🏖</span>No beaches found.<br>Try a different location.</div>`;
+                clearMarkers();
                 return;
             }
 
-            grid.innerHTML = filtered.map(beach => {
-                const hasTemp = beach.temp_c !== null;
-                const band = hasTemp ? getBand(beach.temp_c) : null;
-
-                return `
-        <a href="/beach/${beach.slug}" class="beach-card"
-           style="${band ? `--band-color: ${band.color}` : ''}">
-            <div class="card-location">${beach.city}, ${beach.country}</div>
-            <div class="card-name">${beach.name}</div>
-            ${hasTemp ? `
-                <div class="card-temp-row">
-                    <span class="card-temp">${beach.temp_c.toFixed(1)}</span>
-                    <span class="card-unit">°C</span>
-                </div>
-                <div class="card-badge"
-                     style="background:${band.color}20;color:${band.color};border:1px solid ${band.color}35">
-                    <span aria-hidden="true">${band.emoji}</span> ${band.label}
-                </div>
-            ` : `<div class="card-no-data">No data available</div>`}
-            <span class="card-arrow" aria-hidden="true">→</span>
-        </a>`;
+            container.innerHTML = beaches.map((b, i) => {
+                const color = b.temp_c != null ? getBand(b.temp_c).color : '#94a3b8';
+                const tempStr = b.temp_c != null ? b.temp_c.toFixed(1) : '—';
+                const band = b.temp_c != null ? getBand(b.temp_c) : null;
+                const meta = b.distance_km != null ? `${b.distance_km} km away`
+                    : b.country ? b.country : '';
+                return `<div class="beach-card" id="bcard-${tab}-${i}" onclick="setActive(${i}, '${tab}')">
+            <div class="beach-num" style="border-color:${color};${b.temp_c != null ? `background:${color}18` : ''}">${i + 1}</div>
+            <div class="beach-info">
+                <div class="beach-name">${b.name}</div>
+                <div class="beach-meta">${meta}</div>
+                ${band ? `<span class="beach-badge" style="background:${color}18;color:${color}">${band.label}</span>` : ''}
+            </div>
+            <div class="beach-temp" style="color:${color}">${tempStr}<span style="font-size:11px">°</span></div>
+        </div>`;
             }).join('');
+
+            addMarkers(beaches);
+            fitMapToBeaches(beaches);
         }
 
-        // Search input
-        // Filter buttons
-        // Region buttons
-        document.querySelectorAll('[data-region]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                activeRegion = btn.dataset.region;
-                document.querySelectorAll('[data-region]').forEach(b => {
-                    b.classList.remove('active');
-                    b.setAttribute('aria-pressed', 'false');
-                });
-                btn.classList.add('active');
-                btn.setAttribute('aria-pressed', 'true');
-                renderGrid();
+        // ── Skeleton ──────────────────────────────────────────────────────────────────
+        function renderSkeleton(containerId, count = 6) {
+            document.getElementById(containerId).innerHTML = Array.from({ length: count }, (_, i) =>
+                `<div class="beach-card">
+            <div class="beach-num skeleton" style="border:none;background:rgba(255,255,255,0.07)"></div>
+            <div class="beach-info">
+                <div class="skeleton" style="height:12px;width:${55 + (i % 3) * 20}%;margin-bottom:6px;border-radius:4px"></div>
+                <div class="skeleton" style="height:9px;width:35%;border-radius:4px"></div>
+            </div>
+            <div class="skeleton" style="width:36px;height:24px;border-radius:4px"></div>
+        </div>`
+            ).join('');
+        }
+
+        // ── Haversine ────────────────────────────────────────────────────────────────
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        // ── Overpass query ────────────────────────────────────────────────────────────
+        async function queryOverpass(lat, lon, radiusKm = 50) {
+            const r = radiusKm * 1000;
+            const q = `[out:json][timeout:20];(node["natural"="beach"](around:${r},${lat},${lon});way["natural"="beach"](around:${r},${lat},${lon});node["leisure"="beach"](around:${r},${lat},${lon});way["leisure"="beach"](around:${r},${lat},${lon}););out center tags;`;
+
+            const fetchWithTimeout = async (url, ms = 15000) => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), ms);
+                try {
+                    const res = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timer);
+                    return res;
+                } catch (e) {
+                    clearTimeout(timer);
+                    throw e;
+                }
+            };
+
+            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`;
+            try {
+                const res = await fetchWithTimeout(url, 15000);
+                const data = await res.json();
+                return data.elements || [];
+            } catch {
+                try {
+                    const res2 = await fetchWithTimeout(
+                        `https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(q)}`, 15000
+                    );
+                    const data2 = await res2.json();
+                    return data2.elements || [];
+                } catch {
+                    return [];  // timeout or both failed — return empty
+                }
+            }
+        }
+
+        async function fetchSST(beaches) {
+            return Promise.all(beaches.map(async b => {
+                try {
+                    const r = await fetch(`/api/point?lat=${b.lat.toFixed(5)}&lon=${b.lon.toFixed(5)}&radius_km=10`);
+                    const d = await r.json();
+                    return { ...b, temp_c: d.status === 'ok' ? d.mean_c : null };
+                } catch { return { ...b, temp_c: null }; }
+            }));
+        }
+
+        function processOverpass(elements, lat, lon) {
+            const seen = new Set();
+            return elements
+                .map(el => {
+                    const blat = el.lat ?? el.center?.lat;
+                    const blon = el.lon ?? el.center?.lon;
+                    if (!blat || !blon) return null;
+                    const name = el.tags?.name || el.tags?.['name:en'] || 'Unnamed Beach';
+                    return { name, lat: blat, lon: blon, distance_km: haversine(lat, lon, blat, blon).toFixed(1) };
+                })
+                .filter(b => b && !seen.has(b.name) && seen.add(b.name))
+                .sort((a, b) => parseFloat(a.distance_km) - parseFloat(b.distance_km))
+                .slice(0, 15);
+        }
+
+        // ── Tab switching ─────────────────────────────────────────────────────────────
+        let currentTab = 'discover';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.page-tab').forEach((t, i) => {
+                const tabs = ['discover', 'nearme', 'warmest'];
+                t.classList.toggle('active', tabs[i] === tab);
             });
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(`panel-${tab}`).classList.add('active');
+            clearMarkers();
+
+            // Reset map to world view when switching to Discover
+            if (tab === 'discover') {
+                map.flyTo({ center: [14, 36], zoom: 5.5, duration: 800 });
+                document.getElementById('discover-search').value = '';
+                document.getElementById('discover-label').textContent = '';
+                document.getElementById('discover-count').textContent = '';
+                document.getElementById('discover-items').innerHTML = '';
+                document.getElementById('discover-header').style.display = 'none';
+            }
+
+            if (tab === 'warmest' && !warmestLoaded) loadWarmest();
+        }
+
+        // ── Tab 1: Discover ───────────────────────────────────────────────────────────
+        const discoverInput = document.getElementById('discover-search');
+        const discoverDrop = document.getElementById('discover-drop');
+        let searchTimer;
+
+        discoverInput.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            const q = discoverInput.value.trim();
+            if (q.length < 2) { discoverDrop.classList.remove('visible'); return; }
+            searchTimer = setTimeout(() => doSearch(q), 400);
         });
 
-        // Temperature filter buttons
-        document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                activeFilter = btn.dataset.filter;
-                document.querySelectorAll('.filter-btn').forEach(b => {
-                    b.classList.remove('active');
-                    b.setAttribute('aria-pressed', 'false');
-                });
-                btn.classList.add('active');
-                btn.setAttribute('aria-pressed', 'true');
-                document.getElementById('beach-grid').setAttribute('aria-busy', 'true');
-                renderGrid();
-            });
+        discoverInput.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { discoverDrop.classList.remove('visible'); discoverInput.blur(); }
         });
 
-        loadBeaches();
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.search-wrap')) discoverDrop.classList.remove('visible');
+        });
+
+        async function doSearch(q) {
+            discoverDrop.innerHTML = '<div style="padding:10px 14px;font-size:11px;color:var(--muted)"><span class="spinner-ring"></span>Searching…</div>';
+            discoverDrop.classList.add('visible');
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`, { headers: { 'Accept-Language': 'en' } });
+                const results = await res.json();
+                if (!results.length) {
+                    discoverDrop.innerHTML = '<div style="padding:10px 14px;font-size:11px;color:var(--muted)">No results found</div>';
+                    return;
+                }
+                discoverDrop.innerHTML = results.map(r => {
+                    const name = r.display_name.split(',').slice(0, 3).join(',');
+                    return `<div class="search-result-item" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${name}">
+                <div class="search-result-name">${name}</div>
+                <div class="search-result-type">${r.type || r.class || ''}</div>
+            </div>`;
+                }).join('');
+                discoverDrop.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        discoverInput.value = item.dataset.name.split(',')[0].trim();
+                        discoverDrop.classList.remove('visible');
+                        discoverSearch(parseFloat(item.dataset.lat), parseFloat(item.dataset.lon), item.dataset.name.split(',')[0].trim());
+                    });
+                });
+            } catch {
+                discoverDrop.innerHTML = '<div style="padding:10px 14px;font-size:11px;color:var(--muted)">Search failed</div>';
+            }
+        }
+
+        async function discoverSearch(lat, lon, placeName) {
+            document.getElementById('discover-header').style.display = 'flex';
+            document.getElementById('discover-label').textContent = `Beaches near ${placeName}`;
+            document.getElementById('discover-count').textContent = '';
+            renderSkeleton('discover-items', 6);
+            map.flyTo({ center: [lon, lat], zoom: 10, duration: 800 });
+
+            try {
+                const elements = await queryOverpass(lat, lon);
+                const beaches = processOverpass(elements, lat, lon);
+
+                if (!beaches.length) {
+                    document.getElementById('discover-items').innerHTML =
+                        `<div class="empty-state"><span class="emoji">🏖</span>No beaches found within 50km of ${placeName}.<br>Try a nearby coastal city.</div>`;
+                    clearMarkers();
+                    return;
+                }
+
+                document.getElementById('discover-count').textContent = 'Loading temperatures…';
+                const withTemp = await fetchSST(beaches);
+                renderBeachCards(withTemp, 'discover-items', 'discover',
+                    document.getElementById('discover-label'),
+                    document.getElementById('discover-count'),
+                    `Beaches near ${placeName}`);
+            } catch {
+                document.getElementById('discover-items').innerHTML =
+                    `<div class="empty-state"><span class="emoji">⚠️</span>Could not load beaches.<br>Check your connection.</div>`;
+            }
+        }
+
+        // ── Tab 2: Near me ────────────────────────────────────────────────────────────
+        async function loadNearMe() {
+            const items = document.getElementById('nearme-items');
+            items.innerHTML = `<div class="loading-state"><span class="spinner-ring"></span>Finding your location…</div>`;
+
+            try {
+                const pos = await new Promise((resolve, reject) =>
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 6000, maximumAge: 60000 })
+                );
+                const { latitude: lat, longitude: lon } = pos.coords;
+
+                items.innerHTML = `<div class="loading-state"><span class="spinner-ring"></span>Finding nearby beaches…</div>`;
+                map.flyTo({ center: [lon, lat], zoom: 10, duration: 800 });
+
+                const elements = await queryOverpass(lat, lon, 20);
+                const beaches = processOverpass(elements, lat, lon);
+
+                if (!beaches.length) {
+                    items.innerHTML = `<div class="near-me-empty">
+                <div style="font-size:48px;margin-bottom:8px">😭🌊</div>
+                <div class="near-me-title">No beaches within 30km</div>
+                <div class="near-me-sub">
+                    SpongeBob would be disappointed. 🧽<br>
+                    You're too far from the ocean right now.<br><br>
+                    <small style="color:var(--text-panel-muted)">
+                        No beaches tagged in OpenStreetMap within 30km of you.
+                    </small>
+                </div>
+                <button class="btn-primary" onclick="switchTab('discover')">
+                    🔍 Search a coastal city instead
+                </button>
+            </div>`;
+                    return;
+                }
+
+                items.innerHTML = `<div class="loading-state"><span class="spinner-ring"></span>Loading temperatures…</div>`;
+                const withTemp = await fetchSST(beaches);
+
+                // Filter to only real ocean beaches (have SST data)
+                const oceanBeaches = withTemp.filter(b => b.temp_c !== null);
+
+                if (!oceanBeaches.length) {
+                    items.innerHTML = `<div class="near-me-empty">
+                <div style="font-size:40px;margin-bottom:12px">🏖️</div>
+                <div class="near-me-title">You're beachless.</div>
+                <div class="near-me-sub">
+                    Nearest ocean: disappointingly far away. 🌊<br>
+                    Time to migrate. 🐟
+                </div>
+                <button class="btn-primary" onclick="switchTab('discover')">
+                    Search a coastal city
+                </button>
+            </div>`;
+                    return;
+                }
+
+                // Add list header
+                document.getElementById('nearme-list').insertAdjacentHTML('afterbegin',
+                    `<div class="list-header"><span>Beaches near you</span><span class="list-count">${oceanBeaches.length} found</span></div>`);
+
+                renderBeachCards(oceanBeaches, 'nearme-items', 'nearme', null, null, 'Beaches near you');
+
+            } catch (err) {
+                items.innerHTML = `<div class="near-me-empty">
+            <div class="near-me-icon">🚫</div>
+            <div class="near-me-title">Location blocked</div>
+            <div class="near-me-sub">Your browser blocked location access.<br>Check your browser settings to allow it,<br>or search a city in the Discover tab.</div>
+            <button class="btn-primary" onclick="loadNearMe()">Try again</button>
+        </div>`;
+            }
+        }
+
+        // ── Tab 3: Warmest ────────────────────────────────────────────────────────────
+        let warmestLoaded = false;
+        let currentWarmestRegion = 'all';
+
+        const REGION_LABELS = {
+            all: 'Warmest water right now',
+            mediterranean: 'Warmest in Mediterranean',
+            adriatic: 'Warmest in Adriatic',
+            atlantic: 'Warmest in Atlantic',
+            pacific: 'Warmest in Pacific',
+            indian: 'Warmest in Indian Ocean',
+            redsea: 'Warmest in Red Sea',
+        };
+
+        async function loadWarmest() {
+            warmestLoaded = true;
+            await filterWarmest('all', document.querySelector('.filter-btn.active'));
+        }
+
+        async function filterWarmest(region, btn) {
+            currentWarmestRegion = region;
+
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            document.getElementById('warmest-label').textContent = REGION_LABELS[region] || 'Warmest water right now';
+            document.getElementById('warmest-count').textContent = '';
+            renderSkeleton('warmest-items', 8);
+            clearMarkers();
+
+            try {
+                // Fetch warmest points from SQLite cache
+                const res = await fetch(`/api/warmest?region=${region}&limit=20`);
+                const data = await res.json();
+                const beaches = data.beaches || [];
+
+                if (!beaches.length) {
+                    document.getElementById('warmest-items').innerHTML =
+                        `<div class="empty-state">
+                    <span class="emoji">🌊</span>
+                    No warmest beach data yet.<br>
+                    <small style="color:var(--text-panel-muted)">Data is updated nightly — check back soon.</small>
+                </div>`;
+                    return;
+                }
+
+                // Beaches already have names from the nightly job — no geocoding needed
+                renderBeachCards(beaches, 'warmest-items', 'warmest',
+                    document.getElementById('warmest-label'),
+                    document.getElementById('warmest-count'),
+                    REGION_LABELS[region] || 'Warmest water right now');
+
+            } catch {
+                document.getElementById('warmest-items').innerHTML =
+                    `<div class="empty-state"><span class="emoji">⚠️</span>Could not load data.<br>Try refreshing.</div>`;
+            }
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────────────
+        // Warmest loads lazily when tab is opened
     </script>
-
-    <footer class="site-footer">
-        <div class="footer-inner">
-            <div class="footer-brand">
-                <a href="/" class="footer-logo">SwimTemp</a>
-                <p class="footer-tagline">Satellite sea temperature &amp; live ocean conditions for swimmers &amp;
-                    travelers.</p>
-            </div>
-            <div class="footer-links">
-                <div class="footer-col">
-                    <div class="footer-col-label">Explore</div>
-                    <a href="/map">Map</a>
-                    <a href="/beaches">Beaches</a>
-                    <a href="/about">About</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Data</div>
-                    <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
-                    <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA
-                        WOA23</a>
-                    <a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank"
-                        rel="noopener">Open-Meteo Marine</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Tools</div>
-                    <a href="/embed">Embed Widget</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Legal</div>
-                    <a href="/privacy">Privacy Policy</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Contact</div>
-                    <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Follow</div>
-                    <a href="https://www.instagram.com/swimtemp/" target="_blank" rel="noopener">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            style="vertical-align:middle;margin-right:6px">
-                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                        </svg>Instagram
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <span>© 2026 SwimTemp</span>
-            <span>Sea surface temperature updated daily</span>
-        </div>
-    </footer>
 </body>
 
 </html>

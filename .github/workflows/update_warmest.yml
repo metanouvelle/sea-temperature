@@ -1,0 +1,17 @@
+name: Update Warmest Beaches
+
+on:
+  schedule:
+    - cron: '0 5 * * *'   # 5am UTC — runs after prewarm (4am)
+  workflow_dispatch:        # allow manual trigger
+
+jobs:
+  update-warmest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run update_warmest on Fly
+        run: |
+          curl -s -X POST \
+            "https://swimtemp.com/api/admin/update-warmest" \
+            -H "Authorization: Bearer ${{ secrets.PREWARM_SECRET }}" \
+            -w "\nHTTP status: %{http_code}\n"
