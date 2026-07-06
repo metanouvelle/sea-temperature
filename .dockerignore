@@ -12,6 +12,8 @@
 # Database
 data/
 woa23/
+screenshots/
+tests/
 
 # OS
 **/.DS_Store

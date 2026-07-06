@@ -503,7 +503,23 @@
         }
 
         /* ── Mobile ── */
-        @media (max-width: 768px) {
+
+        /* ── Tablet tier (701-1024px): desktop layout, tighter sidebar ── */
+        @media (min-width: 701px) and (max-width: 1024px) {
+            .main {
+                grid-template-columns: 380px 1fr;
+            }
+        }
+
+        /* Touch devices: comfortable tap targets on map controls */
+        @media (pointer: coarse) {
+            .maplibregl-ctrl-group button {
+                width: 44px !important;
+                height: 44px !important;
+            }
+        }
+
+        @media (max-width: 700px) {
             body {
                 overflow: hidden;
                 height: 100vh;
@@ -540,6 +556,8 @@
                 border-radius: 20px 20px 0 0;
                 box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
                 max-height: 75vh;
+                max-height: 75dvh;
+                padding-bottom: env(safe-area-inset-bottom, 0px);
                 overflow: hidden;
                 display: flex;
                 flex-direction: column;
@@ -698,7 +716,12 @@
                         <span id="discover-label"></span>
                         <span id="discover-count" class="list-count"></span>
                     </div>
-                    <div id="discover-items"></div>
+                    <div id="discover-items">
+                        <div class="empty-state">
+                            <div class="emoji">🏖️</div>
+                            Search a city or country above,<br>or tap anywhere on the sea to check the temperature.
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -778,6 +801,72 @@
             if (e.ctrlKey || e.metaKey) e.preventDefault();
         }, { passive: false });
 
+        // ── Click sea → live SST popup (consistent with /map) ────────────────────────
+        let inspectMarker = null;
+        let inspectPopup = null;
+        let inspectSeq = 0;
+
+        map.on('click', async e => {
+            const t = e.originalEvent && e.originalEvent.target;
+            if (t && (t.closest('.bm-el') || t.closest('.maplibregl-ctrl') ||
+                t.closest('.maplibregl-ctrl-group') || t.closest('.maplibregl-popup'))) return;
+
+            const { lng: lon, lat } = e.lngLat;
+            const seq = ++inspectSeq;
+
+            if (inspectMarker) inspectMarker.remove();
+            if (inspectPopup) inspectPopup.remove();
+
+            const dot = document.createElement('div');
+            dot.style.cssText = 'width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #0ea5e9;box-shadow:0 2px 8px rgba(0,0,0,.3);transition:border-color .4s';
+            inspectMarker = new maplibregl.Marker({ element: dot, anchor: 'center' })
+                .setLngLat([lon, lat]).addTo(map);
+
+            inspectPopup = new maplibregl.Popup({ offset: 16, maxWidth: '260px', closeButton: true })
+                .setLngLat([lon, lat])
+                .setHTML('<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:#475569;padding:4px 2px">Checking sea temperature…</div>')
+                .addTo(map);
+            inspectPopup.on('close', () => {
+                if (inspectMarker) { inspectMarker.remove(); inspectMarker = null; }
+            });
+
+            const ac = new AbortController();
+            const timeoutId = setTimeout(() => ac.abort(), 15000);
+            const [d, place] = await Promise.all([
+                fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=25`, { signal: ac.signal })
+                    .then(r => r.ok ? r.json() : null).catch(() => null),
+                fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=10&addressdetails=1`,
+                    { headers: { 'Accept-Language': 'en' } })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(j => {
+                        if (!j) return null;
+                        const a = j.address || {};
+                        return j.name || a.city || a.town || a.village || a.county || a.state || a.country || null;
+                    }).catch(() => null),
+            ]);
+            clearTimeout(timeoutId);
+            if (seq !== inspectSeq || !inspectPopup) return; // superseded by a newer click
+
+            const mapLink = `/map?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}`;
+            if (!d || d.status !== 'ok') {
+                inspectPopup.setHTML(
+                    '<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:#475569;padding:4px 2px;line-height:1.6">' +
+                    'No data here yet — new areas can take a moment.<br>' +
+                    `<a href="${mapLink}" style="color:#0ea5e9;font-weight:700;text-decoration:none">Try the full map →</a></div>`);
+                return;
+            }
+
+            const band = getBand(d.mean_c);
+            dot.style.borderColor = band.color;
+            inspectPopup.setHTML(
+                '<div style="font-family:\'DM Mono\',monospace;padding:4px 2px;min-width:170px">' +
+                `<div style="font-size:10px;letter-spacing:.5px;color:#64748b;margin-bottom:4px">${(place || 'OPEN WATER').toUpperCase()}</div>` +
+                `<div style="font-family:Fraunces,serif;font-size:30px;font-weight:600;line-height:1;color:${band.color};margin-bottom:6px">${d.mean_c.toFixed(1)}<span style="font-size:14px">°C</span></div>` +
+                `<span style="background:${band.color}18;color:${band.color};border:1px solid ${band.color}33;padding:2px 9px;border-radius:99px;font-size:9.5px;font-weight:500">${band.emoji} ${band.label}</span>` +
+                `<div style="margin-top:9px;padding-top:8px;border-top:1px solid rgba(0,0,0,.07)"><a href="${mapLink}" style="color:#0ea5e9;font-size:10.5px;font-weight:700;text-decoration:none">Forecast & history →</a></div>` +
+                '</div>');
+        });
+
         // ── Markers ───────────────────────────────────────────────────────────────────
         let markers = [];
         let activeMarkerIdx = null;
@@ -794,6 +883,7 @@
                 if (!b.lat || !b.lon) return;
                 const color = b.temp_c != null ? getBand(b.temp_c).color : '#94a3b8';
                 const el = document.createElement('div');
+                el.className = 'bm-el';
                 el.style.cssText = [
                     'width:24px', 'height:24px', 'border-radius:50%',
                     'background:#ffffff', `border:2.5px solid ${color}`,

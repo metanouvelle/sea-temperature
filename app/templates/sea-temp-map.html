@@ -447,7 +447,7 @@
         }
 
         /* ── Mobile ── */
-        @media (max-width: 768px) {
+        @media (max-width: 700px) {
 
             /* Fix iOS auto-zoom on search input focus */
             #search-input {
@@ -474,6 +474,7 @@
                 border-radius: 20px 20px 0 0;
                 border-bottom: none;
                 max-height: 55vh;
+                max-height: 55dvh;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
                 transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
@@ -574,7 +575,7 @@
             display: none;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 700px) {
             .legend-scale-btn {
                 display: inline-flex;
             }
@@ -721,6 +722,7 @@
             box-shadow: 0 4px 40px rgba(0, 0, 0, 0.15);
             width: 480px;
             max-height: 85vh;
+            max-height: 85dvh;
             overflow-y: auto;
             margin: 20px;
         }
@@ -909,12 +911,13 @@
             letter-spacing: 1px;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 700px) {
             #nearby-panel {
                 width: 100%;
                 margin: 0;
                 border-radius: 20px 20px 0 0;
                 max-height: 80vh;
+                max-height: 80dvh;
             }
 
             #nearby-overlay {
@@ -949,6 +952,13 @@
             outline: 2px solid var(--accent);
             outline-offset: 3px;
             border-radius: 4px;
+        }
+
+        @media (pointer: coarse) {
+            .maplibregl-ctrl-group button {
+                width: 44px !important;
+                height: 44px !important;
+            }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -988,6 +998,7 @@
             box-shadow: 0 4px 40px rgba(0, 0, 0, 0.15);
             width: 480px;
             max-height: 85vh;
+            max-height: 85dvh;
             overflow-y: auto;
             margin: 20px;
             -webkit-overflow-scrolling: touch;
@@ -1404,12 +1415,13 @@
         }
 
         /* Mobile forecast */
-        @media (max-width: 768px) {
+        @media (max-width: 700px) {
             #forecast-panel {
                 width: 100%;
                 margin: 0;
                 border-radius: 20px 20px 0 0;
                 max-height: 80vh;
+                max-height: 80dvh;
             }
 
             #forecast-overlay {
@@ -2124,7 +2136,7 @@
         }
 
         function isMobileView() {
-            return window.innerWidth <= 768;
+            return window.innerWidth <= 700;
         }
 
         function renderMobileAccordion() {
@@ -3075,7 +3087,7 @@
         // ── Mobile bottom sheet collapse/expand ──────────────────────────────────────
         const infoPanel = document.getElementById('info-panel');
         const panelHandle = document.getElementById('panel-handle');
-        let isMobile = window.innerWidth <= 768;
+        let isMobile = window.innerWidth <= 700;
         let isCollapsed = false;
 
         function collapsePanel() {
@@ -3111,17 +3123,32 @@
 
         // Start collapsed on mobile
         window.addEventListener('load', () => {
-            isMobile = window.innerWidth <= 768;
+            isMobile = window.innerWidth <= 700;
             if (isMobile) collapsePanel();
         });
 
         window.addEventListener('resize', () => {
-            isMobile = window.innerWidth <= 768;
+            isMobile = window.innerWidth <= 700;
             if (!isMobile) expandPanel();
         });
 
 
 
+
+        // ── Deep link: /map?lat=..&lon=.. → jump there and inspect the point ─────────
+        (function () {
+            const p = new URLSearchParams(location.search);
+            const lat = parseFloat(p.get('lat')), lon = parseFloat(p.get('lon'));
+            if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
+            const go = () => {
+                map.jumpTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 9) });
+                map.fire('click', {
+                    lngLat: new maplibregl.LngLat(lon, lat),
+                    originalEvent: { target: document.body },
+                });
+            };
+            if (map.loaded()) go(); else map.once('load', go);
+        })();
 
     </script>
 </body>

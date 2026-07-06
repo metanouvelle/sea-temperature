@@ -915,6 +915,251 @@
                 letter-spacing: -1px;
             }
         }
+
+        @keyframes featpulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 6px #4ade80
+            }
+
+            50% {
+                opacity: .5;
+                box-shadow: 0 0 12px #4ade80
+            }
+        }
+
+        .features-section {
+            padding: 64px 8vw;
+            border-top: 1px solid var(--border-dark)
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 14px;
+            max-width: 1080px;
+            margin: 0 auto
+        }
+
+        .feat-block {
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid var(--border-dark);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: border-color .2s
+        }
+
+        .feat-block:hover {
+            border-color: rgba(255, 255, 255, .15)
+        }
+
+        .feat-tag {
+            padding: 12px 16px 0;
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .feat-live .feat-tag {
+            color: #4ade80
+        }
+
+        .feat-live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4ade80;
+            display: inline-block;
+            animation: featpulse 2s ease-in-out infinite
+        }
+
+        .feat-card {
+            margin: 10px 16px 12px;
+            border-radius: 12px;
+            padding: 12px 14px;
+            min-height: 208px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px
+        }
+
+        .feat-light {
+            background: rgba(255, 255, 255, .96)
+        }
+
+        .feat-dark {
+            background: #0d1b2a;
+            border: 1px solid rgba(255, 255, 255, .08)
+        }
+
+        .feat-title {
+            padding: 0 16px 6px;
+            font-family: 'Fraunces', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text)
+        }
+
+        .feat-desc {
+            padding: 0 16px 16px;
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.8
+        }
+
+        .fc-eyebrow {
+            font-family: 'DM Mono', monospace;
+            font-size: 8px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 6px
+        }
+
+        .fc-temp {
+            font-family: 'Fraunces', serif;
+            font-size: 40px;
+            font-weight: 300;
+            letter-spacing: -1.5px;
+            line-height: 1;
+            margin-bottom: 6px;
+            color: #94a3b8
+        }
+
+        .fc-unit {
+            font-size: 15px
+        }
+
+        .fc-divider {
+            border-top: 1px solid rgba(0, 0, 0, .06);
+            margin: 8px 0
+        }
+
+        .fc-waves {
+            display: flex;
+            gap: 14px
+        }
+
+        .fc-wcol {
+            text-align: center
+        }
+
+        .fc-wval {
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            color: #0d1b2a
+        }
+
+        .fc-wlbl {
+            font-family: 'DM Mono', monospace;
+            font-size: 7px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-top: 2px
+        }
+
+        .fc-days {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px
+        }
+
+        .fc-day {
+            flex: 1;
+            background: rgba(0, 0, 0, .04);
+            border-radius: 8px;
+            padding: 8px 4px;
+            text-align: center
+        }
+
+        .fc-dname {
+            font-family: 'DM Mono', monospace;
+            font-size: 7px;
+            letter-spacing: 1px;
+            color: #475569;
+            margin-bottom: 4px;
+            text-transform: uppercase
+        }
+
+        .fc-dtemp {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 300;
+            margin-bottom: 2px
+        }
+
+        .fc-dsub {
+            font-family: 'DM Mono', monospace;
+            font-size: 8px;
+            color: #94a3b8
+        }
+
+        .fc-beaches {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin-top: 8px
+        }
+
+        .fc-beach {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 7px;
+            border-bottom: 1px solid rgba(0, 0, 0, .06)
+        }
+
+        .fc-beach:last-child {
+            border-bottom: none;
+            padding-bottom: 0
+        }
+
+        .fc-bnum {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1.5px solid;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'DM Mono', monospace;
+            font-size: 8px;
+            font-weight: 700;
+            color: #0d1b2a;
+            flex-shrink: 0
+        }
+
+        .fc-bname {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            color: #0d1b2a;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .fc-btemp {
+            font-family: 'Fraunces', serif;
+            font-size: 17px;
+            font-weight: 300;
+            flex-shrink: 0
+        }
+
+        @media(max-width:640px) {
+            .features-grid {
+                grid-template-columns: 1fr 1fr
+            }
+        }
     </style>
 </head>
 
@@ -964,40 +1209,87 @@
         <div class="scroll-hint" aria-hidden="true"><span>↓</span><span>Explore</span></div>
     </section>
 
-    <!-- ── Live panels ── -->
-    <section class="live-section">
-        <div class="live-section-header">
-            <span class="live-dot">LIVE</span>
-            <span class="live-section-title">Right now around the world</span>
-        </div>
-        <div class="panels-grid" id="panels-grid">
-            <div class="mini-panel" id="mini-panel-0">
-                <div class="mini-live">LIVE</div>
-                <div class="mini-eyebrow">Mediterranean</div>
-                <div class="mini-place">Catania, Sicily</div>
-                <div class="mini-temp" id="mp-temp-0" style="color:#94a3b8">—<span class="mini-unit">°C</span></div>
-                <div id="mp-badge-0"></div>
+    <!-- ── Features ── -->
+    <section class="features-section">
+        <div class="features-grid">
+            <div class="feat-block feat-live">
+                <div class="feat-tag"><span class="feat-live-dot"></span>LIVE NOW</div>
+                <div class="feat-card feat-light">
+                    <div class="fc-eyebrow">OCEAN CONDITIONS · CATANIA, SICILY</div>
+                    <div class="fc-temp" id="fp-temp">—<span class="fc-unit">°C</span></div>
+                    <div id="fp-badge" style="margin-bottom:10px"></div>
+                    <div class="fc-divider"></div>
+                    <div class="fc-waves">
+                        <div class="fc-wcol">
+                            <div class="fc-wval" id="fp-wave">—</div>
+                            <div class="fc-wlbl">WAVES</div>
+                        </div>
+                        <div class="fc-wcol">
+                            <div class="fc-wval" id="fp-swell">—</div>
+                            <div class="fc-wlbl">SWELL</div>
+                        </div>
+                        <div class="fc-wcol">
+                            <div class="fc-wval" id="fp-current">—</div>
+                            <div class="fc-wlbl">CURRENT</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="feat-title">Live sea conditions</div>
+                <div class="feat-desc">Real satellite temperature, updated daily.</div>
             </div>
-            <div class="mini-panel" id="mini-panel-1">
-                <div class="mini-live">LIVE</div>
-                <div class="mini-eyebrow">Aegean Sea</div>
-                <div class="mini-place">Mykonos, Greece</div>
-                <div class="mini-temp" id="mp-temp-1" style="color:#94a3b8">—<span class="mini-unit">°C</span></div>
-                <div id="mp-badge-1"></div>
+            <div class="feat-block">
+                <div class="feat-tag">FORECAST</div>
+                <div class="feat-card feat-light">
+                    <div class="fc-eyebrow">3-DAY FORECAST · OPEN-METEO MARINE</div>
+                    <div class="fc-days">
+                        <div class="fc-day">
+                            <div class="fc-dname" data-fc-day="1">TOMORROW</div>
+                            <div class="fc-dtemp" style="color:#f59e0b">26.8°</div>
+                            <div class="fc-dsub">0.4m</div>
+                        </div>
+                        <div class="fc-day">
+                            <div class="fc-dname" data-fc-day="2">—</div>
+                            <div class="fc-dtemp" style="color:#f59e0b">26.2°</div>
+                            <div class="fc-dsub">0.6m</div>
+                        </div>
+                        <div class="fc-day">
+                            <div class="fc-dname" data-fc-day="3">—</div>
+                            <div class="fc-dtemp" style="color:#22c55e">24.9°</div>
+                            <div class="fc-dsub">0.8m</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="feat-title">3-day sea forecast</div>
+                <div class="feat-desc">Know before you pack.</div>
             </div>
-            <div class="mini-panel" id="mini-panel-2">
-                <div class="mini-live">LIVE</div>
-                <div class="mini-eyebrow">Mediterranean</div>
-                <div class="mini-place">Ibiza, Spain</div>
-                <div class="mini-temp" id="mp-temp-2" style="color:#94a3b8">—<span class="mini-unit">°C</span></div>
-                <div id="mp-badge-2"></div>
+            <div class="feat-block">
+                <div class="feat-tag">HISTORY</div>
+                <div class="feat-card feat-dark">
+                    <div class="fc-eyebrow" style="color:rgba(255,255,255,0.35)">12 MONTHS · COPERNICUS SATELLITE</div>
+                    <canvas id="mini-chart" width="280" height="90"
+                        style="width:100%;height:90px;margin-top:8px"></canvas>
+                </div>
+                <div class="feat-title">12 months of history</div>
+                <div class="feat-desc">Was it warm last August?</div>
             </div>
-            <div class="mini-panel" id="mini-panel-3">
-                <div class="mini-live">LIVE</div>
-                <div class="mini-eyebrow">Adriatic Sea</div>
-                <div class="mini-place">Dubrovnik, Croatia</div>
-                <div class="mini-temp" id="mp-temp-3" style="color:#94a3b8">—<span class="mini-unit">°C</span></div>
-                <div id="mp-badge-3"></div>
+            <div class="feat-block">
+                <div class="feat-tag">BEACHES</div>
+                <div class="feat-card feat-light">
+                    <div class="fc-eyebrow">BEACHES NEARBY · OPENSTREETMAP</div>
+                    <div class="fc-beaches">
+                        <div class="fc-beach"><span class="fc-bnum" style="border-color:#f59e0b">1</span><span
+                                class="fc-bname">Lido Arcobaleno</span><span class="fc-btemp"
+                                style="color:#f59e0b">26.4°</span></div>
+                        <div class="fc-beach"><span class="fc-bnum" style="border-color:#22c55e">2</span><span
+                                class="fc-bname">Spiaggia Torre Conca</span><span class="fc-btemp"
+                                style="color:#22c55e">25.1°</span></div>
+                        <div class="fc-beach"><span class="fc-bnum" style="border-color:#22c55e">3</span><span
+                                class="fc-bname">Caletta Rais Gerbi</span><span class="fc-btemp"
+                                style="color:#22c55e">24.9°</span></div>
+                    </div>
+                </div>
+                <div class="feat-title">Beaches nearby</div>
+                <div class="feat-desc">Real beaches, live temperatures.</div>
             </div>
         </div>
     </section>
@@ -1196,119 +1488,90 @@
                     const current = cur.ocean_current_velocity != null ? cur.ocean_current_velocity.toFixed(1) : null;
                     if (!waves && !swell && !current) return;
 
-                    const panel = document.getElementById(`mini-panel-${i}`);
-                    if (!panel) return;
-                    const existing = panel.querySelector('.mini-waves');
-                    if (existing) return;
-
-                    const wavesHtml = `<div class="mini-waves">
-                ${waves ? `<div class="mini-wave-item"><div class="mini-wave-val">${waves}m</div><div class="mini-wave-label">WAVE</div></div>` : ''}
-                ${swell ? `<div class="mini-wave-item"><div class="mini-wave-val">${swell}m</div><div class="mini-wave-label">SWELL</div></div>` : ''}
-                ${current ? `<div class="mini-wave-item"><div class="mini-wave-val">${current}kn</div><div class="mini-wave-label">CURRENT</div></div>` : ''}
-            </div>`;
-                    panel.insertAdjacentHTML('beforeend', wavesHtml);
+                    // old wave code removed
                 } catch { /* silent */ }
             });
         }
 
-        // ── Live panels — 4 real ocean spots ─────────────────────────────────────────
-        const SPOTS = [
-            { name: 'Catania, Sicily', lat: 37.47, lon: 15.14, label: 'Mediterranean' },
-            { name: 'Mykonos, Greece', lat: 37.44, lon: 25.36, label: 'Aegean Sea' },
-            { name: 'Ibiza, Spain', lat: 38.91, lon: 1.43, label: 'Mediterranean' },
-            { name: 'Dubrovnik, Croatia', lat: 42.64, lon: 18.11, label: 'Adriatic Sea' },
-        ];
-
-        // Use small radius so we only hit cached tiles — no live Copernicus fetch
-        const SST_RADIUS = 25;
-
-        const fetchWithTimeout = (url, ms = 8000) => {
-            const ctrl = new AbortController();
-            setTimeout(() => ctrl.abort(), ms);
-            return fetch(url, { signal: ctrl.signal }).catch(() => null);
-        };
-
-        // Panels pre-rendered in HTML — just update values when data arrives
+        // ── Feature panels: live conditions (Catania) ────────────────────────────────
         function loadLivePanels() {
-            // SST — each spot updates independently as data arrives
-            SPOTS.forEach(async (spot, i) => {
-                try {
-                    const res = await fetchWithTimeout(`/api/point?lat=${spot.lat}&lon=${spot.lon}&radius_km=${SST_RADIUS}`);
-                    const sst = res ? await res.json() : {};
-                    if (sst.status !== 'ok') return;
+            const L = 37.47, O = 15.14;
 
-                    const band = getBand(sst.mean_c);
-                    const color = band.color;
+            // SST from our own cached API
+            const a = new AbortController();
+            setTimeout(() => a.abort(), 8000);
+            fetch(`/api/point?lat=${L}&lon=${O}&radius_km=25`, { signal: a.signal })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.status !== 'ok') return;
+                    const b = getBand(d.mean_c), c = b.color;
+                    const te = document.getElementById('fp-temp');
+                    if (te) {
+                        te.style.color = c;
+                        te.innerHTML = `${d.mean_c.toFixed(1)}<span class="fc-unit">°C</span>`;
+                    }
+                    const be = document.getElementById('fp-badge');
+                    if (be) be.innerHTML = `<span style="background:${c}18;color:${c};border:1px solid ${c}33;padding:3px 10px;border-radius:99px;font-family:'DM Mono',monospace;font-size:9px;font-weight:500">${b.emoji} ${b.label}</span>`;
+                })
+                .catch(() => { /* leave — placeholders */ });
 
-                    const tempEl = document.getElementById(`mp-temp-${i}`);
-                    const badgeEl = document.getElementById(`mp-badge-${i}`);
-                    if (tempEl) { tempEl.style.color = color; tempEl.innerHTML = `${sst.mean_c.toFixed(1)}<span class="mini-unit">°C</span>`; }
-                    if (badgeEl) { badgeEl.innerHTML = `<div class="mini-badge" style="background:${color}18;color:${color};border:1px solid ${color}33">${band.emoji} ${band.label}</div>`; }
-                } catch { /* silent */ }
-            });
-
-            // Waves — update each panel independently after SST
-            SPOTS.forEach(async (spot, i) => {
-                try {
-                    const res = await fetchWithTimeout(
-                        `https://marine-api.open-meteo.com/v1/marine?latitude=${spot.lat}&longitude=${spot.lon}&current=wave_height,swell_wave_height,ocean_current_velocity&timezone=auto`
-                    );
-                    if (!res) return;
-                    const marine = await res.json();
-                    const cur = marine.current || {};
-                    const waves = cur.wave_height != null ? cur.wave_height.toFixed(1) : null;
-                    const swell = cur.swell_wave_height != null ? cur.swell_wave_height.toFixed(1) : null;
-                    const current = cur.ocean_current_velocity != null ? cur.ocean_current_velocity.toFixed(1) : null;
-                    if (!waves && !swell && !current) return;
-
-                    const panel = document.getElementById(`mini-panel-${i}`);
-                    if (!panel || panel.querySelector('.mini-waves')) return;
-                    panel.insertAdjacentHTML('beforeend', `<div class="mini-waves">
-                ${waves ? `<div class="mini-wave-item"><div class="mini-wave-val">${waves}m</div><div class="mini-wave-label">WAVE</div></div>` : ''}
-                ${swell ? `<div class="mini-wave-item"><div class="mini-wave-val">${swell}m</div><div class="mini-wave-label">SWELL</div></div>` : ''}
-                ${current ? `<div class="mini-wave-item"><div class="mini-wave-val">${current}kn</div><div class="mini-wave-label">CURRENT</div></div>` : ''}
-            </div>`);
-                } catch { /* silent */ }
-            });
+            // Waves / swell / current from Open-Meteo Marine
+            const bx = new AbortController();
+            setTimeout(() => bx.abort(), 10000);
+            fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${L}&longitude=${O}&current=wave_height,swell_wave_height,ocean_current_velocity&timezone=auto`, { signal: bx.signal })
+                .then(r => r.json())
+                .then(d => {
+                    const c = d.current || {};
+                    const w = document.getElementById('fp-wave'),
+                        s = document.getElementById('fp-swell'),
+                        u = document.getElementById('fp-current');
+                    if (w && c.wave_height != null) w.textContent = c.wave_height.toFixed(1) + 'm';
+                    if (s && c.swell_wave_height != null) s.textContent = c.swell_wave_height.toFixed(1) + 'm';
+                    if (u && c.ocean_current_velocity != null) u.textContent = c.ocean_current_velocity.toFixed(1) + 'kn';
+                })
+                .catch(() => { /* leave — placeholders */ });
         }
+        loadLivePanels();
 
+        // ── Forecast panel: keep day labels current (temps are illustrative) ─────────
+        document.querySelectorAll('[data-fc-day]').forEach(el => {
+            const off = parseInt(el.dataset.fcDay, 10);
+            if (off === 1) { el.textContent = 'TOMORROW'; return; }
+            const d = new Date(); d.setDate(d.getDate() + off);
+            el.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+        });
 
-        // ── Mini history chart ────────────────────────────────────────────────────────
+        // ── Feature panels: 12-month history mini chart (illustrative) ───────────────
         (function () {
-            const canvas = document.getElementById('mini-chart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const W = canvas.width, H = canvas.height;
-            const temps = [15.2, 14.8, 15.6, 17.4, 20.8, 24.2, 26.4, 27.1, 25.3, 22.1, 18.4, 16.0];
-            const months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-            const minT = 13, maxT = 29;
-            function ty(t) { return H - 18 - ((t - minT) / (maxT - minT)) * (H - 30); }
-            function tx(i) { return 10 + (i / 11) * (W - 20); }
-
-            const grad = ctx.createLinearGradient(0, 0, 0, H);
-            grad.addColorStop(0, 'rgba(239,68,68,0.25)');
-            grad.addColorStop(0.5, 'rgba(245,158,11,0.15)');
-            grad.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.beginPath();
-            temps.forEach((t, i) => i === 0 ? ctx.moveTo(tx(i), ty(t)) : ctx.lineTo(tx(i), ty(t)));
-            ctx.lineTo(tx(11), H); ctx.lineTo(tx(0), H); ctx.closePath();
-            ctx.fillStyle = grad; ctx.fill();
-
-            ctx.beginPath();
-            temps.forEach((t, i) => i === 0 ? ctx.moveTo(tx(i), ty(t)) : ctx.lineTo(tx(i), ty(t)));
-            ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
-
-            temps.forEach((t, i) => {
+            const cv = document.getElementById('mini-chart');
+            if (!cv) return;
+            const mctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+            const T = [15.2, 14.8, 15.6, 17.4, 20.8, 24.2, 26.4, 27.1, 25.3, 22.1, 18.4, 16.0];
+            const M = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+            const ty = t => H - 16 - ((t - 13) / 16) * (H - 26),
+                tx = i => 10 + (i / 11) * (W - 20);
+            const g = mctx.createLinearGradient(0, 0, 0, H);
+            g.addColorStop(0, 'rgba(239,68,68,.25)');
+            g.addColorStop(.5, 'rgba(245,158,11,.15)');
+            g.addColorStop(1, 'rgba(0,0,0,0)');
+            mctx.beginPath();
+            T.forEach((t, i) => i ? mctx.lineTo(tx(i), ty(t)) : mctx.moveTo(tx(i), ty(t)));
+            mctx.lineTo(tx(11), H); mctx.lineTo(tx(0), H); mctx.closePath();
+            mctx.fillStyle = g; mctx.fill();
+            mctx.beginPath();
+            T.forEach((t, i) => i ? mctx.lineTo(tx(i), ty(t)) : mctx.moveTo(tx(i), ty(t)));
+            mctx.strokeStyle = '#f59e0b'; mctx.lineWidth = 2; mctx.lineJoin = 'round'; mctx.stroke();
+            T.forEach((t, i) => {
                 const c = t < 17 ? '#2563eb' : t < 20 ? '#0ea5e9' : t < 23 ? '#22c55e' : t < 26 ? '#f59e0b' : '#ef4444';
-                ctx.beginPath(); ctx.arc(tx(i), ty(t), 3, 0, Math.PI * 2);
-                ctx.fillStyle = c; ctx.fill();
+                mctx.beginPath(); mctx.arc(tx(i), ty(t), 3, 0, Math.PI * 2);
+                mctx.fillStyle = c; mctx.fill();
             });
-
-            ctx.fillStyle = 'rgba(0,0,0,0.35)';
-            ctx.font = '8px DM Mono, monospace';
-            ctx.textAlign = 'center';
-            months.forEach((m, i) => ctx.fillText(m, tx(i), H - 2));
+            mctx.fillStyle = 'rgba(255,255,255,.35)';
+            mctx.font = '8px DM Mono,monospace';
+            mctx.textAlign = 'center';
+            M.forEach((m, i) => mctx.fillText(m, tx(i), H - 2));
         })();
+
     </script>
 </body>
 
