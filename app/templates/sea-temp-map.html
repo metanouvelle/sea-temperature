@@ -1493,67 +1493,25 @@
                 font-size: 9px;
             }
 
-            /* ── Mobile info tabs ── */
+            /* ── Mobile info tabs: same paradigm as the beaches page ── */
             .info-tabs {
-                gap: 1px;
-                padding: 2px;
+                gap: 2px;
+                padding: 3px;
+                width: 100%;
             }
 
             .info-tab {
-                font-size: 7.5px;
-                padding: 8px 1px;
+                flex: 1;
+                font-size: 9px;
+                padding: 11px 2px;
                 letter-spacing: 0;
+                white-space: nowrap;
+                -webkit-tap-highlight-color: transparent;
             }
 
             /* Panel wide state does nothing on mobile — already full width */
             #info-panel.wide {
                 width: 100%;
-            }
-
-            /* ── Mobile: hide desktop tabs, show accordion ── */
-            #info-tabs {
-                display: none !important;
-            }
-
-            .mob-accordion {
-                margin-top: 12px;
-                border-top: 1px solid rgba(0, 0, 0, 0.06);
-            }
-
-            .mob-acc-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 13px 0;
-                cursor: pointer;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-                font-family: 'DM Mono', monospace;
-                font-size: 10px;
-                font-weight: 600;
-                letter-spacing: 1.5px;
-                text-transform: uppercase;
-                color: var(--navy);
-                user-select: none;
-            }
-
-            .mob-acc-arrow {
-                font-size: 11px;
-                color: var(--soft);
-                transition: transform 0.2s;
-            }
-
-            .mob-acc-header.open .mob-acc-arrow {
-                transform: rotate(180deg);
-            }
-
-            .mob-acc-body {
-                display: none;
-                padding: 12px 0;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-            }
-
-            .mob-acc-body.open {
-                display: block;
             }
 
             /* Forecast inline on mobile — stack cards vertically */
@@ -2135,90 +2093,9 @@
             }
         }
 
-        function isMobileView() {
-            return window.innerWidth <= 700;
-        }
-
-        function renderMobileAccordion() {
-            const ctx = window._infoCtx;
-            if (!ctx) return;
-            const body = document.getElementById('info-body');
-            body.innerHTML = `
-                <div class="mob-accordion">
-                    <div class="mob-acc-header open" onclick="toggleAcc('today')">
-                        Today <span class="mob-acc-arrow">▾</span>
-                    </div>
-                    <div class="mob-acc-body open" id="acc-today">
-                        <p class="temp-meta">${ctx.date}</p>
-                        ${waveHtml(ctx.waves)}
-                    </div>
-                    <div class="mob-acc-header" onclick="toggleAcc('forecast')">
-                        Forecast <span class="mob-acc-arrow">▾</span>
-                    </div>
-                    <div class="mob-acc-body" id="acc-forecast">
-                        <div class="forecast-loading" style="padding:16px 0">Loading…</div>
-                    </div>
-                    <div class="mob-acc-header" onclick="toggleAcc('history')">
-                        History <span class="mob-acc-arrow">▾</span>
-                    </div>
-                    <div class="mob-acc-body" id="acc-history">
-                        <div class="forecast-loading" style="padding:16px 0">Loading…</div>
-                    </div>
-                    <div class="mob-acc-header" onclick="toggleAcc('beaches')">
-                        Beaches nearby <span class="mob-acc-arrow">▾</span>
-                    </div>
-                    <div class="mob-acc-body" id="acc-beaches">
-                        <div class="forecast-loading" style="padding:16px 0">Loading…</div>
-                    </div>
-                </div>`;
-
-
-        }
-
-        function toggleAcc(section) {
-            const ctx = window._infoCtx;
-            const header = document.querySelector(`.mob-acc-header[onclick="toggleAcc('${section}')"]`);
-            const body = document.getElementById(`acc-${section}`);
-            if (!header || !body) return;
-
-            const isOpen = body.classList.contains('open');
-
-            if (isOpen) {
-                // Collapse
-                header.classList.remove('open');
-                body.classList.remove('open');
-            } else {
-                // Expand + lazy load content
-                header.classList.add('open');
-                body.classList.add('open');
-
-                if (section === 'forecast' && body.querySelector('.forecast-loading')) {
-                    loadForecastInline(ctx.lat, ctx.lon, body);
-                } else if (section === 'history' && body.querySelector('.forecast-loading')) {
-                    body.innerHTML = `<div class="sst-history-chart-wrap" id="sstChartWrap" style="margin-top:8px">
-                        <div style="height:160px;display:flex;align-items:center;justify-content:center;">
-                            <div class="panel-spinner-ring" style="border-top-color:#38bdf8"></div><div class="panel-spinner-text" style="color:#38bdf8">Loading history…</div>
-                        </div>
-                        <div class="sst-history-tooltip" id="sstTooltip"></div>
-                    </div>`;
-                    loadSSTHistory(ctx.lat, ctx.lon, ctx.temp, ctx.placeName);
-                } else if (section === 'beaches' && body.querySelector('.forecast-loading')) {
-                    beachMarkers.forEach(m => m.remove());
-                    beachMarkers = [];
-                    loadNearbyInline(ctx.lat, ctx.lon, body);
-                }
-            }
-        }
-
         function showInfoTab(tab) {
             const ctx = window._infoCtx;
             if (!ctx) return;
-
-            // On mobile — use accordion instead of tabs
-            if (isMobileView()) {
-                renderMobileAccordion();
-                return;
-            }
 
             // Update tab active state
             document.querySelectorAll('#info-tabs .info-tab').forEach((t, i) => {
@@ -2345,7 +2222,11 @@
                     } catch { return { ...b, temp_c: null }; }
                 }));
 
-                body.innerHTML = withTemp.map((b, i) => {
+                // Warmest first — that's the question users are asking
+                withTemp.sort((a, b) => (b.temp_c ?? -99) - (a.temp_c ?? -99) || a.dist - b.dist);
+                const chipT = withTemp[0] && withTemp[0].temp_c != null ? withTemp[0].temp_c : null;
+
+                body.innerHTML = '<div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#94a3b8;padding:2px 0 8px">Sorted warmest first</div>' + withTemp.map((b, i) => {
                     const num = i + 1;
                     const band = bandFromTemp(b.temp_c);
                     const dotColor = b.temp_c != null ? band.color : '#94a3b8';
@@ -2365,7 +2246,7 @@
                     return `<div class="nearby-beach-card" id="${cardId}" onclick="highlightBeachMarker(${i})" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.06)">
                         <div class="nearby-beach-num" style="background:${dotColor};flex-shrink:0">${num}</div>
                         <div style="flex:1;min-width:0">
-                            <div class="nearby-beach-name" style="font-size:13px">${b.name}</div>
+                            <div class="nearby-beach-name" style="font-size:13px">${b.name}${chipT != null && b.temp_c === chipT ? ' <span style="font-size:9px;letter-spacing:.5px;text-transform:uppercase;background:rgba(245,158,11,.14);color:#b45309;border:1px solid rgba(245,158,11,.3);border-radius:99px;padding:2px 7px;white-space:nowrap;vertical-align:2px">🔥 Warmest</span>' : ''}</div>
                             <div class="nearby-beach-meta">${b.dist.toFixed(1)} km · ${b.temp_c != null ? 'Live SST' : 'No data'}</div>
                         </div>
                         <div class="nearby-beach-temp" style="color:${dotColor};font-size:20px">${tempStr}<span style="font-size:11px">°</span></div>
