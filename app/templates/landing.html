@@ -1455,6 +1455,10 @@
             document.getElementById('result-temp').innerHTML = '<span style="font-size:24px;color:#38bdf8">◌</span>';
             document.getElementById('result-place').textContent = placeName.split(',')[0];
             document.getElementById('result-badge').innerHTML = '';
+            // Carry the searched location to the map page — even if the
+            // temperature fetch below fails, the CTA still lands on the spot.
+            document.getElementById('result-cta').href =
+                `/map?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}`;
 
             try {
                 const res = await fetch(`/api/point?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=25`);
@@ -1469,7 +1473,6 @@
                 document.getElementById('result-temp').style.color = band.color;
                 document.getElementById('result-place').textContent = placeName.split(',').slice(0, 2).join(', ');
                 document.getElementById('result-badge').innerHTML = `<div class="result-badge" style="background:${band.color}18;color:${band.color};border:1px solid ${band.color}33">${band.emoji} ${band.label}</div>`;
-                document.getElementById('result-cta').href = `/map`;
             } catch {
                 document.getElementById('result-temp').innerHTML = '—<span class="result-temp-unit">°C</span>';
             }

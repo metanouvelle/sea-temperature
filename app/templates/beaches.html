@@ -47,6 +47,7 @@
             background: var(--surface-page);
             color: var(--text);
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -502,6 +503,22 @@
             margin-bottom: 12px;
         }
 
+        .sheet-grab {
+            display: none;
+        }
+
+        /* ── Sea-tap temperature popup ── */
+        .maplibregl-popup-content {
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 28px rgba(15, 30, 60, 0.22);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .maplibregl-popup-tip {
+            border-top-color: #ffffff;
+        }
+
         /* ── Mobile ── */
 
         /* ── Tablet tier (701-1024px): desktop layout, tighter sidebar ── */
@@ -523,16 +540,31 @@
             body {
                 overflow: hidden;
                 height: 100vh;
+                height: 100dvh;
                 width: 100vw;
             }
 
-            /* Map fills full screen */
+            /* Compact nav with a fixed height so .main can size against it */
+            nav {
+                height: 52px;
+                min-height: 52px;
+                padding: 0 16px;
+                box-sizing: border-box;
+            }
+
+            /* Map fills the space under the nav — no more 60px overflow
+               for iOS to scroll into (that's what hid the header) */
             .main {
                 display: block;
                 position: relative;
-                height: 100vh;
+                height: calc(100vh - 52px);
+                height: calc(100dvh - 52px);
                 width: 100vw;
                 overflow: hidden;
+            }
+
+            .empty-state {
+                padding: 20px 20px 28px;
             }
 
             #discover-map {
@@ -566,16 +598,31 @@
                 min-height: 200px;
             }
 
-            /* Drag handle */
-            .sidebar::before {
-                content: '';
-                display: block;
-                width: 36px;
-                height: 4px;
-                background: rgba(0, 0, 0, 0.15);
-                border-radius: 2px;
-                margin: 10px auto 4px;
+            /* Drag handle: full-width grab strip, ~40px touch target */
+            .sheet-grab {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 40px;
                 flex-shrink: 0;
+                cursor: grab;
+                touch-action: none;
+            }
+
+            .sheet-pill {
+                width: 44px;
+                height: 5px;
+                background: rgba(0, 0, 0, 0.18);
+                border-radius: 3px;
+            }
+
+            .sidebar {
+                transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+                will-change: transform;
+            }
+
+            .sidebar.dragging {
+                transition: none;
             }
 
             /* Tabs — all 3 visible, no overflow */
@@ -686,7 +733,6 @@
         <a href="/" class="nav-brand">SwimTemp</a>
         <div class="nav-links">
             <a href="/map" class="nav-link">Map</a>
-            <a href="/beaches" class="nav-link active">Beaches</a>
             <a href="/about" class="nav-link">About</a>
         </div>
     </nav>
@@ -695,6 +741,10 @@
 
         <!-- ── Sidebar ── -->
         <aside class="sidebar">
+
+            <div class="sheet-grab" id="sheet-grab" aria-label="Collapse or expand panel">
+                <div class="sheet-pill"></div>
+            </div>
 
             <!-- Page tabs -->
             <div class="page-tabs">
@@ -802,33 +852,41 @@
         }, { passive: false });
 
         // ── Click sea → live SST popup (consistent with /map) ────────────────────────
+        // Mobile pattern: no close button; while a popup is open, the next tap
+        // anywhere just dismisses it (like Google/Apple Maps) instead of
+        // spawning another popup under your finger.
         let inspectMarker = null;
         let inspectPopup = null;
         let inspectSeq = 0;
+        const IS_TOUCH = window.matchMedia('(pointer: coarse)').matches;
+
+        function closeInspect() {
+            inspectSeq++;                              // invalidate any in-flight fetch
+            if (inspectPopup) { inspectPopup.remove(); inspectPopup = null; }
+            if (inspectMarker) { inspectMarker.remove(); inspectMarker = null; }
+        }
 
         map.on('click', async e => {
             const t = e.originalEvent && e.originalEvent.target;
             if (t && (t.closest('.bm-el') || t.closest('.maplibregl-ctrl') ||
                 t.closest('.maplibregl-ctrl-group') || t.closest('.maplibregl-popup'))) return;
 
-            const { lng: lon, lat } = e.lngLat;
-            const seq = ++inspectSeq;
+            // On touch devices, a tap while a popup is open only dismisses it.
+            if (IS_TOUCH && inspectPopup) { closeInspect(); return; }
 
-            if (inspectMarker) inspectMarker.remove();
-            if (inspectPopup) inspectPopup.remove();
+            const { lng: lon, lat } = e.lngLat;
+            closeInspect();
+            const seq = ++inspectSeq;
 
             const dot = document.createElement('div');
             dot.style.cssText = 'width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #0ea5e9;box-shadow:0 2px 8px rgba(0,0,0,.3);transition:border-color .4s';
             inspectMarker = new maplibregl.Marker({ element: dot, anchor: 'center' })
                 .setLngLat([lon, lat]).addTo(map);
 
-            inspectPopup = new maplibregl.Popup({ offset: 16, maxWidth: '260px', closeButton: true })
+            inspectPopup = new maplibregl.Popup({ offset: 16, maxWidth: '280px', closeButton: false, closeOnClick: false })
                 .setLngLat([lon, lat])
                 .setHTML('<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:#475569;padding:4px 2px">Checking sea temperature…</div>')
                 .addTo(map);
-            inspectPopup.on('close', () => {
-                if (inspectMarker) { inspectMarker.remove(); inspectMarker = null; }
-            });
 
             const ac = new AbortController();
             const timeoutId = setTimeout(() => ac.abort(), 15000);
@@ -845,7 +903,7 @@
                     }).catch(() => null),
             ]);
             clearTimeout(timeoutId);
-            if (seq !== inspectSeq || !inspectPopup) return; // superseded by a newer click
+            if (seq !== inspectSeq || !inspectPopup) return; // superseded or dismissed
 
             const mapLink = `/map?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}`;
             if (!d || d.status !== 'ok') {
@@ -1001,7 +1059,8 @@
         // ── Overpass query ────────────────────────────────────────────────────────────
         async function queryOverpass(lat, lon, radiusKm = 50) {
             const r = radiusKm * 1000;
-            const q = `[out:json][timeout:20];(node["natural"="beach"](around:${r},${lat},${lon});way["natural"="beach"](around:${r},${lat},${lon});node["leisure"="beach"](around:${r},${lat},${lon});way["leisure"="beach"](around:${r},${lat},${lon}););out center tags;`;
+            // server timeout (12s) < client timeout (16s), so the server answers or errors first
+            const q = `[out:json][timeout:12];(node["natural"="beach"](around:${r},${lat},${lon});way["natural"="beach"](around:${r},${lat},${lon});node["leisure"="beach"](around:${r},${lat},${lon});way["leisure"="beach"](around:${r},${lat},${lon}););out center tags;`;
 
             const fetchWithTimeout = async (url, ms = 15000) => {
                 const controller = new AbortController();
@@ -1016,20 +1075,41 @@
                 }
             };
 
+            // Overpass reports internal timeouts as HTTP 200 + a "remark" field —
+            // an empty result WITH a remark is a degraded answer, not "no beaches".
+            const degraded = d => !(d.elements || []).length && d.remark;
+
+            // 1) Our own backend proxy: cached, clean datacenter IP,
+            //    immune to mobile-carrier (CGNAT) rate limiting.
+            try {
+                const res = await fetchWithTimeout(
+                    `/api/beaches/search?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=${radiusKm}`, 28000);
+                if (res.ok) {
+                    const data = await res.json();
+                    return data.elements || [];
+                }
+            } catch { /* endpoint missing or down — fall through to direct Overpass */ }
+
+            // 2) Direct Overpass (fallback while the proxy isn't deployed)
             const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`;
             try {
-                const res = await fetchWithTimeout(url, 15000);
+                const res = await fetchWithTimeout(url, 16000);
+                if (!res.ok) throw new Error('overpass ' + res.status);
                 const data = await res.json();
+                if (degraded(data)) throw new Error('overpass degraded');
                 return data.elements || [];
             } catch {
                 try {
                     const res2 = await fetchWithTimeout(
-                        `https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(q)}`, 15000
+                        `https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(q)}`, 16000
                     );
+                    if (!res2.ok) throw new Error('overpass mirror ' + res2.status);
                     const data2 = await res2.json();
+                    if (degraded(data2)) throw new Error('overpass mirror degraded');
                     return data2.elements || [];
                 } catch {
-                    return [];  // timeout or both failed — return empty
+                    // Everything failed: this is a NETWORK failure, not "no beaches".
+                    throw new Error('overpass_unavailable');
                 }
             }
         }
@@ -1062,7 +1142,77 @@
         // ── Tab switching ─────────────────────────────────────────────────────────────
         let currentTab = 'discover';
 
+        // ── Bottom sheet drag / collapse (mobile) ────────────────────────────────────
+        const sheetEl = document.querySelector('.sidebar');
+        const grabEl = document.getElementById('sheet-grab');
+        let sheetCollapsed = false;
+        const isPhone = () => window.innerWidth <= 700;
+        // visible when collapsed: grab strip + tab row
+        const sheetHeaderH = () => grabEl.offsetHeight + document.querySelector('.page-tabs').offsetHeight;
+
+        function collapseSheet() {
+            if (!isPhone()) return;
+            sheetCollapsed = true;
+            sheetEl.style.transform = `translateY(calc(100% - ${sheetHeaderH()}px))`;
+        }
+
+        function expandSheet() {
+            sheetCollapsed = false;
+            sheetEl.style.transform = '';
+        }
+
+        (function initSheetGestures() {
+            let startY = 0, startOffset = 0, dragging = false, moved = false;
+
+            grabEl.addEventListener('touchstart', e => {
+                if (!isPhone()) return;
+                dragging = true; moved = false;
+                startY = e.touches[0].clientY;
+                startOffset = sheetCollapsed ? sheetEl.offsetHeight - sheetHeaderH() : 0;
+                sheetEl.classList.add('dragging');
+            }, { passive: true });
+
+            grabEl.addEventListener('touchmove', e => {
+                if (!dragging) return;
+                const dy = e.touches[0].clientY - startY;
+                if (Math.abs(dy) > 6) moved = true;
+                const max = sheetEl.offsetHeight - sheetHeaderH();
+                const off = Math.min(Math.max(startOffset + dy, 0), max);
+                sheetEl.style.transform = `translateY(${off}px)`;
+            }, { passive: true });
+
+            grabEl.addEventListener('touchend', e => {
+                if (!dragging) return;
+                dragging = false;
+                sheetEl.classList.remove('dragging');
+                if (!moved) {                              // treat as a tap → toggle
+                    sheetCollapsed ? expandSheet() : collapseSheet();
+                    return;
+                }
+                const dy = e.changedTouches[0].clientY - startY;
+                if (Math.abs(dy) < 40) {                   // small drag → snap back
+                    sheetCollapsed ? collapseSheet() : expandSheet();
+                } else {
+                    dy > 0 ? collapseSheet() : expandSheet();
+                }
+            });
+
+            // desktop/no-touch fallback: click toggles
+            grabEl.addEventListener('click', () => {
+                if (!isPhone()) return;
+                if (!('ontouchstart' in window)) {
+                    sheetCollapsed ? expandSheet() : collapseSheet();
+                }
+            });
+
+            // leaving phone width: clear any transform so tablet/desktop is unaffected
+            window.addEventListener('resize', () => {
+                if (!isPhone()) { sheetEl.style.transform = ''; sheetCollapsed = false; }
+            });
+        })();
+
         function switchTab(tab) {
+            if (sheetCollapsed) expandSheet();             // tapping a tab always reopens
             currentTab = tab;
             document.querySelectorAll('.page-tab').forEach((t, i) => {
                 const tabs = ['discover', 'nearme', 'warmest'];
@@ -1134,7 +1284,13 @@
             }
         }
 
+        let lastDiscover = null;
+        function retryDiscover() {
+            if (lastDiscover) discoverSearch(lastDiscover.lat, lastDiscover.lon, lastDiscover.placeName);
+        }
+
         async function discoverSearch(lat, lon, placeName) {
+            lastDiscover = { lat, lon, placeName };
             document.getElementById('discover-header').style.display = 'flex';
             document.getElementById('discover-label').textContent = `Beaches near ${placeName}`;
             document.getElementById('discover-count').textContent = '';
@@ -1160,7 +1316,8 @@
                     `Beaches near ${placeName}`);
             } catch {
                 document.getElementById('discover-items').innerHTML =
-                    `<div class="empty-state"><span class="emoji">⚠️</span>Could not load beaches.<br>Check your connection.</div>`;
+                    `<div class="empty-state"><span class="emoji">⚠️</span>Beach lookup didn't respond — this is a connection hiccup, not a lack of beaches.<br><br><button class="btn-primary" onclick="retryDiscover()">Try again</button></div>`;
+                clearMarkers();
             }
         }
 
@@ -1178,7 +1335,18 @@
                 items.innerHTML = `<div class="loading-state"><span class="spinner-ring"></span>Finding nearby beaches…</div>`;
                 map.flyTo({ center: [lon, lat], zoom: 10, duration: 800 });
 
-                const elements = await queryOverpass(lat, lon, 20);
+                let elements;
+                try {
+                    elements = await queryOverpass(lat, lon, 20);
+                } catch {
+                    items.innerHTML = `<div class="near-me-empty">
+                <div class="near-me-icon">⚠️</div>
+                <div class="near-me-title">Couldn't reach the beach database</div>
+                <div class="near-me-sub">This is a connection hiccup — it doesn't mean there are no beaches near you.</div>
+                <button class="btn-primary" onclick="loadNearMe()">Try again</button>
+            </div>`;
+                    return;
+                }
                 const beaches = processOverpass(elements, lat, lon);
 
                 if (!beaches.length) {

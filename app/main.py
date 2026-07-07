@@ -29,6 +29,8 @@ from app.services.sst_cache import (
     tile_exists,
     tile_id_for,
 )
+from app.routes_beach_search import router as beach_search_router
+from app.routes_seo import router as seo_router
 
 load_dotenv()
 
@@ -753,5 +755,9 @@ def admin_update_warmest(authorization: str = Header(None)):
         "message": "Warmest beaches update running in background",
     }
 
+
+app.include_router(seo_router)
+
+app.include_router(beach_search_router)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
