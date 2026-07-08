@@ -53,60 +53,72 @@
             flex-direction: column;
         }
 
-        /* ── Nav ── */
-        nav {
+        /* ── Floating pill nav (same language as /map) ── */
+        #map-nav {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 14px 24px;
-            border-bottom: 1px solid var(--border-panel);
-            background: #ffffff;
             z-index: 20;
-            flex-shrink: 0;
+            pointer-events: none;
         }
 
-        .nav-brand {
-            font-family: 'Fraunces', serif;
-            font-size: 16px;
-            font-weight: 300;
+        .nav-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 100px;
+            padding: 8px 18px;
             color: var(--navy);
             text-decoration: none;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            pointer-events: all;
+            transition: all 0.2s;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
         }
 
-        .nav-links {
-            display: flex;
-            gap: 24px;
+        .nav-pill:hover {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.14);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.16);
         }
 
-        .nav-link {
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--muted);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .nav-link:hover,
-        .nav-link.active {
-            color: var(--text);
+        .nav-pill-brand {
+            font-family: 'Fraunces', serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--navy);
         }
 
         /* ── Main layout ── */
         .main {
-            display: grid;
-            grid-template-columns: 480px 1fr;
             flex: 1;
             overflow: hidden;
+            position: relative;
         }
 
-        /* ── Sidebar ── */
+        /* ── Floating panel (same layout language as /map's info panel) ── */
         .sidebar {
+            position: absolute;
+            top: 76px;
+            left: 24px;
+            bottom: 24px;
+            width: 400px;
+            z-index: 15;
             display: flex;
             flex-direction: column;
-            border-right: 1px solid var(--border-panel);
             overflow: hidden;
             background: #ffffff;
+            border: 1px solid var(--border-panel);
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(15, 30, 60, 0.16);
         }
 
         /* ── Page tabs ── */
@@ -437,10 +449,10 @@
             font-weight: 500;
         }
 
-        /* ── Map ── */
+        /* ── Map: full-bleed, panel and pills float above ── */
         #discover-map {
-            width: 100%;
-            height: 100%;
+            position: absolute;
+            inset: 0;
         }
 
         /* ── Loading ── */
@@ -507,6 +519,44 @@
             display: none;
         }
 
+        .sort-toggle {
+            display: inline-flex;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .sort-btn {
+            font-family: 'DM Mono', monospace;
+            font-size: 9px;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            padding: 5px 11px;
+            border-radius: 99px;
+            border: 1px solid var(--border-panel);
+            background: transparent;
+            color: var(--text-panel-muted);
+            cursor: pointer;
+        }
+
+        .sort-btn.active {
+            background: var(--navy);
+            color: #fff;
+            border-color: var(--navy);
+        }
+
+        .warmest-chip {
+            font-size: 9px;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            background: rgba(245, 158, 11, 0.14);
+            color: #b45309;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 99px;
+            padding: 2px 8px;
+            vertical-align: 2px;
+            white-space: nowrap;
+        }
+
         /* ── Sea-tap temperature popup ── */
         .maplibregl-popup-content {
             border-radius: 14px;
@@ -521,10 +571,11 @@
 
         /* ── Mobile ── */
 
-        /* ── Tablet tier (701-1024px): desktop layout, tighter sidebar ── */
+        /* ── Tablet tier (701-1024px): desktop layout, tighter panel ── */
         @media (min-width: 701px) and (max-width: 1024px) {
-            .main {
-                grid-template-columns: 380px 1fr;
+            .sidebar {
+                width: 360px;
+                left: 16px;
             }
         }
 
@@ -544,23 +595,22 @@
                 width: 100vw;
             }
 
-            /* Compact nav with a fixed height so .main can size against it */
-            nav {
-                height: 52px;
-                min-height: 52px;
-                padding: 0 16px;
-                box-sizing: border-box;
-            }
-
-            /* Map fills the space under the nav — no more 60px overflow
-               for iOS to scroll into (that's what hid the header) */
+            /* Full-bleed map — the pill nav floats, costing zero pixels */
             .main {
                 display: block;
                 position: relative;
-                height: calc(100vh - 52px);
-                height: calc(100dvh - 52px);
+                height: 100vh;
+                height: 100dvh;
                 width: 100vw;
                 overflow: hidden;
+            }
+
+            /* Mirror /map on phones: brand top-left, Map link top-right */
+            #map-nav {
+                left: 12px;
+                right: 12px;
+                top: 12px;
+                justify-content: space-between;
             }
 
             .empty-state {
@@ -578,6 +628,7 @@
             /* Bottom sheet */
             .sidebar {
                 position: absolute;
+                top: auto;
                 bottom: 0;
                 left: 0;
                 right: 0;
@@ -729,15 +780,13 @@
 
 <body>
 
-    <nav>
-        <a href="/" class="nav-brand">SwimTemp</a>
-        <div class="nav-links">
-            <a href="/map" class="nav-link">Map</a>
-            <a href="/about" class="nav-link">About</a>
-        </div>
-    </nav>
-
     <div class="main">
+
+        <!-- Floating navigation (matches /map) -->
+        <nav id="map-nav" aria-label="Site navigation">
+            <a href="/" class="nav-pill nav-pill-brand"><span aria-hidden="true">←</span> SwimTemp</a>
+            <a href="/map" class="nav-pill nav-pill-link">Map</a>
+        </nav>
 
         <!-- ── Sidebar ── -->
         <aside class="sidebar">
@@ -765,6 +814,11 @@
                     <div class="list-header" id="discover-header" style="display:none">
                         <span id="discover-label"></span>
                         <span id="discover-count" class="list-count"></span>
+                        <span class="sort-toggle">
+                            <button class="sort-btn active" data-sort="warmest"
+                                onclick="setSort('warmest')">Warmest</button>
+                            <button class="sort-btn" data-sort="nearest" onclick="setSort('nearest')">Nearest</button>
+                        </span>
                     </div>
                     <div id="discover-items">
                         <div class="empty-state">
@@ -991,21 +1045,66 @@
             map.flyTo({ center: [ll.lng, ll.lat], zoom: Math.max(map.getZoom(), 10), duration: 800 });
         }
 
+        function mapPadding() {
+            // On desktop/tablet the floating panel covers the left edge —
+            // pad fitBounds so beaches land in the visible map area.
+            if (window.innerWidth <= 700) return 80;
+            const panelW = window.innerWidth <= 1024 ? 360 + 16 : 400 + 24;
+            return { top: 90, right: 80, bottom: 60, left: panelW + 40 };
+        }
+
         function fitMapToBeaches(beaches) {
             const valid = beaches.filter(b => b.lat && b.lon);
             if (valid.length < 2) {
-                if (valid.length === 1) map.flyTo({ center: [valid[0].lon, valid[0].lat], zoom: 11 });
+                if (valid.length === 1) map.flyTo({ center: [valid[0].lon, valid[0].lat], zoom: 11, padding: mapPadding() });
                 return;
             }
             const bounds = valid.reduce((b, beach) => b.extend([beach.lon, beach.lat]),
                 new maplibregl.LngLatBounds([valid[0].lon, valid[0].lat], [valid[0].lon, valid[0].lat]));
-            map.fitBounds(bounds, { padding: 80, maxZoom: 13, duration: 1000 });
+            map.fitBounds(bounds, { padding: mapPadding(), maxZoom: 13, duration: 1000 });
         }
 
         // ── Render beach cards ────────────────────────────────────────────────────────
+        // ── Sorting: warmest-first is the default — it's the product promise ──
+        let sortMode = 'warmest';
+        const lastRender = {};
+
+        function sortBeachList(list) {
+            const copy = [...list];
+            if (sortMode === 'warmest') {
+                copy.sort((a, b) => {
+                    if (a.temp_c == null && b.temp_c == null)
+                        return parseFloat(a.distance_km || 0) - parseFloat(b.distance_km || 0);
+                    if (a.temp_c == null) return 1;
+                    if (b.temp_c == null) return -1;
+                    return b.temp_c - a.temp_c;
+                });
+            } else {
+                copy.sort((a, b) => parseFloat(a.distance_km || 0) - parseFloat(b.distance_km || 0));
+            }
+            return copy;
+        }
+
+        function setSort(mode) {
+            if (sortMode === mode) return;
+            sortMode = mode;
+            document.querySelectorAll('.sort-btn').forEach(b =>
+                b.classList.toggle('active', b.dataset.sort === mode));
+            const args = lastRender[currentTab];
+            if (args) renderBeachCards(args.beaches, args.containerId, currentTab,
+                args.labelEl, args.countEl, args.label);
+        }
+
         function renderBeachCards(beaches, containerId, tab, labelEl, countEl, label) {
+            if (tab !== 'warmest') {
+                lastRender[tab] = { beaches, containerId, labelEl, countEl, label };
+                beaches = sortBeachList(beaches);
+            }
             if (labelEl) labelEl.textContent = label;
             if (countEl) countEl.textContent = beaches.length ? `${beaches.length} beaches` : '';
+
+            const temps = beaches.filter(b => b.temp_c != null).map(b => b.temp_c);
+            const chipT = (tab !== 'warmest' && temps.length) ? Math.max(...temps) : null;
 
             const container = document.getElementById(containerId);
             if (!beaches.length) {
@@ -1023,7 +1122,7 @@
                 return `<div class="beach-card" id="bcard-${tab}-${i}" onclick="setActive(${i}, '${tab}')">
             <div class="beach-num" style="border-color:${color};${b.temp_c != null ? `background:${color}18` : ''}">${i + 1}</div>
             <div class="beach-info">
-                <div class="beach-name">${b.name}</div>
+                <div class="beach-name">${b.name}${chipT != null && b.temp_c === chipT ? ' <span class="warmest-chip">🔥 Warmest</span>' : ''}</div>
                 <div class="beach-meta">${meta}</div>
                 ${band ? `<span class="beach-badge" style="background:${color}18;color:${color}">${band.label}</span>` : ''}
             </div>
