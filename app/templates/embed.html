@@ -42,42 +42,6 @@
             min-height: 100vh;
         }
 
-        nav {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 24px 8vw;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .nav-brand {
-            font-family: 'Fraunces', serif;
-            font-size: 16px;
-            font-weight: 300;
-            color: var(--text);
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 24px;
-        }
-
-        .nav-link {
-            font-family: 'Fraunces', serif;
-            font-size: 13px;
-            font-weight: 300;
-            color: var(--muted);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .nav-link:hover {
-            color: var(--text);
-        }
-
         .page {
             max-width: 900px;
             margin: 0 auto;
@@ -440,88 +404,6 @@
         }
 
         /* ── Footer ── */
-        .site-footer {
-            border-top: 1px solid var(--border);
-            padding: 48px 8vw 32px;
-            margin-top: 80px;
-        }
-
-        .footer-inner {
-            max-width: 860px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            gap: 48px;
-            flex-wrap: wrap;
-            margin-bottom: 40px;
-        }
-
-        .footer-brand {
-            max-width: 200px;
-        }
-
-        .footer-logo {
-            font-family: 'Fraunces', serif;
-            font-size: 18px;
-            font-weight: 300;
-            color: var(--text);
-            text-decoration: none;
-            display: block;
-            margin-bottom: 12px;
-        }
-
-        .footer-tagline {
-            font-size: 11px;
-            color: var(--muted);
-            line-height: 1.8;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 48px;
-            flex-wrap: wrap;
-        }
-
-        .footer-col {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .footer-col-label {
-            font-size: 9px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 4px;
-        }
-
-        .footer-col a {
-            font-size: 12px;
-            color: var(--soft);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .footer-col a:hover {
-            color: var(--text);
-        }
-
-        .footer-bottom {
-            max-width: 860px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border-dark);
-            font-size: 11px;
-            color: var(--muted);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
         @keyframes fadeUp {
             from {
                 opacity: 0;
@@ -546,32 +428,13 @@
             .field-row {
                 grid-template-columns: 1fr;
             }
-
-            .footer-inner {
-                flex-direction: column;
-                gap: 32px;
-            }
-
-            .footer-links {
-                gap: 32px;
-            }
-
-            .footer-bottom {
-                flex-direction: column;
-            }
         }
     </style>
 </head>
 
 <body>
 
-    <nav>
-        <a href="/" class="nav-brand">SwimTemp</a>
-        <div class="nav-links">
-            <a href="/beaches" class="nav-link">Beaches</a>
-            <a href="/map" class="nav-link">Map</a>
-        </div>
-    </nav>
+    {% include "_nav.html" %}
 
     <div class="page">
 
@@ -674,51 +537,7 @@
 
     </div>
 
-    <footer class="site-footer">
-        <div class="footer-inner">
-            <div class="footer-brand">
-                <a href="/" class="footer-logo">SwimTemp</a>
-                <p class="footer-tagline">Satellite sea temperature &amp; live ocean conditions for swimmers &amp;
-                    travelers.</p>
-            </div>
-            <div class="footer-links">
-                <div class="footer-col">
-                    <div class="footer-col-label">Explore</div>
-                    <a href="/map">Map</a>
-                    <a href="/beaches">Beaches</a>
-                    <a href="/about">About</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Tools</div>
-                    <a href="/embed">Embed Widget</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Legal</div>
-                    <a href="/privacy">Privacy Policy</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Contact</div>
-                    <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Follow</div>
-                    <a href="https://www.instagram.com/swimtemp/" target="_blank" rel="noopener">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            style="vertical-align:middle;margin-right:6px">
-                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                        </svg>Instagram
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <span>© 2026 SwimTemp</span>
-            <span>Sea surface temperature updated daily</span>
-        </div>
-    </footer>
+    {% include "_footer.html" %}
 
     <script>
         const searchInput = document.getElementById('location-search');

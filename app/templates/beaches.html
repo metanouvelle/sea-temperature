@@ -11,7 +11,7 @@
     <title>Discover Beaches — SwimTemp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Find beaches near you, search any city, or discover the warmest water worldwide. Live sea temperatures powered by satellite data.">
+        content="Find beaches near you, search any city, or discover the warmest beach worldwide. Live sea temperatures powered by satellite data.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="/static/shared-tokens.css">
     <link
@@ -119,6 +119,28 @@
             border: 1px solid var(--border-panel);
             border-radius: 20px;
             box-shadow: 0 12px 40px rgba(15, 30, 60, 0.16);
+        }
+
+        /* ── Panel identity header ── */
+        .panel-head {
+            padding: 18px 20px 14px;
+            flex-shrink: 0;
+        }
+
+        .panel-head-eyebrow {
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-panel-muted);
+            margin-bottom: 4px;
+        }
+
+        .panel-head-title {
+            font-family: 'Fraunces', serif;
+            font-size: 21px;
+            font-weight: 600;
+            color: var(--navy);
+            line-height: 1.15;
         }
 
         /* ── Page tabs ── */
@@ -269,6 +291,8 @@
             border-bottom: 1px solid var(--border-panel);
             display: flex;
             align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
             justify-content: space-between;
             position: sticky;
             top: 0;
@@ -595,6 +619,10 @@
                 width: 100vw;
             }
 
+            .panel-head {
+                display: none;
+            }
+
             /* Full-bleed map — the pill nav floats, costing zero pixels */
             .main {
                 display: block;
@@ -795,9 +823,15 @@
                 <div class="sheet-pill"></div>
             </div>
 
+            <!-- Panel identity (desktop/tablet; hidden on the phone sheet) -->
+            <div class="panel-head">
+                <div class="panel-head-eyebrow">Live satellite data</div>
+                <div class="panel-head-title">Beach water temperatures</div>
+            </div>
+
             <!-- Page tabs -->
             <div class="page-tabs">
-                <button class="page-tab active" onclick="switchTab('discover')">🔍 Discover</button>
+                <button class="page-tab active" onclick="switchTab('discover')">🔍 Search</button>
                 <button class="page-tab" onclick="switchTab('nearme')">📍 Near me</button>
                 <button class="page-tab" onclick="switchTab('warmest')">🌡 Warmest</button>
             </div>
@@ -823,7 +857,7 @@
                     <div id="discover-items">
                         <div class="empty-state">
                             <div class="emoji">🏖️</div>
-                            Search a city or country above,<br>or tap anywhere on the sea to check the temperature.
+                            See live water temperatures at beaches anywhere —<br>type a city or country above
                         </div>
                     </div>
                 </div>
@@ -850,14 +884,8 @@
 
             <!-- ── Tab 3: Warmest ── -->
             <div class="tab-panel" id="panel-warmest">
-                <div class="warmest-filters">
+                <div class="warmest-filters" id="warmest-filters">
                     <button class="filter-btn active" onclick="filterWarmest('all', this)">🌍 All</button>
-                    <button class="filter-btn" onclick="filterWarmest('mediterranean', this)">Mediterranean</button>
-                    <button class="filter-btn" onclick="filterWarmest('adriatic', this)">Adriatic</button>
-                    <button class="filter-btn" onclick="filterWarmest('atlantic', this)">Atlantic</button>
-                    <button class="filter-btn" onclick="filterWarmest('pacific', this)">Pacific</button>
-                    <button class="filter-btn" onclick="filterWarmest('indian', this)">Indian Ocean</button>
-                    <button class="filter-btn" onclick="filterWarmest('redsea', this)">Red Sea</button>
                 </div>
                 <div class="beach-list" id="warmest-list">
                     <div class="list-header">
@@ -1517,28 +1545,100 @@
             redsea: 'Warmest in Red Sea',
         };
 
-        async function loadWarmest() {
-            warmestLoaded = true;
-            await filterWarmest('all', document.querySelector('.filter-btn.active'));
+        // People plan trips to countries, not oceans — so the filter facet is
+        // countries, built from the data itself. Ocean regions remain only as
+        // a fallback if the DB carries no country info.
+        let warmestAll = null;
+        let warmestMode = 'country';
+
+        async function fetchWarmestAll() {
+            // Preferred: one call for everything (needs region=all support server-side)
+            for (const limit of [100, 20]) {
+                try {
+                    const res = await fetch(`/api/warmest?region=all&limit=${limit}`);
+                    if (res.ok) {
+                        const beaches = (await res.json()).beaches || [];
+                        if (beaches.length) return beaches;
+                    }
+                } catch { /* try next */ }
+            }
+            // Fallback: the API may not know 'all' — merge the six regions ourselves
+            const regions = ['mediterranean', 'adriatic', 'atlantic', 'pacific', 'indian', 'redsea'];
+            const results = await Promise.all(regions.map(async r => {
+                try {
+                    const res = await fetch(`/api/warmest?region=${r}&limit=20`);
+                    if (!res.ok) return [];
+                    return (await res.json()).beaches || [];
+                } catch { return []; }
+            }));
+            const seen = new Set();
+            return results.flat()
+                .filter(b => {
+                    const k = `${b.name}:${b.lat}`;
+                    if (seen.has(k)) return false;
+                    seen.add(k);
+                    return true;
+                })
+                .sort((a, b) => (b.temp_c ?? -99) - (a.temp_c ?? -99));
         }
 
-        async function filterWarmest(region, btn) {
-            currentWarmestRegion = region;
+        async function loadWarmest() {
+            warmestLoaded = true;
+            renderSkeleton('warmest-items', 8);
+            warmestAll = await fetchWarmestAll();
+
+            const filtersEl = document.getElementById('warmest-filters');
+            const countries = [...new Set(warmestAll.map(b => b.country).filter(Boolean))];
+
+            if (countries.length >= 2) {
+                // pills ordered by each country's warmest beach — the order itself ranks
+                const maxT = {};
+                warmestAll.forEach(b => {
+                    if (b.country && b.temp_c != null)
+                        maxT[b.country] = Math.max(maxT[b.country] ?? -99, b.temp_c);
+                });
+                countries.sort((a, b) => (maxT[b] ?? -99) - (maxT[a] ?? -99));
+                filtersEl.innerHTML =
+                    `<button class="filter-btn active" onclick="filterWarmest('all', this)">🌍 All</button>` +
+                    countries.slice(0, 12).map(c =>
+                        `<button class="filter-btn" onclick="filterWarmest('${c.replace(/'/g, "\\'")}', this)">${c}</button>`
+                    ).join('');
+            } else {
+                warmestMode = 'region';
+                filtersEl.innerHTML =
+                    `<button class="filter-btn active" onclick="filterWarmest('all', this)">🌍 All</button>` +
+                    Object.keys(REGION_LABELS).filter(r => r !== 'all').map(r =>
+                        `<button class="filter-btn" onclick="filterWarmest('${r}', this)">${REGION_LABELS[r].replace('Warmest in ', '')}</button>`
+                    ).join('');
+            }
+
+            await filterWarmest('all', filtersEl.querySelector('.filter-btn'));
+        }
+
+        async function filterWarmest(sel, btn) {
+            currentWarmestRegion = sel;
 
             // Update active button
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
 
-            document.getElementById('warmest-label').textContent = REGION_LABELS[region] || 'Warmest water right now';
+            const label = sel === 'all' ? 'Warmest water right now'
+                : (warmestMode === 'region' ? (REGION_LABELS[sel] || sel) : `Warmest in ${sel}`);
+            document.getElementById('warmest-label').textContent = label;
             document.getElementById('warmest-count').textContent = '';
             renderSkeleton('warmest-items', 8);
             clearMarkers();
 
             try {
-                // Fetch warmest points from SQLite cache
-                const res = await fetch(`/api/warmest?region=${region}&limit=20`);
-                const data = await res.json();
-                const beaches = data.beaches || [];
+                let beaches;
+                if (sel === 'all') {
+                    beaches = (warmestAll || []).slice(0, 20);
+                } else if (warmestMode === 'region') {
+                    const res = await fetch(`/api/warmest?region=${sel}&limit=20`);
+                    beaches = (await res.json()).beaches || [];
+                } else {
+                    beaches = (warmestAll || []).filter(b => b.country === sel).slice(0, 20);
+                }
 
                 if (!beaches.length) {
                     document.getElementById('warmest-items').innerHTML =
@@ -1554,7 +1654,7 @@
                 renderBeachCards(beaches, 'warmest-items', 'warmest',
                     document.getElementById('warmest-label'),
                     document.getElementById('warmest-count'),
-                    REGION_LABELS[region] || 'Warmest water right now');
+                    label);
 
             } catch {
                 document.getElementById('warmest-items').innerHTML =

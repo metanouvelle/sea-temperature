@@ -1,0 +1,166 @@
+<!-- ═══════════════════════════════════════════════════════════════════
+     _footer.html — the ONE canonical SwimTemp footer.
+
+     Usage in any page template (landing, about, privacy, embed):
+     use Jinja's include tag with the name "_footer.html" where the
+     footer should appear.
+
+     Do NOT copy footer markup or CSS into pages anymore — edit here,
+     every page updates. Styles are bundled below with dark-theme
+     fallbacks, so pages don't need to carry any footer CSS.
+     ═══════════════════════════════════════════════════════════════════ -->
+<style>
+    .site-footer {
+        position: relative;
+        z-index: 10;
+        border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+        padding: 48px 8vw 32px;
+    }
+
+    .footer-inner {
+        max-width: 860px;
+        margin: 0 auto 40px;
+        display: flex;
+        justify-content: space-between;
+        gap: 48px;
+        flex-wrap: wrap;
+    }
+
+    .footer-brand {
+        max-width: 200px;
+    }
+
+    .footer-logo {
+        font-family: 'Fraunces', serif;
+        font-size: 18px;
+        font-weight: 300;
+        color: var(--text, #e8edf4);
+        text-decoration: none;
+        display: block;
+        margin-bottom: 12px;
+    }
+
+    .footer-tagline {
+        font-size: 11px;
+        color: var(--muted, #64748b);
+        line-height: 1.8;
+    }
+
+    .footer-links {
+        display: flex;
+        gap: 48px;
+        flex-wrap: wrap;
+    }
+
+    .footer-col {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .footer-col-label {
+        font-size: 9px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--muted, #64748b);
+        margin-bottom: 4px;
+    }
+
+    .footer-col a {
+        font-size: 12px;
+        color: var(--soft, #94a3b8);
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .footer-col a:hover {
+        color: var(--text, #e8edf4);
+    }
+
+    .footer-bottom {
+        max-width: 860px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border-dark, rgba(255, 255, 255, 0.06));
+        font-size: 11px;
+        color: var(--muted, #64748b);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    @media (max-width: 640px) {
+        .footer-inner {
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .footer-links {
+            gap: 32px;
+        }
+
+        .footer-bottom {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <a href="/" class="footer-logo">SwimTemp</a>
+            <p class="footer-tagline">Satellite sea temperature &amp; live ocean conditions for swimmers &amp;
+                travelers.</p>
+        </div>
+        <div class="footer-links">
+            <div class="footer-col">
+                <div class="footer-col-label">Explore</div>
+                <a href="/map">Map</a>
+                <a href="/beaches">Beaches</a>
+                <a href="/about">About</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Data</div>
+                <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
+                <!-- NOAA line inherited from the About footer — remove if WOA23 is no longer a data source -->
+                <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA
+                    WOA23</a>
+                <a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank" rel="noopener">Open-Meteo
+                    Marine</a>
+                <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Tools</div>
+                <a href="/embed">Embed Widget</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Legal</div>
+                <a href="/privacy">Privacy Policy</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Contact</div>
+                <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-label">Follow</div>
+                <a href="https://www.instagram.com/swimtemp/" target="_blank" rel="noopener"
+                    style="display:inline-flex;align-items:center;gap:8px">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                    Instagram
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>© 2026 SwimTemp</span>
+        <span>Sea surface temperature updated daily</span>
+    </div>
+</footer>
