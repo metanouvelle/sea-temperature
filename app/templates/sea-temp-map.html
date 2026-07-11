@@ -1514,28 +1514,23 @@
                 width: 100%;
             }
 
-            /* Forecast inline on mobile — stack cards vertically */
+            /* Forecast on mobile — same 3-column day grid as desktop,
+               aligned with the metric columns below; just compacted */
             .forecast-days.forecast-days--3col {
-                display: flex;
-                flex-direction: column;
                 gap: 6px;
             }
 
             .forecast-days.forecast-days--3col .forecast-day {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-                padding: 12px 14px;
-                text-align: left;
+                padding: 10px 4px;
             }
 
             .forecast-days.forecast-days--3col .forecast-day-name {
-                font-size: 11px;
-                min-width: 80px;
+                font-size: 9px;
+                letter-spacing: 0.5px;
             }
 
             .forecast-days.forecast-days--3col .forecast-day-temp {
-                font-size: 24px;
+                font-size: 22px;
             }
 
             /* Forecast table on mobile — ensure 3rd column visible */
