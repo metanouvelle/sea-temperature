@@ -850,6 +850,12 @@
             margin: 0 auto
         }
 
+        a.feat-block {
+            display: block;
+            color: inherit;
+            text-decoration: none;
+        }
+
         .feat-block {
             background: rgba(255, 255, 255, .03);
             border: 1px solid var(--border-dark);
@@ -1115,7 +1121,7 @@
     <!-- ── Features ── -->
     <section class="features-section">
         <div class="features-grid">
-            <div class="feat-block feat-live">
+            <a class="feat-block feat-live" href="/map?lat=37.47&lon=15.14">
                 <div class="feat-tag"><span class="feat-live-dot"></span>LIVE NOW</div>
                 <div class="feat-card feat-light">
                     <div class="fc-eyebrow">OCEAN CONDITIONS · CATANIA, SICILY</div>
@@ -1139,8 +1145,8 @@
                 </div>
                 <div class="feat-title">Live sea conditions</div>
                 <div class="feat-desc">Real satellite temperature, updated daily.</div>
-            </div>
-            <div class="feat-block">
+            </a>
+            <a class="feat-block" href="/map?lat=37.47&lon=15.14">
                 <div class="feat-tag">FORECAST</div>
                 <div class="feat-card feat-light">
                     <div class="fc-eyebrow">3-DAY FORECAST · OPEN-METEO MARINE</div>
@@ -1164,8 +1170,8 @@
                 </div>
                 <div class="feat-title">3-day sea forecast</div>
                 <div class="feat-desc">Know before you pack.</div>
-            </div>
-            <div class="feat-block">
+            </a>
+            <a class="feat-block" href="/map?lat=37.47&lon=15.14">
                 <div class="feat-tag">HISTORY</div>
                 <div class="feat-card feat-dark">
                     <div class="fc-eyebrow" style="color:rgba(255,255,255,0.35)">12 MONTHS · COPERNICUS SATELLITE</div>
@@ -1174,8 +1180,8 @@
                 </div>
                 <div class="feat-title">12 months of history</div>
                 <div class="feat-desc">Was it warm last August?</div>
-            </div>
-            <div class="feat-block">
+            </a>
+            <a class="feat-block" href="/beaches">
                 <div class="feat-tag">BEACHES</div>
                 <div class="feat-card feat-light">
                     <div class="fc-eyebrow">BEACHES NEARBY · OPENSTREETMAP</div>
@@ -1193,7 +1199,7 @@
                 </div>
                 <div class="feat-title">Beaches nearby</div>
                 <div class="feat-desc">Real beaches, live temperatures.</div>
-            </div>
+            </a>
         </div>
     </section>
 
@@ -1293,8 +1299,12 @@
             heroDrop.innerHTML = '<div style="padding:12px 20px;font-size:11px;color:var(--muted)">Searching…</div>';
             heroDrop.classList.add('visible');
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5`, { headers: { 'Accept-Language': 'en' } });
-                const data = await res.json();
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=10`, { headers: { 'Accept-Language': 'en' } });
+                let data = await res.json();
+                // Filter out non-destination results (airports, stations, roads):
+                // Berlin should suggest Berlin, not Berlin Brandenburg Airport.
+                const JUNK = ['aeroway', 'railway', 'highway', 'military', 'office', 'building', 'man_made'];
+                data = data.filter(r => !JUNK.includes(r.class)).slice(0, 5);
                 if (!data.length) { heroDrop.innerHTML = '<div style="padding:12px 20px;font-size:11px;color:var(--muted)">No results</div>'; return; }
                 heroDrop.innerHTML = data.map(r => {
                     const name = r.display_name.split(',').slice(0, 3).join(', ');
@@ -1329,7 +1339,7 @@
                 const data = await res.json();
                 if (data.status !== 'ok') {
                     document.getElementById('result-temp').innerHTML = '—<span class="result-temp-unit">°C</span>';
-                    document.getElementById('result-badge').innerHTML = '<span style="color:#94a3b8;font-size:11px">No ocean data at this location</span>';
+                    document.getElementById('result-badge').innerHTML = '<span style="color:#94a3b8;font-size:11px">Looks inland — sea temperature needs a coastal spot. Try the nearest coast on the map.</span>';
                     return;
                 }
                 const band = getBand(data.mean_c);

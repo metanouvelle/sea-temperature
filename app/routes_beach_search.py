@@ -18,6 +18,7 @@ Returns:   {"elements": [...]}  — same shape as raw Overpass, so the
 """
 
 import json
+import os
 import sqlite3
 import time
 import urllib.parse
@@ -27,7 +28,12 @@ from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
 
-DB_PATH = "/data/sst.sqlite"
+# Fly.io volume in production; SWIMTEMP_DB env var or a local file for dev.
+_DEFAULT_DB = "/data/sst.sqlite"
+_LOCAL_DEV_DB = os.path.join(os.path.dirname(__file__), "dev-cache.sqlite")
+DB_PATH = os.environ.get("SWIMTEMP_DB") or (
+    _DEFAULT_DB if os.path.isdir(os.path.dirname(_DEFAULT_DB)) else _LOCAL_DEV_DB
+)
 CACHE_TTL_SECONDS = 24 * 3600  # beaches don't move; refresh daily
 OVERPASS_MIRRORS = [
     "https://overpass-api.de/api/interpreter",
@@ -38,36 +44,47 @@ USER_AGENT = "SwimTemp/1.0 (+https://swimtemp.com)"
 
 def _db() -> sqlite3.Connection:
     con = sqlite3.connect(DB_PATH)
-    con.execute(
-        """CREATE TABLE IF NOT EXISTS beach_search_cache (
+    con.execute("""CREATE TABLE IF NOT EXISTS beach_search_cache (
                key        TEXT PRIMARY KEY,
                payload    TEXT NOT NULL,
                updated_at INTEGER NOT NULL
-           )"""
-    )
+           )""")
     return con
 
 
-def _overpass_query(lat: float, lon: float, radius_m: int) -> str:
+def _overpass_query(
+    lat: float, lon: float, radius_m: int, include_resorts: bool
+) -> str:
     around = f"(around:{radius_m},{lat},{lon})"
+    resort = (
+        (
+            f'node["leisure"="beach_resort"]{around};'
+            f'way["leisure"="beach_resort"]{around};'
+        )
+        if include_resorts
+        else ""
+    )
     return (
         "[out:json][timeout:20];("
         f'node["natural"="beach"]{around};'
         f'way["natural"="beach"]{around};'
         f'node["leisure"="beach"]{around};'
         f'way["leisure"="beach"]{around};'
+        f"{resort}"
         ");out center tags;"
     )
 
 
 @router.get("/api/beaches/search")
-def beaches_search(lat: float, lon: float, radius_km: float = 50) -> dict:
+def beaches_search(
+    lat: float, lon: float, radius_km: float = 50, include_resorts: int = 0
+) -> dict:
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
         raise HTTPException(status_code=422, detail="invalid coordinates")
     radius_km = max(1.0, min(radius_km, 100.0))
 
     # ~1km grid so nearby searches share a cache entry
-    key = f"{lat:.2f}:{lon:.2f}:{int(radius_km)}"
+    key = f"{lat:.2f}:{lon:.2f}:{int(radius_km)}:{1 if include_resorts else 0}"
 
     con = _db()
     try:
@@ -78,7 +95,7 @@ def beaches_search(lat: float, lon: float, radius_km: float = 50) -> dict:
         if row and time.time() - row[1] < CACHE_TTL_SECONDS:
             return json.loads(row[0])
 
-        query = _overpass_query(lat, lon, int(radius_km * 1000))
+        query = _overpass_query(lat, lon, int(radius_km * 1000), bool(include_resorts))
         body = urllib.parse.urlencode({"data": query}).encode()
 
         data = None

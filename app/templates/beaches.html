@@ -11,7 +11,7 @@
     <title>Discover Beaches — SwimTemp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Find beaches near you, search any city, or discover the warmest beach worldwide. Live sea temperatures powered by satellite data.">
+        content="Find beaches near you, search any city, or discover the warmest water worldwide. Live sea temperatures powered by satellite data.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="/static/shared-tokens.css">
     <link
@@ -568,17 +568,56 @@
             border-color: var(--navy);
         }
 
-        .warmest-chip {
+        .no-sea {
+            color: var(--text-panel-muted);
+            font-style: italic;
+        }
+
+        .beach-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 4px 0 2px;
+        }
+
+        .chip {
             font-size: 9px;
+            font-weight: 500;
             letter-spacing: .5px;
             text-transform: uppercase;
+            line-height: 1;
+            padding: 4px 9px;
+            border-radius: 99px;
+            background: rgba(13, 27, 42, 0.05);
+            color: var(--text-panel-muted);
+            border: 1px solid var(--border-panel);
+            white-space: nowrap;
+        }
+
+        .chip-warmest {
             background: rgba(245, 158, 11, 0.14);
             color: #b45309;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            border-radius: 99px;
-            padding: 2px 8px;
-            vertical-align: 2px;
-            white-space: nowrap;
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .chip-resort {
+            background: rgba(56, 189, 248, 0.12);
+            color: #0369a1;
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        .list-notice {
+            padding: 9px 20px;
+            font-size: 10px;
+            letter-spacing: .3px;
+            color: var(--text-panel-muted);
+            background: rgba(13, 27, 42, 0.03);
+            border-bottom: 1px solid var(--border-panel);
+        }
+
+        .list-notice-inline {
+            font-size: 10px;
+            opacity: .8;
         }
 
         /* ── Sea-tap temperature popup ── */
@@ -857,7 +896,8 @@
                     <div id="discover-items">
                         <div class="empty-state">
                             <div class="emoji">🏖️</div>
-                            See live water temperatures at beaches anywhere —<br>type a city or country above
+                            The pins on the map are the warmest beaches right now — tap one.<br>Or type a city or
+                            country above, or tap any spot on the sea.
                         </div>
                     </div>
                 </div>
@@ -1017,7 +1057,7 @@
             activeMarkerIdx = null;
         }
 
-        function addMarkers(beaches) {
+        function addMarkers(beaches, tab) {
             clearMarkers();
             beaches.forEach((b, i) => {
                 if (!b.lat || !b.lon) return;
@@ -1034,7 +1074,10 @@
                     'transition:transform 0.15s',
                 ].join(';');
                 el.textContent = i + 1;
-                el.addEventListener('click', () => setActive(i, currentTab));
+                el.addEventListener('click', () => {
+                    if (tab && currentTab !== tab) switchTab(tab);
+                    setActive(i, tab || currentTab);
+                });
                 const mkr = new maplibregl.Marker({ element: el, anchor: 'center' })
                     .setLngLat([b.lon, b.lat]).addTo(map);
                 markers.push({ mkr, el, color });
@@ -1053,6 +1096,7 @@
             document.querySelectorAll('.beach-card').forEach(c => c.classList.remove('active'));
 
             if (idx === null) { activeMarkerIdx = null; return; }
+            if (!markers[idx]) return;   // list re-rendering — ignore stale click
             activeMarkerIdx = idx;
 
             // Activate marker
@@ -1147,18 +1191,25 @@
                 const band = b.temp_c != null ? getBand(b.temp_c) : null;
                 const meta = b.distance_km != null ? `${b.distance_km} km away`
                     : b.country ? b.country : '';
+                const chips = [
+                    chipT != null && b.temp_c === chipT ? '<span class="chip chip-warmest">🔥 Warmest</span>' : '',
+                    b.is_resort ? '<span class="chip chip-resort">Resort</span>' : '',
+                    b.surface_label ? `<span class="chip">${b.surface_label}</span>` : '',
+                    b.lifeguard ? '<span class="chip">Lifeguard</span>' : '',
+                ].filter(Boolean).join('');
                 return `<div class="beach-card" id="bcard-${tab}-${i}" onclick="setActive(${i}, '${tab}')">
             <div class="beach-num" style="border-color:${color};${b.temp_c != null ? `background:${color}18` : ''}">${i + 1}</div>
             <div class="beach-info">
-                <div class="beach-name">${b.name}${chipT != null && b.temp_c === chipT ? ' <span class="warmest-chip">🔥 Warmest</span>' : ''}</div>
-                <div class="beach-meta">${meta}</div>
+                <div class="beach-name">${b.name}</div>
+                ${chips ? `<div class="beach-chips">${chips}</div>` : ''}
+                <div class="beach-meta">${meta}${b.temp_c == null ? ' · <span class="no-sea">temperature unavailable right now</span>' : ''}</div>
                 ${band ? `<span class="beach-badge" style="background:${color}18;color:${color}">${band.label}</span>` : ''}
             </div>
             <div class="beach-temp" style="color:${color}">${tempStr}<span style="font-size:11px">°</span></div>
         </div>`;
             }).join('');
 
-            addMarkers(beaches);
+            addMarkers(beaches, tab);
             fitMapToBeaches(beaches);
         }
 
@@ -1184,10 +1235,13 @@
         }
 
         // ── Overpass query ────────────────────────────────────────────────────────────
-        async function queryOverpass(lat, lon, radiusKm = 50) {
+        async function queryOverpass(lat, lon, radiusKm = 50, includeResorts = false) {
             const r = radiusKm * 1000;
             // server timeout (12s) < client timeout (16s), so the server answers or errors first
-            const q = `[out:json][timeout:12];(node["natural"="beach"](around:${r},${lat},${lon});way["natural"="beach"](around:${r},${lat},${lon});node["leisure"="beach"](around:${r},${lat},${lon});way["leisure"="beach"](around:${r},${lat},${lon}););out center tags;`;
+            const resortClauses = includeResorts
+                ? `node["leisure"="beach_resort"](around:${r},${lat},${lon});way["leisure"="beach_resort"](around:${r},${lat},${lon});`
+                : '';
+            const q = `[out:json][timeout:12];(node["natural"="beach"](around:${r},${lat},${lon});way["natural"="beach"](around:${r},${lat},${lon});node["leisure"="beach"](around:${r},${lat},${lon});way["leisure"="beach"](around:${r},${lat},${lon});${resortClauses});out center tags;`;
 
             const fetchWithTimeout = async (url, ms = 15000) => {
                 const controller = new AbortController();
@@ -1210,7 +1264,7 @@
             //    immune to mobile-carrier (CGNAT) rate limiting.
             try {
                 const res = await fetchWithTimeout(
-                    `/api/beaches/search?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=${radiusKm}`, 28000);
+                    `/api/beaches/search?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&radius_km=${radiusKm}&include_resorts=${includeResorts ? 1 : 0}`, 28000);
                 if (res.ok) {
                     const data = await res.json();
                     return data.elements || [];
@@ -1245,9 +1299,15 @@
             return Promise.all(beaches.map(async b => {
                 try {
                     const r = await fetch(`/api/point?lat=${b.lat.toFixed(5)}&lon=${b.lon.toFixed(5)}&radius_km=10`);
+                    if (!r.ok) throw new Error('sst http ' + r.status);
                     const d = await r.json();
-                    return { ...b, temp_c: d.status === 'ok' ? d.mean_c : null };
-                } catch { return { ...b, temp_c: null }; }
+                    if (d.status === 'ok') return { ...b, temp_c: d.mean_c, inland: false };
+                    // API answered: no ocean within radius — a VERDICT (inland/artificial)
+                    return { ...b, temp_c: null, inland: true };
+                } catch {
+                    // fetch failed — IGNORANCE, not a verdict; keep the beach
+                    return { ...b, temp_c: null, inland: false };
+                }
             }));
         }
 
@@ -1258,8 +1318,18 @@
                     const blat = el.lat ?? el.center?.lat;
                     const blon = el.lon ?? el.center?.lon;
                     if (!blat || !blon) return null;
-                    const name = el.tags?.name || el.tags?.['name:en'] || 'Unnamed Beach';
-                    return { name, lat: blat, lon: blon, distance_km: haversine(lat, lon, blat, blon).toFixed(1) };
+                    const tags = el.tags || {};
+                    // Sport venues (beach volleyball courts etc.) are not swimming beaches
+                    if (tags.sport) return null;
+                    const name = tags.name || tags['name:en'] || 'Unnamed Beach';
+                    const surfaceMap = { sand: 'Sand', pebbles: 'Pebble', pebblestone: 'Pebble', shingle: 'Pebble', gravel: 'Gravel' };
+                    return {
+                        name, lat: blat, lon: blon,
+                        distance_km: haversine(lat, lon, blat, blon).toFixed(1),
+                        is_resort: tags.leisure === 'beach_resort',
+                        surface_label: surfaceMap[tags.surface] || null,
+                        lifeguard: tags.supervised === 'yes' || tags.lifeguard === 'yes',
+                    };
                 })
                 .filter(b => b && !seen.has(b.name) && seen.add(b.name))
                 .sort((a, b) => parseFloat(a.distance_km) - parseFloat(b.distance_km))
@@ -1338,7 +1408,12 @@
             });
         })();
 
+        const discoverEmptyHTML = document.getElementById('discover-items').innerHTML;
+
+        let userInteracted = false;
+
         function switchTab(tab) {
+            userInteracted = true;
             if (sheetCollapsed) expandSheet();             // tapping a tab always reopens
             currentTab = tab;
             document.querySelectorAll('.page-tab').forEach((t, i) => {
@@ -1355,11 +1430,24 @@
                 document.getElementById('discover-search').value = '';
                 document.getElementById('discover-label').textContent = '';
                 document.getElementById('discover-count').textContent = '';
-                document.getElementById('discover-items').innerHTML = '';
+                document.getElementById('discover-items').innerHTML = discoverEmptyHTML;
                 document.getElementById('discover-header').style.display = 'none';
             }
 
-            if (tab === 'warmest' && !warmestLoaded) loadWarmest();
+            if (tab === 'warmest') {
+                if (!warmestLoaded) {
+                    loadWarmest();
+                } else {
+                    // restore this tab's list + markers (markers were cleared above)
+                    const btn = document.querySelector('#warmest-filters .filter-btn.active');
+                    filterWarmest(typeof currentWarmestRegion !== 'undefined' && currentWarmestRegion ? currentWarmestRegion : 'all', btn);
+                }
+            }
+
+            if (tab === 'nearme' && lastRender.nearme) {
+                const a = lastRender.nearme;
+                renderBeachCards(a.beaches, a.containerId, 'nearme', a.labelEl, a.countEl, a.label);
+            }
         }
 
         // ── Tab 1: Discover ───────────────────────────────────────────────────────────
@@ -1386,8 +1474,11 @@
             discoverDrop.innerHTML = '<div style="padding:10px 14px;font-size:11px;color:var(--muted)"><span class="spinner-ring"></span>Searching…</div>';
             discoverDrop.classList.add('visible');
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`, { headers: { 'Accept-Language': 'en' } });
-                const results = await res.json();
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=10&addressdetails=1`, { headers: { 'Accept-Language': 'en' } });
+                let results = await res.json();
+                // Filter out non-destination results (airports, stations, roads)
+                const JUNK = ['aeroway', 'railway', 'highway', 'military', 'office', 'building', 'man_made'];
+                results = results.filter(r => !JUNK.includes(r.class)).slice(0, 5);
                 if (!results.length) {
                     discoverDrop.innerHTML = '<div style="padding:10px 14px;font-size:11px;color:var(--muted)">No results found</div>';
                     return;
@@ -1417,6 +1508,7 @@
         }
 
         async function discoverSearch(lat, lon, placeName) {
+            userInteracted = true;
             lastDiscover = { lat, lon, placeName };
             document.getElementById('discover-header').style.display = 'flex';
             document.getElementById('discover-label').textContent = `Beaches near ${placeName}`;
@@ -1425,22 +1517,43 @@
             map.flyTo({ center: [lon, lat], zoom: 10, duration: 800 });
 
             try {
-                const elements = await queryOverpass(lat, lon);
+                let elements = await queryOverpass(lat, lon);
+                let searchRadius = 50;
+                if (!processOverpass(elements, lat, lon).length) {
+                    // Sparse OSM coverage (e.g. North Africa): widen radius AND
+                    // include managed beach resorts before giving up
+                    elements = await queryOverpass(lat, lon, 100, true);
+                    searchRadius = 100;
+                }
                 const beaches = processOverpass(elements, lat, lon);
 
                 if (!beaches.length) {
                     document.getElementById('discover-items').innerHTML =
-                        `<div class="empty-state"><span class="emoji">🏖</span>No beaches found within 50km of ${placeName}.<br>Try a nearby coastal city.</div>`;
+                        `<div class="empty-state"><span class="emoji">🏖</span>No beaches found within ${searchRadius}km of ${placeName}.<br>Try a nearby coastal city.</div>`;
                     clearMarkers();
                     return;
                 }
 
                 document.getElementById('discover-count').textContent = 'Loading temperatures…';
                 const withTemp = await fetchSST(beaches);
-                renderBeachCards(withTemp, 'discover-items', 'discover',
+                const seaBeaches = withTemp.filter(b => !b.inland);
+                const hidden = withTemp.length - seaBeaches.length;
+
+                if (!seaBeaches.length) {
+                    document.getElementById('discover-items').innerHTML =
+                        `<div class="empty-state"><span class="emoji">🌊</span>No sea beaches near ${placeName} — SwimTemp covers coastal beaches.${hidden ? `<br><span class="list-notice-inline">${hidden} inland or artificial ${hidden === 1 ? 'beach' : 'beaches'} not shown.</span>` : ''}</div>`;
+                    document.getElementById('discover-count').textContent = '';
+                    clearMarkers();
+                    return;
+                }
+
+                renderBeachCards(seaBeaches, 'discover-items', 'discover',
                     document.getElementById('discover-label'),
                     document.getElementById('discover-count'),
                     `Beaches near ${placeName}`);
+
+                if (hidden) document.getElementById('discover-items').insertAdjacentHTML('afterbegin',
+                    `<div class="list-notice">${hidden} inland or artificial ${hidden === 1 ? 'beach' : 'beaches'} hidden — SwimTemp covers sea &amp; ocean beaches.</div>`);
             } catch {
                 document.getElementById('discover-items').innerHTML =
                     `<div class="empty-state"><span class="emoji">⚠️</span>Beach lookup didn't respond — this is a connection hiccup, not a lack of beaches.<br><br><button class="btn-primary" onclick="retryDiscover()">Try again</button></div>`;
@@ -1450,6 +1563,7 @@
 
         // ── Tab 2: Near me ────────────────────────────────────────────────────────────
         async function loadNearMe() {
+            userInteracted = true;
             const items = document.getElementById('nearme-items');
             items.innerHTML = `<div class="loading-state"><span class="spinner-ring"></span>Finding your location…</div>`;
 
@@ -1497,15 +1611,17 @@
                 items.innerHTML = `<div class="loading-state"><span class="spinner-ring"></span>Loading temperatures…</div>`;
                 const withTemp = await fetchSST(beaches);
 
-                // Filter to only real ocean beaches (have SST data)
-                const oceanBeaches = withTemp.filter(b => b.temp_c !== null);
+                // Hide provably-inland beaches; keep sea beaches whose lookup merely failed
+                const oceanBeaches = withTemp.filter(b => !b.inland);
+                const hiddenNear = withTemp.length - oceanBeaches.length;
 
                 if (!oceanBeaches.length) {
                     items.innerHTML = `<div class="near-me-empty">
                 <div style="font-size:40px;margin-bottom:12px">🏖️</div>
-                <div class="near-me-title">You're beachless.</div>
+                <div class="near-me-title">No sea beaches near you.</div>
                 <div class="near-me-sub">
-                    Nearest ocean: disappointingly far away. 🌊<br>
+                    SwimTemp covers coastal beaches — the ocean is disappointingly far away. 🌊<br>
+                    ${hiddenNear ? `(${hiddenNear} inland or artificial ${hiddenNear === 1 ? 'beach' : 'beaches'} not shown.)<br>` : ''}
                     Time to migrate. 🐟
                 </div>
                 <button class="btn-primary" onclick="switchTab('discover')">
@@ -1582,7 +1698,7 @@
                 .sort((a, b) => (b.temp_c ?? -99) - (a.temp_c ?? -99));
         }
 
-        async function loadWarmest() {
+        async function loadWarmest(eager = false) {
             warmestLoaded = true;
             renderSkeleton('warmest-items', 8);
             warmestAll = await fetchWarmestAll();
@@ -1611,6 +1727,10 @@
                         `<button class="filter-btn" onclick="filterWarmest('${r}', this)">${REGION_LABELS[r].replace('Warmest in ', '')}</button>`
                     ).join('');
             }
+
+            // Eager preload: if the user started their own thing while we fetched,
+            // don't stomp their markers (unless they're now ON the warmest tab).
+            if (eager && userInteracted && currentTab !== 'warmest') return;
 
             await filterWarmest('all', filtersEl.querySelector('.filter-btn'));
         }
@@ -1664,6 +1784,11 @@
 
         // ── Init ──────────────────────────────────────────────────────────────────────
         // Warmest loads lazily when tab is opened
+        // ── Josephine's idea: pins before search ─────────────────────────────────────
+        // Eagerly load the warmest beaches (nightly-cached, one cheap call) so the
+        // map greets visitors with real, tappable pins instead of empty water.
+        loadWarmest(true);
+
     </script>
 </body>
 

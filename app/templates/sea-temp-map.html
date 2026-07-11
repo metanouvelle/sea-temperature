@@ -1749,10 +1749,13 @@
             searchResults.classList.add('visible');
             try {
                 const res = await fetch(
-                    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`,
+                    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=10&addressdetails=1`,
                     { headers: { 'Accept-Language': 'en' } }
                 );
-                const results = await res.json();
+                let results = await res.json();
+                // Filter out non-destination results (airports, stations, roads)
+                const JUNK = ['aeroway', 'railway', 'highway', 'military', 'office', 'building', 'man_made'];
+                results = results.filter(r => !JUNK.includes(r.class)).slice(0, 5);
                 if (results.length === 0) {
                     searchResults.innerHTML = '<div class="search-loading">No results found</div>';
                     return;

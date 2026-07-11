@@ -12,6 +12,7 @@ __pycache__/
 sst.sqlite
 sst.sqlite-shm
 sst.sqlite-wal
+app/dev-cache.sqlite
 
 # OS
 .DS_Store
