@@ -5,20 +5,21 @@ import os
 import sqlite3
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import asynccontextmanager
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from xml.sax.saxutils import escape
 
 from dotenv import load_dotenv
-from fastapi import Cookie, FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
+from fastapi import FastAPI, Header, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import init_db
 from app.logger import get_logger
-from app.middleware import TimingMiddleware
+from app.middleware import SecurityHeadersMiddleware, TimingMiddleware
 from app.scripts.prewarm_tiles import prewarm, yesterday_utc
 from app.services.optimized_query import query_points_in_bbox_optimized
 from app.services.sst_cache import (
@@ -36,10 +37,55 @@ log = get_logger(__name__)
 
 PREWARM_SECRET = os.getenv("PREWARM_SECRET", "")
 
+
+def runtime_data_dir() -> Path:
+    """Return the writable runtime data directory.
+
+    Fly mounts /data. Local development falls back to ./data unless
+    SST_DB_PATH explicitly points somewhere else.
+    """
+    explicit = os.getenv("SST_DB_PATH")
+    if explicit:
+        return Path(explicit).expanduser().resolve().parent
+    fly_data = Path("/data")
+    if fly_data.exists() and os.access(fly_data, os.W_OK):
+        return fly_data
+    return Path("data").resolve()
+
+
+def sst_db_path() -> Path:
+    explicit = os.getenv("SST_DB_PATH")
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    return runtime_data_dir() / "sst.sqlite"
+
+
+STATUS_PATH = runtime_data_dir() / "prewarm_status.json"
+
 _tile_executor = ThreadPoolExecutor(max_workers=12)
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize local storage while keeping cached-only development usable."""
+    init_db()
+    try:
+        login_copernicus()
+    except RuntimeError as exc:
+        log.warning("Copernicus credentials unavailable at startup: %s", exc)
+    yield
+
+
+app = FastAPI(
+    title="SwimTemp",
+    description="Sea-surface temperature and marine conditions for swimmers.",
+    version="1.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+    lifespan=lifespan,
+)
 templates = Jinja2Templates(directory="app/templates")
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(TimingMiddleware)
 
 
@@ -63,15 +109,6 @@ def get_latest_available_date() -> str:
     return yesterday_utc()
 
 
-# ── Startup ───────────────────────────────────────────────────────────────────
-
-
-@app.on_event("startup")
-def _startup():
-    """Init database and Copernicus on startup."""
-    init_db()
-    login_copernicus()
-
 
 # ── Background prewarm ────────────────────────────────────────────────────────
 def _cleanup_old_data():
@@ -94,12 +131,13 @@ def _cleanup_old_data():
             WHERE cached_at < datetime('now', '-7 days')
         """)
 
-        # Beach search cache — keep only last 7 days
+        # Beach search cache stores Unix timestamps.
         try:
-            conn.execute("""
-                DELETE FROM beach_search_cache
-                WHERE updated_at < datetime('now', '-7 days')
-            """)
+            cutoff_epoch = int(time.time()) - (7 * 24 * 60 * 60)
+            conn.execute(
+                "DELETE FROM beach_search_cache WHERE updated_at < ?",
+                (cutoff_epoch,),
+            )
         except Exception:
             pass  # table may not exist in all environments
 
@@ -112,30 +150,12 @@ def _cleanup_old_data():
         except Exception:
             pass
 
-        # Sessions — delete expired
-        try:
-            conn.execute("""
-                DELETE FROM sessions
-                WHERE expires_at < datetime('now')
-            """)
-        except Exception:
-            pass
 
-        # Auth tokens — delete expired
-        try:
-            conn.execute("""
-                DELETE FROM auth_tokens
-                WHERE expires_at < datetime('now')
-            """)
-        except Exception:
-            pass
-
-        # Checkpoint WAL to prevent it growing large
-        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-
-        # VACUUM to reclaim disk space
-        conn.execute("VACUUM")
+        # Finish the write transaction before checkpoint/VACUUM. SQLite
+        # rejects VACUUM while a transaction is active.
         conn.commit()
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        conn.execute("VACUUM")
         conn.close()
         log.info("Cleanup complete")
     except Exception as e:
@@ -159,7 +179,8 @@ def _background_prewarm():
             elapsed,
         )
 
-        Path("/data/prewarm_status.json").write_text(
+        STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        STATUS_PATH.write_text(
             json.dumps(
                 {
                     "last_run": date,
@@ -228,13 +249,16 @@ def location_page(
 
 @app.get("/api/point")
 def api_point(
+    response: Response,
     lat: float = Query(..., ge=-90, le=90),
     lon: float = Query(..., ge=-180, le=180),
     radius_km: float = Query(10.0, gt=0, le=50),
 ):
     d = get_latest_available_date()
     try:
-        return point_temperature(d, lat, lon, radius_km)
+        result = point_temperature(d, lat, lon, radius_km)
+        response.headers["Cache-Control"] = "public, max-age=900, stale-if-error=86400"
+        return result
     except Exception as exc:
         log.error("api_point error lat=%s lon=%s: %s", lat, lon, exc)
         raise HTTPException(
@@ -243,12 +267,19 @@ def api_point(
 
 
 @app.get("/api/grid")
-def get_grid(bbox: str, zoom: float = Query(8.0)):
+def get_grid(response: Response, bbox: str, zoom: float = Query(8.0)):
     """
     Return cached SST grid points for a bounding box.
     bbox format: south,west,north,east
     """
-    south, west, north, east = map(float, bbox.split(","))
+    try:
+        south, west, north, east = map(float, bbox.split(","))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="bbox must be south,west,north,east")
+    if not (-90 <= south < north <= 90 and -180 <= west < east <= 180):
+        raise HTTPException(status_code=422, detail="invalid bbox bounds")
+    if (north - south) > 30 or (east - west) > 60:
+        raise HTTPException(status_code=422, detail="bbox is too large")
     date = get_latest_available_date()
     bounds = {"min_lat": south, "max_lat": north, "min_lon": west, "max_lon": east}
     pending = 0
@@ -272,6 +303,9 @@ def get_grid(bbox: str, zoom: float = Query(8.0)):
             lon += 2.0
         lat += 2.0
     points = query_points_in_bbox_optimized(date, bounds, zoom=zoom)
+    response.headers["Cache-Control"] = (
+        "no-store" if pending else "public, max-age=300"
+    )
     return {
         "points": [
             {"lat": p[0], "lon": p[1], "temp_c": round(p[2], 2)} for p in points
@@ -280,17 +314,35 @@ def get_grid(bbox: str, zoom: float = Query(8.0)):
     }
 
 
+@app.get("/healthz")
+def healthz():
+    """Deployment health check that verifies the SQLite store is reachable."""
+    try:
+        from app.database import connect
+
+        conn = connect()
+        conn.execute("SELECT 1").fetchone()
+        conn.close()
+        return {"status": "ok"}
+    except Exception as exc:
+        log.error("health check failed: %s", exc)
+        raise HTTPException(status_code=503, detail="database unavailable") from exc
+
+
 @app.get("/api/status")
 def api_status():
-    """Health + prewarm status endpoint."""
-    status_file = Path("/data/prewarm_status.json")
+    """Small operational health endpoint for deploy checks."""
     prewarm_info = {}
-    if status_file.exists():
+    if STATUS_PATH.exists():
         try:
-            prewarm_info = json.loads(status_file.read_text(encoding="utf-8"))
+            prewarm_info = json.loads(STATUS_PATH.read_text(encoding="utf-8"))
         except Exception:
             prewarm_info = {"error": "could not read status file"}
-    return {"status": "ok", "prewarm": prewarm_info}
+    return {
+        "status": "ok",
+        "latest_sst_date": get_latest_available_date(),
+        "prewarm": prewarm_info,
+    }
 
 
 @app.post("/api/admin/prewarm")
@@ -299,7 +351,8 @@ def trigger_prewarm(authorization: str = Header(None)):
     if not PREWARM_SECRET or authorization != f"Bearer {PREWARM_SECRET}":
         raise HTTPException(status_code=401, detail="Unauthorized")
     # Clear status so polling knows a fresh run is in progress
-    Path("/data/prewarm_status.json").write_text(
+    STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    STATUS_PATH.write_text(
         json.dumps({"last_run": "running", "success": False}), encoding="utf-8"
     )
     threading.Thread(target=_background_prewarm, daemon=True).start()
@@ -335,7 +388,7 @@ def sitemap_xml():
     for url in urls:
         xml_parts.append(
             f'  <url>\n    <loc>{escape(url["loc"])}</loc>\n'
-            f'    <changefreq>daily</changefreq>\n    <priority>{url["priority"]}</priority>\n  </url>'
+            f'    <changefreq>weekly</changefreq>\n    <priority>{url["priority"]}</priority>\n  </url>'
         )
     xml_parts.append("</urlset>")
     return Response(content="\n".join(xml_parts), media_type="application/xml")
@@ -359,13 +412,12 @@ def widget_coords(
     name: str = Query("Sea Temperature"),
 ):
     return templates.TemplateResponse(
+        request,
         "widget.html",
         {
-            "request": request,
-            "name": name,
+            "name": name.strip()[:80] or "Sea Temperature",
             "lat": lat,
             "lon": lon,
-            "slug": "",
         },
     )
 
@@ -387,7 +439,11 @@ def robots_head():
 
 
 @app.get("/api/sst-history")
-async def sst_history(lat: float, lon: float):
+async def sst_history(
+    response: Response,
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+):
     """
     Returns ~1 year of daily SST history (REP + NRT merged) plus a 7-day
     Open-Meteo Marine SST forecast for the given coordinates.
@@ -404,7 +460,9 @@ async def sst_history(lat: float, lon: float):
     cache_key = f"sst_history_{lat_r}_{lon_r}"
 
     # ── 1. Check SQLite cache ──────────────────────────────────────────────
-    db_path = os.environ.get("SST_DB_PATH", "/data/sst.sqlite")
+    db_file = sst_db_path()
+    db_file.parent.mkdir(parents=True, exist_ok=True)
+    db_path = str(db_file)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
@@ -427,6 +485,8 @@ async def sst_history(lat: float, lon: float):
         cached_at = datetime.fromisoformat(row["cached_at"])
         if datetime.now(timezone.utc) - cached_at < timedelta(hours=24):
             conn.close()
+            response.headers["Cache-Control"] = "public, max-age=3600, stale-if-error=86400"
+            response.headers["X-SwimTemp-Cache"] = "hit"
             return json.loads(row["data"])
 
     # ── 2. Fetch historical SST (REP + NRT) ───────────────────────────────
@@ -499,140 +559,9 @@ async def sst_history(lat: float, lon: float):
     conn.commit()
     conn.close()
 
+    response.headers["Cache-Control"] = "public, max-age=3600, stale-if-error=86400"
+    response.headers["X-SwimTemp-Cache"] = "miss"
     return result
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ADD TO app/main.py  —  Auth + Saves API stubs
-#
-# These endpoints are intentionally minimal stubs. They:
-#   - Return 501 Not Implemented so the frontend can detect "not yet live"
-#   - Have correct route signatures so no URL changes are needed when implemented
-#   - Include the full docstring spec so the implementer knows exactly what to build
-#
-# Implementation order when ready:
-#   1. /api/auth/register  — email + password, send verification email
-#   2. /api/auth/login     — return session token in httpOnly cookie
-#   3. /api/auth/me        — used by frontend to hydrate saved/liked state on load
-#   4. /api/saves/*        — the actual save/like toggle endpoints
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-# ── Auth ──────────────────────────────────────────────────────────────────────
-
-
-@app.post("/api/auth/register")
-async def auth_register(request: Request):
-    """
-    Register with email + password.
-    Body: { email, password }
-    - Hash password with bcrypt
-    - Insert into users table
-    - Send verification email (use SendGrid or Resend)
-    - Return 201 with { message: "Check your email" }
-    - On duplicate email: 409
-    """
-    return JSONResponse({"detail": "Coming soon"}, status_code=501)
-
-
-@app.post("/api/auth/login")
-async def auth_login(request: Request):
-    """
-    Login with email + password.
-    Body: { email, password }
-    - Verify password hash
-    - Create session row, set httpOnly cookie 'st_session'
-    - Return { user: { id, email, display_name, tier } }
-    """
-    return JSONResponse({"detail": "Coming soon"}, status_code=501)
-
-
-@app.post("/api/auth/logout")
-async def auth_logout(request: Request):
-    """
-    Delete session row, clear cookie.
-    """
-    return JSONResponse({"detail": "Coming soon"}, status_code=501)
-
-
-@app.get("/api/auth/me")
-async def auth_me(request: Request):
-    """
-    Return current user + their saved/liked beach slugs.
-    Called on page load to hydrate UI state.
-    Response: {
-        user: { id, email, display_name, tier } | null,
-        saved: ["slug1", "slug2", ...],
-        liked: ["slug3", ...]
-    }
-    If not logged in: { user: null, saved: [], liked: [] }
-    This shape means the frontend never needs to branch on auth state
-    for rendering — it just gets empty arrays when logged out.
-    """
-    return JSONResponse({"user": None, "saved": [], "liked": []}, status_code=200)
-
-
-@app.get("/api/auth/verify")
-async def auth_verify(token: str):
-    """
-    Verify email address from link in verification email.
-    - Look up auth_tokens row, check not expired/used
-    - Set users.verified = 1
-    - Mark token used
-    - Redirect to /map?verified=1
-    """
-    return JSONResponse({"detail": "Coming soon"}, status_code=501)
-
-
-# ── Saves ─────────────────────────────────────────────────────────────────────
-
-
-@app.post("/api/saves/beach/{slug}")
-async def save_beach(slug: str, request: Request):
-    """
-    Toggle saved status for a beach.
-    Body: { action: "save" | "unsave" | "like" | "unlike" }
-    - Requires valid session cookie
-    - Upsert user_saved_beaches row
-    - Return { saved: bool, liked: bool }
-    Frontend calls this on heart/bookmark icon click.
-    If not authenticated: 401 — frontend shows login modal.
-    """
-    return JSONResponse({"detail": "Login required"}, status_code=401)
-
-
-@app.get("/api/saves/beaches")
-async def get_saved_beaches(request: Request):
-    """
-    Return all saved + liked beaches for current user, with live SST.
-    Response: {
-        saved: [{ ...beach, temp_c, saved_at }],
-        liked: [{ ...beach, temp_c, liked_at }]
-    }
-    This powers a "My beaches" page or panel.
-    """
-    return JSONResponse({"saved": [], "liked": []}, status_code=200)
-
-
-@app.post("/api/saves/point")
-async def save_point(request: Request):
-    """
-    Save an arbitrary map point.
-    Body: { lat, lon, label? }
-    - Requires valid session
-    - Insert into user_saved_points
-    - Return { id, lat, lon, label }
-    """
-    return JSONResponse({"detail": "Login required"}, status_code=401)
-
-
-@app.delete("/api/saves/point/{point_id}")
-async def delete_saved_point(point_id: str, request: Request):
-    """
-    Delete a saved map point.
-    - Requires valid session + ownership check
-    """
-    return JSONResponse({"detail": "Login required"}, status_code=401)
 
 
 # ── /api/warmest ──────────────────────────────────────────────────────────────
@@ -645,7 +574,7 @@ def api_warmest(
     Return warmest beaches for a region from the warmest_beaches table.
     Populated nightly by app/scripts/update_warmest.py.
     """
-    conn = sqlite3.connect(os.environ.get("SST_DB_PATH", "/data/sst.sqlite"))
+    conn = sqlite3.connect(sst_db_path())
     conn.row_factory = sqlite3.Row
 
     try:

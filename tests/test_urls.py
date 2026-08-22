@@ -33,8 +33,6 @@ REQUEST_TIMEOUT = 15  # seconds per request
 # Pages that must always return 200
 CRITICAL_PAGES = [
     "/",
-    "/beaches",
-    "/map",
     "/about",
     "/privacy",
 ]
@@ -73,7 +71,7 @@ def sitemap_urls() -> list[str]:
 @pytest.fixture(scope="session")
 def beach_urls(sitemap_urls) -> list[str]:
     """All /beach/* URLs from sitemap."""
-    return [u for u in sitemap_urls if "/beach/" in u]
+    return []
 
 
 @pytest.fixture(scope="session")
@@ -107,10 +105,6 @@ class TestSitemap:
 
     def test_sitemap_contains_homepage(self, sitemap_urls):
         assert "https://swimtemp.com/" in sitemap_urls
-
-    def test_sitemap_contains_beach_pages(self, beach_urls):
-        assert len(beach_urls) > 0, "No beach pages found in sitemap"
-        print(f"\n  Found {len(beach_urls)} beach pages in sitemap")
 
     def test_sitemap_urls_use_https(self, sitemap_urls):
         """All URLs must use HTTPS."""

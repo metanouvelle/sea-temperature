@@ -1,17 +1,10 @@
 /**
- * Responsive 1-year SST history + 7-day forecast chart.
+ * Responsive 1-year SST history + 7-day outlook chart.
+ * History and forecast use separate visual spans so a short forecast remains legible.
  */
 
-const BAND_COLORS = [
-  { max: 16, color: "#2563eb" },
-  { max: 20, color: "#0ea5e9" },
-  { max: 25, color: "#22a866" },
-  { max: Infinity, color: "#d97706" },
-];
-
-function bandColor(sst) {
-  return (BAND_COLORS.find(b => sst < b.max) || BAND_COLORS.at(-1)).color;
-}
+const OBSERVED_COLOR = "#0ea5e9";
+const FORECAST_COLOR = "#0ea5e9";
 
 export class SSTHistoryChart {
   constructor(container) {
@@ -31,7 +24,9 @@ export class SSTHistoryChart {
       const res = await fetch(`/api/sst-history?lat=${lat}&lon=${lon}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       this.data = await res.json();
-      if (!this.data?.history?.length && !this.data?.forecast?.length) throw new Error("No temperature history available");
+      if (!this.data?.history?.length && !this.data?.forecast?.length) {
+        throw new Error("No temperature history available");
+      }
     } catch (err) {
       this._showError(err.message);
       return;
@@ -53,7 +48,6 @@ export class SSTHistoryChart {
 
   _build() {
     this.container.innerHTML = "";
-
     const canvas = document.createElement("canvas");
     canvas.style.cssText = "width:100%;height:220px;cursor:crosshair;display:block;touch-action:pan-y";
     canvas.addEventListener("pointermove", this._onMove);
@@ -71,63 +65,75 @@ export class SSTHistoryChart {
     `;
     this.tooltip = tip;
     this.container.appendChild(tip);
-
     this._sizeCanvas();
   }
 
   _sizeCanvas() {
     const compact = window.matchMedia("(max-width: 700px)").matches;
-    this.canvas.style.height = compact ? "176px" : "220px";
-
+    this.canvas.style.height = compact ? "168px" : "210px";
     const dpr = window.devicePixelRatio || 1;
     const w = this.canvas.offsetWidth || this.container.clientWidth || 600;
-    const h = this.canvas.offsetHeight || (compact ? 176 : 220);
+    const h = this.canvas.offsetHeight || (compact ? 168 : 210);
     this.canvas.width = Math.round(w * dpr);
     this.canvas.height = Math.round(h * dpr);
-    const ctx = this.canvas.getContext("2d");
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.canvas.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
     this._computeLayout(w, h, compact);
   }
 
   _computeLayout(w, h, compact) {
     const pad = compact
-      ? { top: 24, right: 8, bottom: 30, left: 30 }
-      : { top: 28, right: 14, bottom: 32, left: 36 };
-
-    const all = [...(this.data.history || []), ...(this.data.forecast || [])];
-    const allSST = all.map(p => Number(p.sst)).filter(Number.isFinite);
+      ? { top: 24, right: 8, bottom: 28, left: 30 }
+      : { top: 28, right: 14, bottom: 30, left: 36 };
+    const hist = this.data.history || [];
+    const fc = this.data.forecast || [];
+    const allSST = [...hist, ...fc].map(p => Number(p.sst)).filter(Number.isFinite);
     const minSST = Math.floor(Math.min(...allSST)) - 1;
     const maxSST = Math.ceil(Math.max(...allSST)) + 1;
-    const dates = all.map(p => p.date).filter(Boolean).sort();
-    const dateMin = dates.at(0);
-    const dateMax = dates.at(-1);
-    const totalMs = new Date(dateMax) - new Date(dateMin) || 1;
+    const plotW = w - pad.left - pad.right;
+    const plotH = h - pad.top - pad.bottom;
 
-    this.layout = {
-      w, h, pad, compact, minSST, maxSST, dateMin, dateMax, totalMs,
-      plotW: w - pad.left - pad.right,
-      plotH: h - pad.top - pad.bottom,
-    };
+    // Reserve enough room for seven forecast days to be readable on every viewport.
+    const forecastRatio = fc.length ? (compact ? 0.17 : 0.13) : 0;
+    const gap = fc.length ? (compact ? 5 : 7) : 0;
+    const historyW = Math.max(1, plotW * (1 - forecastRatio) - gap);
+    const forecastW = Math.max(1, plotW - historyW - gap);
+
+    this.layout = { w, h, pad, compact, minSST, maxSST, plotW, plotH, historyW, forecastW, gap };
+  }
+
+  _xForPoint(pt, type) {
+    const { pad, historyW, forecastW, gap } = this.layout;
+    const hist = this.data.history || [];
+    const fc = this.data.forecast || [];
+    if (type === "forecast") {
+      const idx = Math.max(0, fc.findIndex(p => p.date === pt.date));
+      const denom = Math.max(1, fc.length - 1);
+      return pad.left + historyW + gap + (idx / denom) * forecastW;
+    }
+    const idx = Math.max(0, hist.findIndex(p => p.date === pt.date));
+    const denom = Math.max(1, hist.length - 1);
+    return pad.left + (idx / denom) * historyW;
+  }
+
+  _yOf(sst) {
+    const { pad, minSST, maxSST, plotH } = this.layout;
+    return pad.top + (1 - (sst - minSST) / (maxSST - minSST)) * plotH;
   }
 
   _draw() {
     const ctx = this.canvas.getContext("2d");
-    const { w, h, pad, compact, minSST, maxSST, dateMin, totalMs, plotW, plotH } = this.layout;
+    const { w, h, pad, compact, minSST, maxSST, plotW, plotH, historyW, forecastW, gap } = this.layout;
+    const hist = this.data.history || [];
+    const fc = this.data.forecast || [];
     ctx.clearRect(0, 0, w, h);
 
-    const xOf = date => pad.left + (new Date(date) - new Date(dateMin)) / totalMs * plotW;
-    const yOf = sst => pad.top + (1 - (sst - minSST) / (maxSST - minSST)) * plotH;
-    this._xOf = xOf;
-    this._yOf = yOf;
-
-    // Horizontal guides and temperature labels.
     ctx.lineWidth = 1;
-    ctx.font = `${compact ? 9 : 10}px Inter, ui-sans-serif, system-ui, sans-serif`;
+    ctx.font = `${compact ? 9 : 10}px Inter,ui-sans-serif,system-ui,sans-serif`;
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     const step = (maxSST - minSST) <= 8 ? 2 : 3;
     for (let t = Math.ceil(minSST); t <= maxSST; t += step) {
-      const y = yOf(t);
+      const y = this._yOf(t);
       ctx.strokeStyle = "#edf1f5";
       ctx.beginPath();
       ctx.moveTo(pad.left, y);
@@ -137,105 +143,99 @@ export class SSTHistoryChart {
       ctx.fillText(`${t}°`, pad.left - 6, y);
     }
 
-    const hist = this.data.history || [];
-    const fc = this.data.forecast || [];
-
-    // Forecast area, visually separate from observations.
     if (fc.length) {
-      const start = hist.length ? xOf(hist.at(-1).date) : xOf(fc[0].date);
+      const forecastStart = pad.left + historyW + gap;
       ctx.fillStyle = "rgba(14,165,233,.055)";
-      ctx.fillRect(start, pad.top, Math.max(0, pad.left + plotW - start), plotH);
+      ctx.fillRect(forecastStart, pad.top, forecastW, plotH);
+      ctx.strokeStyle = "#b9c5d1";
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(forecastStart - gap / 2, pad.top);
+      ctx.lineTo(forecastStart - gap / 2, pad.top + plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
 
-    // Subtle fill below observed history.
     if (hist.length > 1) {
       ctx.beginPath();
       hist.forEach((pt, i) => {
-        const x = xOf(pt.date), y = yOf(pt.sst);
+        const x = this._xForPoint(pt, "observed");
+        const y = this._yOf(pt.sst);
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       });
-      ctx.lineTo(xOf(hist.at(-1).date), pad.top + plotH);
-      ctx.lineTo(xOf(hist[0].date), pad.top + plotH);
+      ctx.lineTo(this._xForPoint(hist.at(-1), "observed"), pad.top + plotH);
+      ctx.lineTo(this._xForPoint(hist[0], "observed"), pad.top + plotH);
       ctx.closePath();
       const fill = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
-      fill.addColorStop(0, "rgba(14,165,233,.13)");
+      fill.addColorStop(0, "rgba(14,165,233,.12)");
       fill.addColorStop(1, "rgba(14,165,233,0)");
       ctx.fillStyle = fill;
       ctx.fill();
+
+      ctx.beginPath();
+      hist.forEach((pt, i) => {
+        const x = this._xForPoint(pt, "observed");
+        const y = this._yOf(pt.sst);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = OBSERVED_COLOR;
+      ctx.lineWidth = compact ? 2 : 2.25;
+      ctx.stroke();
     }
 
-    // Observed history line.
-    if (hist.length > 1) {
-      for (let i = 0; i < hist.length - 1; i++) {
-        const a = hist[i], b = hist[i + 1];
-        ctx.beginPath();
-        ctx.moveTo(xOf(a.date), yOf(a.sst));
-        ctx.lineTo(xOf(b.date), yOf(b.sst));
-        ctx.strokeStyle = bandColor((a.sst + b.sst) / 2);
-        ctx.lineWidth = compact ? 2 : 2.25;
-        ctx.stroke();
-      }
-    }
-
-    // Forecast line, including bridge from last observation.
     if (fc.length) {
-      const bridge = [hist.at(-1), ...fc].filter(Boolean);
+      const points = [];
+      if (hist.length) points.push({ ...hist.at(-1), _type: "observed" });
+      points.push(...fc.map(p => ({ ...p, _type: "forecast" })));
       ctx.beginPath();
       ctx.setLineDash([5, 4]);
-      ctx.strokeStyle = "#0ea5e9";
+      ctx.strokeStyle = FORECAST_COLOR;
       ctx.lineWidth = 2;
-      bridge.forEach((pt, i) => {
-        const x = xOf(pt.date), y = yOf(pt.sst);
+      points.forEach((pt, i) => {
+        const x = this._xForPoint(pt, pt._type);
+        const y = this._yOf(pt.sst);
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       });
       ctx.stroke();
       ctx.setLineDash([]);
     }
 
-    // Today divider at the observation/forecast boundary when possible.
-    const boundaryPt = hist.at(-1);
-    if (boundaryPt && fc.length) {
-      const x = xOf(boundaryPt.date);
-      ctx.strokeStyle = "#b9c5d1";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 4]);
-      ctx.beginPath();
-      ctx.moveTo(x, pad.top);
-      ctx.lineTo(x, pad.top + plotH);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = "#718094";
-      ctx.font = `${compact ? 9 : 10}px Inter, ui-sans-serif, system-ui, sans-serif`;
+    // History month labels only; forecast gets its own compact label.
+    if (hist.length) {
+      ctx.fillStyle = "#8a99aa";
+      ctx.font = `${compact ? 9 : 10}px Inter,ui-sans-serif,system-ui,sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
-      ctx.fillText("Today", Math.min(Math.max(x, pad.left + 20), pad.left + plotW - 20), h - 8);
+      const monthFmt = new Intl.DateTimeFormat("en", { month: "short", timeZone: "UTC" });
+      const every = compact ? 3 : 2;
+      let lastMonth = -1;
+      let visibleMonth = 0;
+      hist.forEach((pt, idx) => {
+        const d = new Date(`${pt.date}T00:00:00Z`);
+        const month = d.getUTCMonth();
+        if (month === lastMonth) return;
+        lastMonth = month;
+        if (visibleMonth++ % every !== 0) return;
+        const x = this._xForPoint(pt, "observed");
+        if (x > pad.left + 10 && x < pad.left + historyW - 12) {
+          ctx.fillText(monthFmt.format(d), x, h - 7);
+        }
+      });
     }
 
-    // Sparse month labels: fewer on mobile.
-    ctx.fillStyle = "#8a99aa";
-    ctx.font = `${compact ? 9 : 10}px Inter, ui-sans-serif, system-ui, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "alphabetic";
-    const monthFmt = new Intl.DateTimeFormat("en", { month: "short", timeZone: "UTC" });
-    let cur = new Date(`${dateMin}T00:00:00Z`);
-    cur.setUTCDate(1);
-    let monthIndex = 0;
-    const every = compact ? 3 : 2;
-    while (cur <= new Date(this.layout.dateMax)) {
-      const date = cur.toISOString().slice(0, 10);
-      const x = xOf(date);
-      if (monthIndex % every === 0 && x >= pad.left + 8 && x <= pad.left + plotW - 8) {
-        ctx.fillText(monthFmt.format(cur), x, h - 8);
-      }
-      cur.setUTCMonth(cur.getUTCMonth() + 1);
-      monthIndex += 1;
+    if (fc.length) {
+      const forecastCenter = pad.left + historyW + gap + forecastW / 2;
+      ctx.fillStyle = "#718094";
+      ctx.textAlign = "center";
+      ctx.font = `${compact ? 9 : 10}px Inter,ui-sans-serif,system-ui,sans-serif`;
+      ctx.fillText("7 days", forecastCenter, h - 7);
     }
 
-    // Compact key at the top of the chart.
+    // Compact key.
     ctx.textBaseline = "middle";
     ctx.textAlign = "left";
-    ctx.font = `${compact ? 9 : 10}px Inter, ui-sans-serif, system-ui, sans-serif`;
-    ctx.strokeStyle = "#0ea5e9";
+    ctx.font = `${compact ? 9 : 10}px Inter,ui-sans-serif,system-ui,sans-serif`;
+    ctx.strokeStyle = OBSERVED_COLOR;
     ctx.lineWidth = 2;
     ctx.setLineDash([]);
     ctx.beginPath(); ctx.moveTo(pad.left, 11); ctx.lineTo(pad.left + 14, 11); ctx.stroke();
@@ -251,30 +251,29 @@ export class SSTHistoryChart {
     if (!this.layout || !this.data) return;
     const rect = this.canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
-    const all = [
+    const points = [
       ...(this.data.history || []).map(p => ({ ...p, type: "observed" })),
       ...(this.data.forecast || []).map(p => ({ ...p, type: "forecast" })),
     ];
-    if (!all.length) return;
-
     let best = null;
     let bestDist = Infinity;
-    for (const pt of all) {
-      const d = Math.abs(this._xOf(pt.date) - mouseX);
+    for (const pt of points) {
+      const d = Math.abs(this._xForPoint(pt, pt.type) - mouseX);
       if (d < bestDist) { bestDist = d; best = pt; }
     }
-    if (!best || bestDist > Math.max(18, this.layout.plotW / all.length * 3)) {
+    if (!best || bestDist > 24) {
       this.tooltip.style.display = "none";
+      this._draw();
       return;
     }
 
     this._draw();
     const ctx = this.canvas.getContext("2d");
-    const x = this._xOf(best.date);
+    const x = this._xForPoint(best, best.type);
     const y = this._yOf(best.sst);
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = best.type === "forecast" ? "#0ea5e9" : bandColor(best.sst);
+    ctx.fillStyle = best.type === "forecast" ? FORECAST_COLOR : OBSERVED_COLOR;
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 1.5;
     ctx.fill();
@@ -283,14 +282,12 @@ export class SSTHistoryChart {
     const label = new Date(`${best.date}T00:00:00Z`).toLocaleDateString("en", {
       month: "short", day: "numeric", year: "numeric", timeZone: "UTC"
     });
-    this.tooltip.innerHTML = `<span style="color:#b9c5d1">${label}${best.type === "forecast" ? " · outlook" : ""}</span><br><strong style="font-size:13px">${Number(best.sst).toFixed(1)}°C</strong>`;
+    const kind = best.type === "forecast" ? "7-day outlook" : "Observed";
+    this.tooltip.innerHTML = `<span style="color:#b9c5d1">${label}</span><br><strong style="font-size:13px">${Number(best.sst).toFixed(1)}°C</strong> <span style="color:#b9c5d1">· ${kind}</span>`;
     this.tooltip.style.display = "block";
-
-    const tipW = 132;
-    const left = Math.min(Math.max(4, x + 10), this.layout.w - tipW - 4);
-    const top = Math.max(4, Math.min(y - 12, this.layout.h - 48));
-    this.tooltip.style.left = `${left}px`;
-    this.tooltip.style.top = `${top}px`;
+    const tipW = 160;
+    this.tooltip.style.left = `${Math.min(Math.max(4, x + 10), this.layout.w - tipW - 4)}px`;
+    this.tooltip.style.top = `${Math.max(4, Math.min(y - 12, this.layout.h - 48))}px`;
   }
 
   _onPointerLeave() {
@@ -305,16 +302,10 @@ export class SSTHistoryChart {
   }
 
   _showSkeleton() {
-    this.container.innerHTML = `
-      <div style="height:176px;display:flex;align-items:center;justify-content:center;color:#718094;font:12px Inter,ui-sans-serif,system-ui,sans-serif">
-        Loading temperature history…
-      </div>`;
+    this.container.innerHTML = `<div style="height:168px;display:flex;align-items:center;justify-content:center;color:#718094;font:12px Inter,ui-sans-serif,system-ui,sans-serif">Loading temperature history…</div>`;
   }
 
-  _showError(msg) {
-    this.container.innerHTML = `
-      <div style="height:176px;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:#718094;font:12px Inter,ui-sans-serif,system-ui,sans-serif">
-        Temperature history is temporarily unavailable.
-      </div>`;
+  _showError() {
+    this.container.innerHTML = `<div style="height:168px;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:#718094;font:12px Inter,ui-sans-serif,system-ui,sans-serif">Temperature history is temporarily unavailable.</div>`;
   }
 }

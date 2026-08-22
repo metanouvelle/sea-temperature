@@ -1,397 +1,83 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ name }} Sea Temperature — SwimTemp</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="/static/shared-tokens.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
-        rel="stylesheet">
-    <style>
-        /* Widget light-surface local tokens */
-        :root {
-            --text-main: var(--navy);
-            /* #0d1b2a */
-            --text-sub: var(--text-panel-soft);
-            /* #334155 */
-            --text-dim: var(--text-panel-muted);
-            /* #475569 */
-            --text-faint: #94a3b8;
-            /* faintest — captions */
-            --border-w: rgba(0, 0, 0, 0.08);
-            --live-green: #4ade80;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'DM Mono', monospace;
-            background: transparent;
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            align-items: stretch;
-        }
-
-        .widget {
-            width: 100%;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            border: 1px solid var(--border-w);
-            border-radius: 16px;
-            background: #ffffff;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
-            margin: 8px;
-        }
-
-        /* ── Header ── */
-        .widget-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 8px;
-        }
-
-        .widget-name {
-            font-family: 'Fraunces', serif;
-            font-size: 17px;
-            font-weight: 700;
-            color: var(--text-main);
-            letter-spacing: -0.3px;
-            line-height: 1.1;
-        }
-
-        .widget-live {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 9px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--text-sub);
-            flex-shrink: 0;
-        }
-
-        .widget-live::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--live-green);
-            box-shadow: 0 0 6px var(--live-green);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.4;
-            }
-        }
-
-        /* ── Temperature ── */
-        .widget-temp-row {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .widget-temp-main {
-            display: flex;
-            align-items: baseline;
-            gap: 2px;
-        }
-
-        .widget-temp-value {
-            font-family: 'Fraunces', serif;
-            font-size: 56px;
-            font-weight: 300;
-            letter-spacing: -4px;
-            line-height: 1;
-            color: var(--text-main);
-            transition: color 0.5s;
-            min-width: 80px;
-        }
-
-        .widget-temp-unit {
-            font-size: 16px;
-            color: var(--text-sub);
-            margin-bottom: 6px;
-        }
-
-        .widget-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 14px;
-            border-radius: 100px;
-            font-family: 'Fraunces', serif;
-            font-style: italic;
-            font-size: 13px;
-            font-weight: 300;
-            background: rgba(56, 189, 248, 0.1);
-            color: var(--link);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            transition: all 0.5s;
-        }
-
-        .widget-date {
-            font-size: 9px;
-            color: var(--text-faint);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-top: 2px;
-        }
-
-        /* ── Divider ── */
-        .widget-divider {
-            height: 1px;
-            background: var(--border-w);
-        }
-
-        /* ── Wave conditions ── */
-        .widget-waves {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-
-        .widget-wave-stat {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .widget-wave-value {
-            font-family: 'Fraunces', serif;
-            font-size: 16px;
-            font-weight: 300;
-            color: var(--text-main);
-            letter-spacing: -0.3px;
-        }
-
-        .widget-wave-label {
-            font-size: 9px;
-            color: var(--text-faint);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .widget-wave-state {
-            font-size: 10px;
-            color: var(--text-dim);
-            margin-top: 6px;
-            letter-spacing: 0.3px;
-            grid-column: 1 / -1;
-        }
-
-        /* ── Footer ── */
-        .widget-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .widget-powered {
-            font-size: 9px;
-            color: var(--text-faint);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .widget-powered:hover {
-            color: var(--accent);
-        }
-
-        .widget-powered strong {
-            color: var(--accent);
-            font-weight: 400;
-        }
-
-        .widget-cta {
-            font-size: 9px;
-            color: var(--accent);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            text-decoration: none;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            padding: 4px 10px;
-            border-radius: 100px;
-            transition: all 0.2s;
-        }
-
-        .widget-cta:hover {
-            background: #38bdf8;
-            color: #ffffff;
-        }
-
-        .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid var(--border-w);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-            display: inline-block;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>{{ name }} sea temperature — SwimTemp</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;background:transparent;color:#10233b;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .w{margin:4px;border:1px solid #dce3e9;border-radius:12px;background:#fff;padding:16px;min-height:244px;display:flex;flex-direction:column}
+    .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .name{font-size:16px;font-weight:750;letter-spacing:-.02em;line-height:1.2}
+    .brand{font-size:11px;color:#718094;text-decoration:none}
+    .temp{margin-top:24px;display:flex;align-items:baseline;gap:3px;font-size:54px;font-weight:800;letter-spacing:-.055em;line-height:.9;font-variant-numeric:tabular-nums}
+    .temp small{font-size:17px;color:#718094;letter-spacing:0}
+    .status{margin-top:10px;font-size:13px;font-weight:650}
+    .observed{margin-top:8px;font-size:11px;color:#718094}
+    .conditions{margin-top:auto;padding-top:16px;border-top:1px solid #edf1f5;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .conditions span{display:block;color:#718094;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+    .conditions strong{display:block;margin-top:3px;font-size:14px;font-variant-numeric:tabular-nums}
+    .muted{color:#718094}
+  </style>
 </head>
-
 <body>
-    <div class="widget">
-
-        <div class="widget-header">
-            <div class="widget-name" id="widget-name">{{ name }}</div>
-            <div class="widget-live">Live</div>
-        </div>
-
-        <div>
-            <div class="widget-temp-row">
-                <div class="widget-temp-main">
-                    <span class="widget-temp-value" id="temp-value"><span class="spinner"></span></span>
-                    <span class="widget-temp-unit" id="temp-unit"></span>
-                </div>
-                <div class="widget-badge" id="temp-badge">Loading...</div>
-            </div>
-            <div class="widget-date" id="temp-date"></div>
-        </div>
-
-        <div class="widget-divider"></div>
-
-        <div class="widget-waves" id="wave-section" style="display:none">
-            <div class="widget-wave-stat">
-                <div class="widget-wave-value" id="wave-height">—</div>
-                <div class="widget-wave-label">🌊 Waves</div>
-            </div>
-            <div class="widget-wave-stat">
-                <div class="widget-wave-value" id="swell-height">—</div>
-                <div class="widget-wave-label">🌬 Swell</div>
-            </div>
-            <div class="widget-wave-stat">
-                <div class="widget-wave-value" id="current-speed">—</div>
-                <div class="widget-wave-label">💨 Current</div>
-            </div>
-            <div class="widget-wave-state" id="wave-state"></div>
-        </div>
-
-        <div class="widget-divider"></div>
-
-        <div class="widget-footer">
-            <a href="https://swimtemp.com" target="_blank" rel="noopener" class="widget-powered">
-                Powered by <strong>SwimTemp</strong>
-            </a>
-            <a href="https://swimtemp.com/map" target="_blank" rel="noopener" class="widget-cta" id="widget-map-link">
-                Explore map →
-            </a>
-        </div>
-
+  <div class="w">
+    <div class="top">
+      <div class="name">{{ name }}</div>
+      <a class="brand" href="https://swimtemp.com" target="_blank" rel="noopener">SwimTemp</a>
     </div>
-
-    <script>
-        const BANDS = [
-            { label: 'Cold', min: -99, max: 16, color: '#2563eb' },
-            { label: 'Cool', min: 16, max: 20, color: '#0ea5e9' },
-            { label: 'Comfortable', min: 20, max: 25, color: '#22a866' },
-            { label: 'Warm', min: 25, max: 999, color: '#d97706' },
-        ];
-
-        function getBand(t) {
-            return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1];
-        }
-
-        // Values passed from server
-        const LAT = {{ lat | tojson }};
-        const LON = {{ lon | tojson }};
-        const detailUrl = `/location?lat=${encodeURIComponent(LAT)}&lon=${encodeURIComponent(LON)}&name=${encodeURIComponent({{ name | tojson }})}`;
-        document.getElementById('widget-map-link').href = detailUrl;
-        document.getElementById('widget-map-link').textContent = 'Full details →';
-
-        async function loadTemp() {
-            try {
-                const res = await fetch(`/api/point?lat=${LAT}&lon=${LON}&radius_km=25`);
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-
-                const temp = data.mean_c;
-                const date = data.date;
-
-                if (temp === null || temp === undefined) {
-                    document.getElementById('temp-value').textContent = '—';
-                    document.getElementById('temp-badge').textContent = 'No data';
-                    return;
-                }
-
-                const band = getBand(temp);
-                document.getElementById('temp-value').textContent = temp.toFixed(1);
-                document.getElementById('temp-unit').textContent = '°C';
-                document.getElementById('temp-value').style.color = band.color;
-
-                const badge = document.getElementById('temp-badge');
-                badge.innerHTML = `${band.emoji} ${band.label}`;
-                badge.style.background = band.color + '15';
-                badge.style.color = band.color;
-                badge.style.borderColor = band.color + '30';
-
-                if (date) document.getElementById('temp-date').textContent = `Updated ${date}`;
-
-            } catch {
-                document.getElementById('temp-value').textContent = '—';
-                document.getElementById('temp-badge').textContent = 'Unavailable';
-            }
-        }
-
-        async function loadWaves() {
-            try {
-                const res = await fetch(
-                    `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=wave_height,swell_wave_height,ocean_current_velocity`
-                );
-                if (!res.ok) return;
-                const data = await res.json();
-                const c = data.current;
-                if (!c || c.wave_height === null) return;
-
-                document.getElementById('wave-section').style.display = 'grid';
-                document.getElementById('wave-height').textContent = c.wave_height.toFixed(1) + 'm';
-                document.getElementById('swell-height').textContent = c.swell_wave_height !== null ? c.swell_wave_height.toFixed(1) + 'm' : '—';
-                document.getElementById('current-speed').textContent = c.ocean_current_velocity !== null ? (c.ocean_current_velocity * 1.944).toFixed(1) + 'kn' : '—';
-
-                const wh = c.wave_height;
-                let state;
-                if (wh >= 2.0) state = '🏄 Good surf conditions';
-                else if (wh >= 1.0) state = '🌊 Moderate waves';
-                else if (wh >= 0.3) state = '😊 Light waves — good for swimming';
-                else state = '🏊 Calm — ideal for swimming';
-                document.getElementById('wave-state').textContent = state;
-
-            } catch { /* silently fail */ }
-        }
-
-        loadTemp();
-        loadWaves();
-    </script>
+    <div class="temp" id="temp"><span class="muted">—</span><small>°C</small></div>
+    <div class="status" id="status">Loading latest reading…</div>
+    <div class="observed" id="observed"></div>
+    <div class="conditions">
+      <div><span>Waves</span><strong id="wave">—</strong></div>
+      <div><span>Swell</span><strong id="swell">—</strong></div>
+      <div><span>Current</span><strong id="current">—</strong></div>
+    </div>
+  </div>
+<script>
+const lat={{ lat }}, lon={{ lon }};
+function comfort(t){
+  if(t<16) return 'Cold water';
+  if(t<20) return 'Cool for swimming';
+  if(t<25) return 'Comfortable for most swimmers';
+  return 'Warm water';
+}
+function shortDate(value){
+  if(!value) return '';
+  const d=new Date(value.length===10 ? value+'T00:00:00Z' : value);
+  return Number.isNaN(d.valueOf()) ? value : new Intl.DateTimeFormat('en',{month:'short',day:'numeric',timeZone:'UTC'}).format(d);
+}
+async function load(){
+  try{
+    const r=await fetch(`/api/point?lat=${lat}&lon=${lon}`);
+    if(!r.ok) throw new Error();
+    const d=await r.json();
+    const t=Number(d.temp_c ?? d.temperature ?? d.sst);
+    if(Number.isFinite(t)){
+      document.getElementById('temp').innerHTML=`${t.toFixed(1)}<small>°C</small>`;
+      document.getElementById('status').textContent=comfort(t);
+    } else {
+      document.getElementById('status').textContent='Current temperature unavailable';
+    }
+    const date=d.date || d.observation_date || d.latest_date;
+    if(date) document.getElementById('observed').textContent=`Observed ${shortDate(date)}`;
+  }catch{
+    document.getElementById('status').textContent='Current temperature unavailable';
+  }
+  try{
+    const u=`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=wave_height,swell_wave_height,ocean_current_velocity`;
+    const r=await fetch(u); if(!r.ok) throw new Error();
+    const d=await r.json(), c=d.current || {};
+    const set=(id,v,unit)=>document.getElementById(id).textContent=Number.isFinite(Number(v))?`${Number(v).toFixed(unit==='km/h'?2:1)} ${unit}`:'—';
+    set('wave',c.wave_height,'m');
+    set('swell',c.swell_wave_height,'m');
+    set('current',c.ocean_current_velocity,'km/h');
+  }catch{}
+}
+load();
+</script>
 </body>
-
 </html>

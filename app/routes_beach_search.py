@@ -18,22 +18,16 @@ Returns:   {"elements": [...]}  — same shape as raw Overpass, so the
 """
 
 import json
-import os
-import sqlite3
 import time
 import urllib.parse
 import urllib.request
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
+
+from app.database import connect
 
 router = APIRouter()
 
-# Fly.io volume in production; SWIMTEMP_DB env var or a local file for dev.
-_DEFAULT_DB = "/data/sst.sqlite"
-_LOCAL_DEV_DB = os.path.join(os.path.dirname(__file__), "dev-cache.sqlite")
-DB_PATH = os.environ.get("SWIMTEMP_DB") or (
-    _DEFAULT_DB if os.path.isdir(os.path.dirname(_DEFAULT_DB)) else _LOCAL_DEV_DB
-)
 CACHE_TTL_SECONDS = 24 * 3600  # beaches don't move; refresh daily
 OVERPASS_MIRRORS = [
     "https://overpass-api.de/api/interpreter",
@@ -42,8 +36,8 @@ OVERPASS_MIRRORS = [
 USER_AGENT = "SwimTemp/1.0 (+https://swimtemp.com)"
 
 
-def _db() -> sqlite3.Connection:
-    con = sqlite3.connect(DB_PATH)
+def _db():
+    con = connect()
     con.execute("""CREATE TABLE IF NOT EXISTS beach_search_cache (
                key        TEXT PRIMARY KEY,
                payload    TEXT NOT NULL,
@@ -65,7 +59,7 @@ def _overpass_query(
         else ""
     )
     return (
-        "[out:json][timeout:20];("
+        "[out:json][timeout:15];("
         f'node["natural"="beach"]{around};'
         f'way["natural"="beach"]{around};'
         f'node["leisure"="beach"]{around};'
@@ -77,7 +71,11 @@ def _overpass_query(
 
 @router.get("/api/beaches/search")
 def beaches_search(
-    lat: float, lon: float, radius_km: float = 50, include_resorts: int = 0
+    response: Response,
+    lat: float,
+    lon: float,
+    radius_km: float = 50,
+    include_resorts: int = 0,
 ) -> dict:
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
         raise HTTPException(status_code=422, detail="invalid coordinates")
@@ -93,6 +91,8 @@ def beaches_search(
             (key,),
         ).fetchone()
         if row and time.time() - row[1] < CACHE_TTL_SECONDS:
+            response.headers["Cache-Control"] = "public, max-age=300"
+            response.headers["X-SwimTemp-Cache"] = "hit"
             return json.loads(row[0])
 
         query = _overpass_query(lat, lon, int(radius_km * 1000), bool(include_resorts))
@@ -104,7 +104,7 @@ def beaches_search(
                 req = urllib.request.Request(
                     base, data=body, headers={"User-Agent": USER_AGENT}
                 )
-                with urllib.request.urlopen(req, timeout=25) as resp:
+                with urllib.request.urlopen(req, timeout=18) as resp:
                     candidate = json.loads(resp.read())
                 # Overpass reports internal timeouts as HTTP 200 + "remark".
                 remark = candidate.get("remark", "")
@@ -118,6 +118,8 @@ def beaches_search(
         if data is None:
             # Serve stale cache over an error if we have it
             if row:
+                response.headers["Cache-Control"] = "public, max-age=60"
+                response.headers["X-SwimTemp-Cache"] = "stale"
                 return json.loads(row[0])
             raise HTTPException(status_code=503, detail="overpass_unavailable")
 
@@ -128,6 +130,8 @@ def beaches_search(
             (key, json.dumps(payload), int(time.time())),
         )
         con.commit()
+        response.headers["Cache-Control"] = "public, max-age=300"
+        response.headers["X-SwimTemp-Cache"] = "miss"
         return payload
     finally:
         con.close()

@@ -1,421 +1,57 @@
-</html>
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <!-- GetYourGuide Analytics -->
-
-    <script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js"
-        data-gyg-partner-id="XWCA45N"></script>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q3NYKPGQ"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-
-        gtag('config', 'G-D3Q3NYKPGQ');
-    </script>
-    <meta charset="UTF-8">
-    <title>About — SwimTemp</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="/static/shared-tokens.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
-        rel="stylesheet">
-    <style>
-        /* Page-specific aliases — see /static/shared-tokens.css */
-        :root {
-            --text: var(--on-dark);
-            --muted: var(--on-dark-2);
-            --soft: var(--on-dark-2);
-            --card: var(--border-dark);
-            --border: var(--border-dark);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'DM Mono', monospace;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        /* ── Grain overlay ── */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-            opacity: 0.025;
-        }
-
-        /* ── Nav ── */
-        /* ── Page layout ── */
-        .page {
-            position: relative;
-            z-index: 1;
-            max-width: 720px;
-            margin: 0 auto;
-            padding: 80px 8vw 120px;
-        }
-
-        /* ── Header ── */
-        .page-eyebrow {
-            font-size: 11px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 20px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.1s;
-        }
-
-        .page-title {
-            font-family: 'Fraunces', serif;
-            font-size: clamp(40px, 6vw, 64px);
-            font-weight: 700;
-            line-height: 1.05;
-            letter-spacing: -2px;
-            color: var(--text);
-            margin-bottom: 16px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.2s;
-        }
-
-        .page-title em {
-            font-style: italic;
-            font-weight: 300;
-            color: var(--accent);
-        }
-
-        .page-lead {
-            font-size: 14px;
-            color: var(--soft);
-            line-height: 1.9;
-            max-width: 520px;
-            margin-bottom: 64px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.3s;
-        }
-
-        /* ── Story sections ── */
-        .section {
-            margin-bottom: 56px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards;
-        }
-
-        .section:nth-child(1) {
-            animation-delay: 0.4s;
-        }
-
-        .section:nth-child(2) {
-            animation-delay: 0.5s;
-        }
-
-        .section:nth-child(3) {
-            animation-delay: 0.6s;
-        }
-
-        .section:nth-child(4) {
-            animation-delay: 0.7s;
-        }
-
-        .section-label {
-            font-size: 10px;
-            letter-spacing: 3.5px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .section-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        .section-title {
-            font-family: 'Fraunces', serif;
-            font-size: 26px;
-            font-weight: 300;
-            letter-spacing: -0.5px;
-            color: var(--text);
-            margin-bottom: 18px;
-            line-height: 1.2;
-        }
-
-        .section p {
-            font-size: 13px;
-            line-height: 2;
-            color: var(--soft);
-            margin-bottom: 16px;
-            letter-spacing: 0.2px;
-        }
-
-        .section p:last-child {
-            margin-bottom: 0;
-        }
-
-        .section p strong {
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        .section p em {
-            color: var(--accent);
-            font-style: normal;
-        }
-
-        /* ── Pull quote ── */
-        .pullquote {
-            border-left: 2px solid var(--accent);
-            padding: 4px 0 4px 24px;
-            margin: 28px 0;
-        }
-
-        .pullquote p {
-            font-family: 'Fraunces', serif;
-            font-style: italic;
-            font-size: 18px !important;
-            font-weight: 300;
-            color: var(--text) !important;
-            line-height: 1.6 !important;
-            letter-spacing: -0.3px !important;
-        }
-
-        /* ── CTA ── */
-        .cta-block {
-            margin-top: 72px;
-            padding-top: 48px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 24px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.9s;
-        }
-
-        .cta-text {
-            font-family: 'Fraunces', serif;
-            font-size: 22px;
-            font-weight: 300;
-            font-style: italic;
-            color: var(--soft);
-        }
-
-        .cta-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 14px 28px;
-            background: var(--accent);
-            color: var(--bg);
-            border-radius: 100px;
-            text-decoration: none;
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition: all 0.25s;
-            white-space: nowrap;
-            box-shadow: 0 0 40px rgba(56, 189, 248, 0.2);
-        }
-
-        .cta-btn:hover {
-            background: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 0 60px rgba(56, 189, 248, 0.35);
-        }
-
-        .cta-btn svg {
-            transition: transform 0.25s;
-        }
-
-        .cta-btn:hover svg {
-            transform: translateX(4px);
-        }
-
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(16px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 640px) {
-            .page {
-                padding: 48px 6vw 80px;
-            }
-
-            .cta-block {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-
-        /* ── Accessibility ── */
-        .skip-link {
-            position: absolute;
-            top: -100%;
-            left: 1rem;
-            z-index: 1000;
-            padding: 8px 16px;
-            background: var(--accent);
-            color: var(--bg);
-            font-size: 13px;
-            font-weight: 500;
-            border-radius: 0 0 8px 8px;
-            text-decoration: none;
-            transition: top 0.2s;
-        }
-
-        .skip-link:focus {
-            top: 0;
-        }
-
-        :focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 3px;
-            border-radius: 4px;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-
-            *,
-            *::before,
-            *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        /* ── Site Footer ── */
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <link rel="canonical" href="https://swimtemp.com/about">
+  <meta property="og:title" content="About SwimTemp">
+  <meta property="og:url" content="https://swimtemp.com/about">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <title>About — SwimTemp</title>
+  <meta name="description" content="Why SwimTemp exists, how it uses satellite sea-surface temperature, and what the readings mean.">
+  <link rel="stylesheet" href="/static/redesign.css">
 </head>
+<body class="content-page">
+  {% set active = 'about' %}
+  {% include "_nav.html" %}
 
-<body>
-    <a href="#main-content" class="skip-link">Skip to main content</a>
+  <main class="content-shell">
+    <header class="content-hero">
+      <div class="content-eyebrow">About SwimTemp</div>
+      <h1>Sea temperature, without the guesswork.</h1>
+      <p class="content-lead">SwimTemp is built around one question: is the water warm enough to swim here?</p>
+    </header>
 
-    {% set active = 'about' %}
-    {% include "_nav.html" %}
+    <section class="prose-section">
+      <div class="content-eyebrow">The beginning</div>
+      <h2>It started with a trip to Tenerife.</h2>
+      <p>We were planning a trip and wanted a simple answer about swimming conditions. The weather information we found made that harder than it should have been.</p>
+      <p>Air temperature, inland weather stations, and sea temperature are different measurements. For someone deciding whether to get in the water, sea-surface temperature is the number that matters.</p>
+    </section>
 
-    <main class="page" id="main-content">
+    <section class="prose-section">
+      <div class="content-eyebrow">The approach</div>
+      <h2>Measure the water near the coast.</h2>
+      <p>SwimTemp uses satellite-derived sea-surface temperature from Copernicus Marine and combines it with marine-condition data such as waves, swell, and current.</p>
+      <p>The map lets you search a coastline or select a location directly. Readings are presented with their observation date so it is clear when the measurement was made.</p>
+    </section>
 
-        <div class="page-eyebrow" aria-hidden="true">Our story</div>
-        <h1 class="page-title">Why the sea temp<br>in weather apps is<br><em>often wrong.</em></h1>
-        <p class="page-lead">
-            A simple question in Tenerife led to building something better.
-        </p>
+    <section class="prose-section">
+      <div class="content-eyebrow">The principle</div>
+      <h2>Useful before impressive.</h2>
+      <p>The goal is not to turn ocean data into another complicated weather dashboard. SwimTemp should make the important number obvious, explain where it came from, and behave predictably when data is delayed or unavailable.</p>
+    </section>
 
-        <div class="sections">
+    <section class="content-callout">
+      <div>
+        <strong>Ready to check the water?</strong>
+        <span>Search a beach or explore any coastline.</span>
+      </div>
+      <a class="content-button" href="/">Explore the map</a>
+    </section>
+  </main>
 
-            <section class="section" aria-labelledby="section-beginning">
-                <div class="section-label" aria-hidden="true">The beginning</div>
-                <h2 class="section-title" id="section-beginning">It started in Tenerife</h2>
-                <p>
-                    We were planning a trip to Tenerife. Like most beach lovers,
-                    we checked the weather app before booking — just wanted to know if we could swim.
-                </p>
-                <p>
-                    The app said <strong>17°C</strong>. Chilly. But photos of the beaches showed
-                    people swimming everywhere.
-                </p>
-                <blockquote class="pullquote">
-                    <p>Something didn't add up...</p>
-                </blockquote>
-                <p>
-                    During
-                    <a href="https://www.getyourguide.com/tenerife-l350/tenerife-anaga-hiking-tour-enchanted-forest-with-pickup-t560436/?partner_id=XWCA45N&utm_medium=online_publisher"
-                        target="_blank" rel="sponsored noopener" style="color:var(--accent);">
-                        the hiking trip in Agana
-                    </a>,
-                    our guide Alex revealed the secret:
-                    the official weather station sits at <strong>high elevation</strong>.
-                    In Tenerife, roughly every 100 meters higher means about 1°C lower.
-                    Suddenly everything made sense.
-                </p>
-            </section>
-
-            <section class="section" aria-labelledby="section-problem">
-                <div class="section-label" aria-hidden="true">The problem</div>
-                <h2 class="section-title" id="section-problem">Weather apps show the wrong temperature</h2>
-                <p>
-                    Most weather apps show air temperature measured inland or at altitude.
-                    They do <em>not</em> show real sea surface temperature near the beach
-                    where you actually want to swim.
-                </p>
-                <p>
-                    That means travelers routinely underestimate — or overestimate —
-                    how warm the ocean really is at their destination.
-                </p>
-            </section>
-
-            <section class="section" aria-labelledby="section-solution">
-                <div class="section-label" aria-hidden="true">The solution</div>
-                <h2 class="section-title" id="section-solution">Satellite data, right at the coast</h2>
-                <p>
-                    This tool uses satellite-derived sea surface temperature data
-                    from <strong>Copernicus Marine</strong> — the same data source used by
-                    oceanographers and climate researchers.
-                </p>
-                <p>
-                    Instead of guessing, you click directly on any coastline and see
-                    what the water is actually like near that exact spot, updated daily.
-                </p>
-            </section>
-
-            <section class="section" aria-labelledby="section-goal">
-                <div class="section-label" aria-hidden="true">The goal</div>
-                <h2 class="section-title" id="section-goal">One simple question, answered.</h2>
-                <blockquote class="pullquote">
-                    <p>"Is the sea warm enough to swim here?"</p>
-                </blockquote>
-                <p>
-                    Help travelers plan better beach days.
-                    Help swimmers avoid surprises.
-                    That's it.
-                </p>
-            </section>
-
-        </div>
-
-        <div class="cta-block">
-            <span class="cta-text">Ready to explore?</span>
-            <a href="/map" class="cta-btn">
-                Open the Map
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false">
-                    <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                </svg>
-            </a>
-        </div>
-
-    </main>
-
-
-    {% include "_footer.html" %}
+  {% include "_footer.html" %}
 </body>
-
 </html>

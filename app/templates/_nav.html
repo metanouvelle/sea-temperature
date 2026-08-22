@@ -1,66 +1,8 @@
-<!-- ═══════════════════════════════════════════════════════════════════
-     _nav.html — the ONE canonical header for secondary content pages
-     (about, privacy, embed). The landing page keeps its own fixed hero
-     nav; tool pages (map, beaches) use floating pills instead.
-
-     Usage: optionally set the Jinja variable `active` to 'map',
-     'beaches', or 'about' BEFORE including this file to hide that
-     page's own link (no self-links). Pages that aren't nav
-     destinations (privacy, embed) include it with no variable and
-     show all three links.
-     ═══════════════════════════════════════════════════════════════════ -->
-<style>
-    .site-nav {
-        position: relative;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 24px 8vw;
-        border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
-    }
-
-    .site-nav .nav-brand {
-        font-family: 'Fraunces', serif;
-        font-size: 16px;
-        font-weight: 300;
-        color: var(--text, #e8edf4);
-        text-decoration: none;
-        letter-spacing: -0.3px;
-    }
-
-    .site-nav .nav-links {
-        display: flex;
-        gap: 24px;
-    }
-
-    .site-nav .nav-link {
-        font-family: 'Fraunces', serif;
-        font-weight: 300;
-        font-size: 11px;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: var(--muted, #64748b);
-        text-decoration: none;
-        transition: color 0.2s;
-    }
-
-    .site-nav .nav-link:hover {
-        color: var(--text, #e8edf4);
-    }
-
-    @media (max-width: 640px) {
-        .site-nav {
-            padding: 16px 20px;
-        }
-    }
-</style>
-
-<nav class="site-nav" aria-label="Main navigation">
-    <a href="/" class="nav-brand">SwimTemp</a>
-    <div class="nav-links">
-        {% if active != 'map' %}<a href="/map" class="nav-link">Map</a>{% endif %}
-        {% if active != 'beaches' %}<a href="/beaches" class="nav-link">Beaches</a>{% endif %}
-        {% if active != 'about' %}<a href="/about" class="nav-link">About</a>{% endif %}
-    </div>
+<nav class="content-nav" aria-label="Main navigation">
+  <a class="content-brand" href="/">SwimTemp</a>
+  <div class="content-nav-links">
+    <a href="/">Explore</a>
+    <a href="/about"{% if active == 'about' %} aria-current="page"{% endif %}>About</a>
+    <a href="/embed"{% if active == 'embed' %} aria-current="page"{% endif %}>Embed</a>
+  </div>
 </nav>

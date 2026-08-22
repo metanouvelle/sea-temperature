@@ -6,7 +6,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_PATH = Path(os.getenv("SST_DB_PATH", "/data/sst.sqlite")).resolve()
+def _default_db_path() -> Path:
+    explicit = os.getenv("SST_DB_PATH") or os.getenv("SWIMTEMP_DB")
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    fly_data = Path("/data")
+    if fly_data.exists() and os.access(fly_data, os.W_OK):
+        return fly_data / "sst.sqlite"
+    return Path("data/sst.sqlite").resolve()
+
+
+DB_PATH = _default_db_path()
 
 
 def connect() -> sqlite3.Connection:
@@ -16,9 +26,11 @@ def connect() -> sqlite3.Connection:
     # mounted volume or the container filesystem.
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA busy_timeout=10000;")
+    conn.execute("PRAGMA foreign_keys=ON;")
     return conn
 
 
@@ -52,75 +64,6 @@ def init_db() -> None:
     )
     cur.execute(
         "CREATE INDEX IF NOT EXISTS idx_sst_grid_date_latlon ON sst_grid(date, lat, lon);"
-    )
-
-    # ── User auth + saves tables ──────────────────────────────────────────
-    # All IF NOT EXISTS — safe to run on every startup, no-op if already present.
-    # Full implementation: see auth_saves_stubs.py and migration_user_saves.sql
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id            TEXT PRIMARY KEY,
-            email         TEXT NOT NULL UNIQUE,
-            password_hash TEXT,
-            display_name  TEXT,
-            tier          TEXT NOT NULL DEFAULT 'free',
-            created_at    TEXT NOT NULL,
-            last_login_at TEXT,
-            verified      INTEGER NOT NULL DEFAULT 0
-        );
-    """)
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS auth_tokens (
-            token      TEXT PRIMARY KEY,
-            user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            purpose    TEXT NOT NULL,
-            expires_at TEXT NOT NULL,
-            used       INTEGER NOT NULL DEFAULT 0
-        );
-    """)
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS sessions (
-            token      TEXT PRIMARY KEY,
-            user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            created_at TEXT NOT NULL,
-            expires_at TEXT NOT NULL,
-            user_agent TEXT,
-            ip         TEXT
-        );
-    """)
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS user_saved_beaches (
-            user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            beach_slug TEXT NOT NULL,
-            saved      INTEGER NOT NULL DEFAULT 0,
-            liked      INTEGER NOT NULL DEFAULT 0,
-            saved_at   TEXT,
-            liked_at   TEXT,
-            PRIMARY KEY (user_id, beach_slug)
-        );
-    """)
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS user_saved_points (
-            id         TEXT PRIMARY KEY,
-            user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            lat        REAL NOT NULL,
-            lon        REAL NOT NULL,
-            label      TEXT,
-            saved_at   TEXT NOT NULL
-        );
-    """)
-
-    cur.execute(
-        "CREATE INDEX IF NOT EXISTS idx_user_saved_beaches_user ON user_saved_beaches(user_id);"
-    )
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);")
-    cur.execute(
-        "CREATE INDEX IF NOT EXISTS idx_auth_tokens_user ON auth_tokens(user_id);"
     )
 
     # ── Warmest beaches cache (populated by nightly cron) ─────────────────

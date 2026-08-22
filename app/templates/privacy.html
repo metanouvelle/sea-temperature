@@ -1,169 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q3NYKPGQ"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-
-        gtag('config', 'G-D3Q3NYKPGQ');
-    </script>
-    <meta charset="UTF-8">
-    <title>Privacy Policy — SwimTemp</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Privacy Policy for SwimTemp — real-time sea temperature data.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="/static/shared-tokens.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
-        rel="stylesheet">
-    <style>
-        /* Page-specific aliases — see /static/shared-tokens.css */
-        :root {
-            --text: var(--on-dark);
-            --muted: var(--on-dark-2);
-            --soft: var(--on-dark-2);
-            --border: var(--border-dark);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'DM Mono', monospace;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-            opacity: 0.025;
-        }
-
-        .page {
-            position: relative;
-            z-index: 1;
-            max-width: 720px;
-            margin: 0 auto;
-            padding: 64px 8vw 80px;
-        }
-
-        .page-eyebrow {
-            font-size: 11px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 16px;
-        }
-
-        .page-title {
-            font-family: 'Fraunces', serif;
-            font-size: clamp(32px, 5vw, 48px);
-            font-weight: 700;
-            letter-spacing: -2px;
-            line-height: 1.0;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-
-        .page-updated {
-            font-size: 11px;
-            color: var(--muted);
-            margin-bottom: 48px;
-            letter-spacing: 0.5px;
-        }
-
-        .section {
-            margin-bottom: 48px;
-        }
-
-        .section-label {
-            font-size: 11px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .section-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        .section-title {
-            font-family: 'Fraunces', serif;
-            font-size: 22px;
-            font-weight: 300;
-            color: var(--text);
-            margin-bottom: 14px;
-            letter-spacing: -0.3px;
-        }
-
-        .section p {
-            font-size: 13px;
-            line-height: 2;
-            color: var(--soft);
-            margin-bottom: 14px;
-            letter-spacing: 0.2px;
-        }
-
-        .section p strong {
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        .section a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
-        .section a:hover {
-            text-decoration: underline;
-        }
-
-        /* ── Footer ── */
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <link rel="canonical" href="https://swimtemp.com/privacy">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <title>Privacy Policy — SwimTemp</title>
+  <meta name="description" content="SwimTemp privacy policy and information about the data and third-party services used by the site.">
+  <link rel="stylesheet" href="/static/redesign.css">
 </head>
+<body class="content-page">
+  {% include "_nav.html" %}
+  <main class="content-shell content-shell-narrow privacy-content">
+    <div class="content-eyebrow">Legal</div>
+        <h1 class="privacy-title">Privacy Policy</h1>
+        <p class="content-updated">Last updated: June 2026</p>
 
-<body>
-
-    {% include "_nav.html" %}
-
-    <div class="page">
-        <div class="page-eyebrow">Legal</div>
-        <h1 class="page-title">Privacy Policy</h1>
-        <p class="page-updated">Last updated: June 2026</p>
-
-        <div class="section">
-            <div class="section-label">Overview</div>
-            <h2 class="section-title">We keep it simple</h2>
+        <div class="prose-section">
+            <div class="content-eyebrow">Overview</div>
+            <h2 >We keep it simple</h2>
             <p>SwimTemp (<strong>swimtemp.com</strong>) is a sea temperature information service. We are committed to
                 protecting your privacy. This policy explains what data we collect, how we use it, and your rights under
                 GDPR.</p>
             <p>SwimTemp is operated by an individual based in Berlin, Germany.</p>
         </div>
 
-        <div class="section">
-            <div class="section-label">Data we collect</div>
-            <h2 class="section-title">Minimal by design</h2>
+        <div class="prose-section">
+            <div class="content-eyebrow">Data we collect</div>
+            <h2 >Minimal by design</h2>
             <p>SwimTemp does <strong>not</strong> require account registration. We do not collect names, email
                 addresses, or any personal information from users.</p>
             <p>We collect the following anonymous technical data through our hosting provider (Fly.io):</p>
@@ -177,9 +41,9 @@
                 never sold or shared with third parties for marketing purposes.</p>
         </div>
 
-        <div class="section">
-            <div class="section-label">Cookies</div>
-            <h2 class="section-title">No tracking cookies</h2>
+        <div class="prose-section">
+            <div class="content-eyebrow">Cookies</div>
+            <h2 >No tracking cookies</h2>
             <p>SwimTemp uses <strong>Google Analytics</strong> to understand how visitors use the site. This service
                 uses cookies to collect anonymous usage data such as pages visited, session duration and device type. No
                 personally identifiable information is collected.</p>
@@ -190,9 +54,9 @@
                 are strictly necessary and cannot be disabled without affecting service functionality.</p>
         </div>
 
-        <div class="section">
-            <div class="section-label">Data sources</div>
-            <h2 class="section-title">Where our data comes from</h2>
+        <div class="prose-section">
+            <div class="content-eyebrow">Data sources</div>
+            <h2 >Where our data comes from</h2>
             <p><strong>Copernicus Marine Service (CMEMS)</strong> — sea surface temperature data at 0.05° resolution,
                 updated daily from satellite observations. Dataset: METOFFICE-GLO-SST-L4-NRT-OBS-SST-V2. <a
                     href="https://marine.copernicus.eu" target="_blank" rel="noopener">marine.copernicus.eu</a></p>
@@ -208,9 +72,9 @@
                     href="https://www.openstreetmap.org" target="_blank" rel="noopener">openstreetmap.org</a></p>
         </div>
 
-        <div class="section">
-            <div class="section-label">Third-party services</div>
-            <h2 class="section-title">External services we use</h2>
+        <div class="prose-section">
+            <div class="content-eyebrow">Third-party services</div>
+            <h2 >External services we use</h2>
             <p><strong>Copernicus Marine Service</strong> — provides sea surface temperature data. When you use
                 SwimTemp, temperature data is fetched from Copernicus servers. Their privacy policy applies: <a
                     href="https://marine.copernicus.eu/privacy-notice" target="_blank"
@@ -236,9 +100,9 @@
                 privacy policies which apply when you visit their websites.</p>
         </div>
 
-        <div class="section">
-            <div class="section-label">Your rights (GDPR)</div>
-            <h2 class="section-title">You are in control</h2>
+        <div class="prose-section">
+            <div class="content-eyebrow">Your rights (GDPR)</div>
+            <h2 >You are in control</h2>
             <p>Under the General Data Protection Regulation (GDPR), you have the right to:</p>
             <p>
                 — Access any personal data we hold about you<br>
@@ -251,17 +115,14 @@
                     href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>.</p>
         </div>
 
-        <div class="section">
-            <div class="section-label">Contact</div>
-            <h2 class="section-title">Get in touch</h2>
+        <div class="prose-section">
+            <div class="content-eyebrow">Contact</div>
+            <h2 >Get in touch</h2>
             <p>For any privacy-related questions or requests:</p>
             <p><a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a></p>
             <p>We will respond within 30 days as required by GDPR.</p>
         </div>
-    </div>
-
-    {% include "_footer.html" %}
-
+  </main>
+  {% include "_footer.html" %}
 </body>
-
 </html>

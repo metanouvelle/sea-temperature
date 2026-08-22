@@ -36,3 +36,17 @@ class TimingMiddleware(BaseHTTPMiddleware):
         # Add timing header so you can see it in browser DevTools Network tab
         response.headers["X-Response-Time"] = f"{elapsed_ms:.0f}ms"
         return response
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add conservative browser security headers without breaking the embeddable widget."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=(self)",
+        )
+        return response
