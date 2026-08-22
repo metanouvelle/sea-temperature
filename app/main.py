@@ -77,20 +77,69 @@ def _startup():
 
 # ── Background prewarm ────────────────────────────────────────────────────────
 def _cleanup_old_data():
-    """Delete SST data older than 3 days to keep database small."""
+    """Delete old data to keep database small."""
     try:
         from app.database import connect
 
         conn = connect()
-        # Keep only last 3 days in case of prewarm failures
+
+        # SST tile/grid — keep only last 2 days
         deleted = conn.execute(
-            "DELETE FROM sst_grid WHERE date < date('now', '-3 days')"
+            "DELETE FROM sst_grid WHERE date < date('now', '-2 days')"
         ).rowcount
-        conn.execute("DELETE FROM sst_tile WHERE date < date('now', '-3 days')")
-        conn.execute("VACUUM")  # reclaim disk space after deletion
+        conn.execute("DELETE FROM sst_tile WHERE date < date('now', '-2 days')")
+        log.info("SST cleanup — deleted %d old grid rows", deleted)
+
+        # SST history cache — keep only last 7 days
+        conn.execute("""
+            DELETE FROM sst_history_cache
+            WHERE cached_at < datetime('now', '-7 days')
+        """)
+
+        # Beach search cache — keep only last 7 days
+        try:
+            conn.execute("""
+                DELETE FROM beach_search_cache
+                WHERE updated_at < datetime('now', '-7 days')
+            """)
+        except Exception:
+            pass  # table may not exist in all environments
+
+        # Warmest beaches — keep only last 2 days
+        try:
+            conn.execute("""
+                DELETE FROM warmest_beaches
+                WHERE updated_at < datetime('now', '-2 days')
+            """)
+        except Exception:
+            pass
+
+        # Sessions — delete expired
+        try:
+            conn.execute("""
+                DELETE FROM sessions
+                WHERE expires_at < datetime('now')
+            """)
+        except Exception:
+            pass
+
+        # Auth tokens — delete expired
+        try:
+            conn.execute("""
+                DELETE FROM auth_tokens
+                WHERE expires_at < datetime('now')
+            """)
+        except Exception:
+            pass
+
+        # Checkpoint WAL to prevent it growing large
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
+        # VACUUM to reclaim disk space
+        conn.execute("VACUUM")
         conn.commit()
         conn.close()
-        log.info("Cleanup complete — deleted %d old grid rows", deleted)
+        log.info("Cleanup complete")
     except Exception as e:
         log.error("Cleanup failed: %s", e)
 
