@@ -187,7 +187,7 @@ def _background_prewarm():
 
 @app.get("/", response_class=HTMLResponse)
 def landing(request: Request):
-    return templates.TemplateResponse(request, "landing.html")
+    return templates.TemplateResponse(request, "explore.html")
 
 
 @app.get("/map", response_class=HTMLResponse)

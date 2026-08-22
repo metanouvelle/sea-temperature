@@ -1,0 +1,188 @@
+:root {
+  --st-bg: #f6f8fb;
+  --st-surface: #ffffff;
+  --st-surface-soft: #f0f4f8;
+  --st-text: #102033;
+  --st-muted: #64748b;
+  --st-border: #dbe4ee;
+  --st-blue: #0b6ea8;
+  --st-blue-soft: #e9f5fb;
+  --st-radius: 14px;
+  --st-shadow: 0 10px 30px rgba(15, 35, 55, .10);
+}
+
+body {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  color: var(--st-text);
+}
+
+button, input, select, textarea { font: inherit; }
+
+/* Explore */
+body:has(#discover-map) { background: var(--st-bg) !important; }
+body:has(#discover-map) #map-nav {
+  top: 14px;
+  left: 14px;
+  right: 14px;
+}
+body:has(#discover-map) .nav-pill {
+  background: rgba(255,255,255,.98) !important;
+  border: 1px solid var(--st-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(15,35,55,.08) !important;
+  color: var(--st-text) !important;
+  padding: 10px 14px !important;
+  letter-spacing: 0 !important;
+}
+body:has(#discover-map) .nav-pill-brand {
+  font-family: inherit !important;
+  font-weight: 750 !important;
+}
+body:has(#discover-map) .sidebar {
+  top: 72px !important;
+  left: 18px !important;
+  bottom: 18px !important;
+  width: 390px !important;
+  border: 1px solid var(--st-border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--st-shadow) !important;
+}
+body:has(#discover-map) .panel-head { padding: 20px 20px 14px !important; }
+body:has(#discover-map) .panel-head-eyebrow {
+  font-size: 12px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: var(--st-muted) !important;
+}
+body:has(#discover-map) .panel-head-title {
+  margin-top: 4px;
+  font-family: inherit !important;
+  font-size: 24px !important;
+  line-height: 1.18 !important;
+  font-weight: 760 !important;
+  letter-spacing: -.02em;
+}
+body:has(#discover-map) .page-tabs {
+  padding: 0 14px 10px;
+  border-bottom: 1px solid var(--st-border) !important;
+  gap: 4px;
+}
+body:has(#discover-map) .page-tab {
+  border-radius: 9px !important;
+  border: 0 !important;
+  padding: 9px 10px !important;
+  font-size: 12px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  font-weight: 650 !important;
+}
+body:has(#discover-map) .page-tab.active {
+  background: var(--st-blue-soft) !important;
+  color: var(--st-blue) !important;
+}
+body:has(#discover-map) .search-wrap { padding: 14px 16px !important; }
+body:has(#discover-map) .search-input {
+  background: #fff !important;
+  border: 1px solid var(--st-border) !important;
+  border-radius: 10px !important;
+  color: var(--st-text) !important;
+  padding: 12px 40px 12px 13px !important;
+  font-size: 15px !important;
+}
+body:has(#discover-map) .search-input:focus {
+  border-color: #8bc7e7 !important;
+  box-shadow: 0 0 0 3px rgba(11,110,168,.10) !important;
+}
+body:has(#discover-map) .beach-card { border-bottom-color: var(--st-border) !important; }
+body:has(#discover-map) .beach-name { font-family: inherit !important; font-weight: 700 !important; }
+body:has(#discover-map) .beach-temp { font-family: inherit !important; font-weight: 780 !important; font-variant-numeric: tabular-nums; }
+body:has(#discover-map) .empty-state,
+body:has(#discover-map) .near-me-sub,
+body:has(#discover-map) .loading-state { color: var(--st-muted) !important; }
+body:has(#discover-map) .filter-btn,
+body:has(#discover-map) .sort-btn,
+body:has(#discover-map) .btn-primary { font-family: inherit !important; letter-spacing: 0 !important; }
+
+/* Beach detail */
+body:has(#temp-value) { background: var(--st-bg) !important; }
+body:has(#temp-value) > nav {
+  background: rgba(255,255,255,.96) !important;
+  border-bottom: 1px solid var(--st-border) !important;
+}
+body:has(#temp-value) .nav-brand,
+body:has(#temp-value) .nav-link { font-family: inherit !important; }
+body:has(#temp-value) .nav-brand { font-weight: 780 !important; }
+body:has(#temp-value) .page { max-width: 980px !important; }
+body:has(#temp-value) .breadcrumb { color: var(--st-muted) !important; }
+body:has(#temp-value) .hero {
+  background: var(--st-surface) !important;
+  border: 1px solid var(--st-border) !important;
+  border-radius: 18px !important;
+  padding: 34px !important;
+  box-shadow: none !important;
+}
+body:has(#temp-value) .hero-eyebrow {
+  font-size: 12px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: var(--st-muted) !important;
+}
+body:has(#temp-value) .hero-title {
+  font-family: inherit !important;
+  font-weight: 780 !important;
+  letter-spacing: -.03em;
+}
+body:has(#temp-value) .temp-main { align-items: baseline !important; }
+body:has(#temp-value) .temp-value {
+  font-family: inherit !important;
+  font-size: clamp(64px, 10vw, 96px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -.06em !important;
+  font-variant-numeric: tabular-nums;
+}
+body:has(#temp-value) .temp-unit { font-family: inherit !important; font-weight: 700 !important; }
+body:has(#temp-value) .temp-badge {
+  font-family: inherit !important;
+  border-radius: 999px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+body:has(#temp-value) .temp-date { color: var(--st-muted) !important; }
+body:has(#temp-value) .chart-section,
+body:has(#temp-value) .info-card,
+body:has(#temp-value) .wave-card,
+body:has(#temp-value) .seo-section {
+  background: var(--st-surface) !important;
+  border-color: var(--st-border) !important;
+  box-shadow: none !important;
+  border-radius: var(--st-radius) !important;
+}
+body:has(#temp-value) .section-label,
+body:has(#temp-value) .info-card-label,
+body:has(#temp-value) .wave-stat-label {
+  font-family: inherit !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: var(--st-muted) !important;
+}
+body:has(#temp-value) .info-card-value,
+body:has(#temp-value) .wave-stat-value { font-family: inherit !important; font-weight: 750 !important; font-variant-numeric: tabular-nums; }
+
+.data-note {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--st-muted);
+  font-size: 12px;
+}
+.data-note-dot { width: 7px; height: 7px; border-radius: 50%; background: #26a269; flex: 0 0 auto; }
+
+@media (max-width: 700px) {
+  body:has(#discover-map) .sidebar {
+    left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important;
+    border-radius: 18px 18px 0 0 !important;
+  }
+  body:has(#discover-map) .nav-pill { padding: 9px 12px !important; }
+  body:has(#temp-value) .hero { padding: 24px 20px !important; }
+}

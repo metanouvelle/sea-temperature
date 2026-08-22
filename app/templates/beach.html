@@ -20,6 +20,7 @@
         content="Sea temperature at {{ beach.name }}, {{ beach.city }} today: updated daily from satellite data. Monthly averages, best time to swim, and local activities.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="/static/shared-tokens.css">
+    <link rel="stylesheet" href="/static/redesign.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
         rel="stylesheet">
@@ -894,20 +895,20 @@
     <nav aria-label="Main navigation">
         <a href="/" class="nav-brand">SwimTemp</a>
         <div class="nav-links">
-            <a href="/beaches" class="nav-link">Beaches</a>
-            <a href="/map" class="nav-link">Map</a>
+            <a href="/" class="nav-link">Explore</a>
+            <a href="/about" class="nav-link">About</a>
         </div>
     </nav>
 
     <main class="page" id="main-content">
         <nav class="breadcrumb" aria-label="Breadcrumb">
-            <a href="/beaches">Beaches</a>
+            <a href="/">Explore</a>
             <span aria-hidden="true">›</span>
             {{ beach.city }}, {{ beach.country }}
         </nav>
 
         <div class="hero">
-            <div class="hero-eyebrow" aria-hidden="true">Sea surface temperature</div>
+            <div class="hero-eyebrow" aria-hidden="true">Current sea surface temperature</div>
             <h1 class="hero-title">{{ beach.name }}</h1>
             <p class="hero-location">{{ beach.city }}, {{ beach.country }}</p>
 
@@ -919,8 +920,9 @@
                     <span class="temp-unit" id="temp-unit"></span>
                 </div>
                 <div>
-                    <div class="temp-badge" id="temp-badge">Loading...</div>
-                    <div class="temp-date" id="temp-date"></div>
+                    <div class="temp-badge" id="temp-badge">Checking current reading…</div>
+                    <div class="temp-date" id="temp-date">Checking latest observation…</div>
+                    <div class="data-note"><span class="data-note-dot"></span><span>Copernicus satellite observation</span></div>
                 </div>
             </div>
         </div>
@@ -1329,8 +1331,10 @@
                 const data = await res.json();
 
                 if (data.temp_c === null) {
-                    document.getElementById('temp-value').textContent = '—';
-                    document.getElementById('temp-badge').textContent = 'No data available';
+                    document.getElementById('temp-value').textContent = 'Unavailable';
+                    document.getElementById('temp-unit').textContent = '';
+                    document.getElementById('temp-badge').textContent = 'Current reading unavailable';
+                    document.getElementById('temp-date').textContent = 'Historical averages are still available below.';
                     drawChart(null);
                     return;
                 }
@@ -1351,8 +1355,10 @@
                 drawChart(data.temp_c);
 
             } catch {
-                document.getElementById('temp-value').textContent = '—';
-                document.getElementById('temp-badge').textContent = 'Could not load data';
+                document.getElementById('temp-value').textContent = 'Unavailable';
+                document.getElementById('temp-unit').textContent = '';
+                document.getElementById('temp-badge').textContent = 'Could not load current reading';
+                document.getElementById('temp-date').textContent = 'Try again later; historical averages remain available.';
                 drawChart(null);
             }
         }
@@ -1368,8 +1374,8 @@
                 document.getElementById('best-month').textContent = MONTH_NAMES[bestIdx];
                 document.getElementById('best-temp').textContent = `avg ${maxTemp}°C`;
             } else {
-                document.getElementById('best-month').textContent = '—';
-                document.getElementById('best-temp').textContent = 'No data';
+                document.getElementById('best-month').textContent = 'Unavailable';
+                document.getElementById('best-temp').textContent = 'No historical data';
             }
         }
 
