@@ -7,7 +7,7 @@ data and your existing Copernicus SST cache.
 Flow per region:
   1. Query Overpass API for real beaches (natural=beach / leisure=beach)
   2. For each beach, look up nearest SST from sst_grid in SQLite
-  3. Sort by temperature, store top 50 in warmest_beaches table
+  3. Sort by temperature and cache a small live warmest set per region
 
 Run manually:
     python -m app.scripts.update_warmest
@@ -47,7 +47,7 @@ REGIONS = {
 }
 
 # How many beaches to store per region
-TOP_N = 50
+TOP_N = 20
 
 # Overpass endpoints (fallback to mirror)
 OVERPASS_URLS = [
@@ -150,7 +150,7 @@ def lookup_sst(
           AND lat BETWEEN ? AND ?
           AND lon BETWEEN ? AND ?
           AND temp_c IS NOT NULL
-        LIMIT 50
+        LIMIT 20
         """,
         (date, lat - radius_deg, lat + radius_deg, lon - radius_deg, lon + radius_deg),
     ).fetchall()

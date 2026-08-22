@@ -865,8 +865,8 @@
 
             <!-- Panel identity (desktop/tablet; hidden on the phone sheet) -->
             <div class="panel-head">
-                <div class="panel-head-eyebrow">Updated daily from satellite observations</div>
-                <div class="panel-head-title">Find water worth swimming in</div>
+                <div class="panel-head-eyebrow">Sea temperatures, updated daily</div>
+                <div class="panel-head-title">Explore sea temperatures</div>
             </div>
 
             <!-- Page tabs -->
@@ -879,7 +879,7 @@
             <!-- ── Tab 1: Discover ── -->
             <div class="tab-panel active" id="panel-discover">
                 <div class="search-wrap">
-                    <input class="search-input" id="discover-search" type="text" placeholder="Search beaches, cities or countries…"
+                    <input class="search-input" id="discover-search" type="text" placeholder="Search a beach, city or coastline…"
                         autocomplete="off" />
                     <span class="search-icon">⌕</span>
                     <div class="search-drop" id="discover-drop"></div>
@@ -943,6 +943,12 @@
 
         <!-- ── Map ── -->
         <div id="discover-map"></div>
+        <div class="map-legend" aria-label="Sea temperature comfort legend">
+            <span><i style="background:#2563eb"></i>Cold</span>
+            <span><i style="background:#0ea5e9"></i>Cool</span>
+            <span><i style="background:#22c55e"></i>Comfortable</span>
+            <span><i style="background:#f59e0b"></i>Warm</span>
+        </div>
 
     </div>
 
@@ -956,6 +962,7 @@
             { label: 'Very warm', color: '#ef4444', emoji: '', min: 26, max: 999 },
         ];
         function getBand(t) { return BANDS.find(b => t >= b.min && t < b.max) || BANDS.at(-1); }
+        function markerTemp(t) { return t == null ? '—' : `${Math.round(t)}°`; }
 
         // ── Map ───────────────────────────────────────────────────────────────────────
         const map = new maplibregl.Map({
@@ -1026,12 +1033,12 @@
             clearTimeout(timeoutId);
             if (seq !== inspectSeq || !inspectPopup) return; // superseded or dismissed
 
-            const mapLink = `/map?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}`;
+            const detailLink = `/location?lat=${lat.toFixed(5)}&lon=${lon.toFixed(5)}&name=${encodeURIComponent(place || 'Open water')}`;
             if (!d || d.status !== 'ok') {
                 inspectPopup.setHTML(
                     '<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:#475569;padding:4px 2px;line-height:1.6">' +
                     'No data here yet — new areas can take a moment.<br>' +
-                    `<a href="${mapLink}" style="color:#0ea5e9;font-weight:700;text-decoration:none">Try the full map →</a></div>`);
+                    `<a href="${detailLink}" style="color:#0ea5e9;font-weight:700;text-decoration:none">View location details →</a></div>`);
                 return;
             }
 
@@ -1042,7 +1049,7 @@
                 `<div style="font-size:10px;letter-spacing:.5px;color:#64748b;margin-bottom:4px">${(place || 'OPEN WATER').toUpperCase()}</div>` +
                 `<div style="font-family:Fraunces,serif;font-size:30px;font-weight:600;line-height:1;color:${band.color};margin-bottom:6px">${d.mean_c.toFixed(1)}<span style="font-size:14px">°C</span></div>` +
                 `<span style="background:${band.color}18;color:${band.color};border:1px solid ${band.color}33;padding:2px 9px;border-radius:99px;font-size:9.5px;font-weight:500">${band.emoji} ${band.label}</span>` +
-                `<div style="margin-top:9px;padding-top:8px;border-top:1px solid rgba(0,0,0,.07)"><a href="${mapLink}" style="color:#0ea5e9;font-size:10.5px;font-weight:700;text-decoration:none">Forecast & history →</a></div>` +
+                `<div style="margin-top:9px;padding-top:8px;border-top:1px solid rgba(0,0,0,.07)"><a href="${detailLink}" style="color:#0ea5e9;font-size:10.5px;font-weight:700;text-decoration:none">Forecast & history →</a></div>` +
                 '</div>');
         });
 
@@ -1051,9 +1058,37 @@
         let activeMarkerIdx = null;
 
         function clearMarkers() {
-            markers.forEach(({ mkr }) => mkr.remove());
+            markers.forEach(marker => marker?.mkr.remove());
             markers = [];
             activeMarkerIdx = null;
+        }
+
+        function markerCollisionDistance() {
+            return window.innerWidth <= 700 ? 52 : 44;
+        }
+
+        function updateMarkerVisibility() {
+            if (!map || !markers.length) return;
+            const kept = [];
+            const minDistance = markerCollisionDistance();
+
+            markers.forEach((marker, idx) => {
+                if (!marker) return;
+                if (idx === activeMarkerIdx) {
+                    marker.el.style.display = 'flex';
+                    return;
+                }
+
+                const point = map.project(marker.mkr.getLngLat());
+                const collides = kept.some(prev => {
+                    const dx = point.x - prev.x;
+                    const dy = point.y - prev.y;
+                    return Math.hypot(dx, dy) < minDistance;
+                });
+
+                marker.el.style.display = collides ? 'none' : 'flex';
+                if (!collides) kept.push(point);
+            });
         }
 
         function addMarkers(beaches, tab) {
@@ -1061,66 +1096,83 @@
             beaches.forEach((b, i) => {
                 if (!b.lat || !b.lon) return;
                 const color = b.temp_c != null ? getBand(b.temp_c).color : '#94a3b8';
-                const el = document.createElement('div');
+
+                // MapLibre owns transforms on the root marker element. Keep all visual
+                // hover/active transforms on the inner pill so markers never jump.
+                const el = document.createElement('button');
+                el.type = 'button';
                 el.className = 'bm-el';
-                el.style.cssText = [
-                    'width:24px', 'height:24px', 'border-radius:50%',
-                    'background:#ffffff', `border:2.5px solid ${color}`,
-                    'display:flex', 'align-items:center', 'justify-content:center',
-                    'font-family:DM Mono,monospace', 'font-size:10px', 'font-weight:700',
-                    'color:#0d1b2a', 'cursor:pointer',
-                    'box-shadow:0 2px 6px rgba(0,0,0,0.35)',
-                    'transition:transform 0.15s',
-                ].join(';');
-                el.textContent = i + 1;
-                el.addEventListener('click', () => {
+                el.setAttribute('aria-label', `${b.name}: ${b.temp_c == null ? 'temperature unavailable' : `${b.temp_c.toFixed(1)} degrees Celsius`}`);
+                el.style.setProperty('--marker-color', color);
+
+                const visual = document.createElement('span');
+                visual.className = 'bm-visual';
+                visual.textContent = markerTemp(b.temp_c);
+                el.appendChild(visual);
+
+                el.addEventListener('mouseenter', () => setPreview(i, tab || currentTab, true));
+                el.addEventListener('mouseleave', () => setPreview(i, tab || currentTab, false));
+                el.addEventListener('focus', () => setPreview(i, tab || currentTab, true));
+                el.addEventListener('blur', () => setPreview(i, tab || currentTab, false));
+                el.addEventListener('click', (event) => {
+                    event.stopPropagation();
                     if (tab && currentTab !== tab) switchTab(tab);
                     setActive(i, tab || currentTab);
                 });
+
                 const mkr = new maplibregl.Marker({ element: el, anchor: 'center' })
                     .setLngLat([b.lon, b.lat]).addTo(map);
-                markers.push({ mkr, el, color });
+                markers[i] = { mkr, el, visual, color };
             });
+            updateMarkerVisibility();
+        }
+
+        function setPreview(idx, tab, on) {
+            if (idx === activeMarkerIdx) return;
+            const marker = markers[idx];
+            const card = document.getElementById(`bcard-${tab}-${idx}`);
+            if (marker) marker.el.classList.toggle('is-preview', on);
+            if (card) card.classList.toggle('preview', on);
         }
 
         function setActive(idx, tab) {
-            // Reset markers
-            markers.forEach(({ el, color }) => {
-                el.style.background = '#ffffff';
-                el.style.color = '#0d1b2a';
-                el.style.transform = 'scale(1)';
-                el.style.borderColor = color;
+            markers.forEach(marker => {
+                if (!marker) return;
+                marker.el.classList.remove('is-active', 'is-preview');
             });
-            // Reset cards
             document.querySelectorAll('.beach-card').forEach(c => c.classList.remove('active'));
 
-            if (idx === null) { activeMarkerIdx = null; return; }
-            if (!markers[idx]) return;   // list re-rendering — ignore stale click
+            if (idx === null) {
+                activeMarkerIdx = null;
+                updateMarkerVisibility();
+                return;
+            }
+            if (!markers[idx]) return;
             activeMarkerIdx = idx;
 
-            // Activate marker
-            const { el, color, mkr } = markers[idx];
-            el.style.background = color;
-            el.style.color = '#ffffff';
-            el.style.transform = 'scale(1.3)';
+            const { el, mkr } = markers[idx];
+            el.style.display = 'flex';
+            el.classList.add('is-active');
 
-            // Activate card
             const card = document.getElementById(`bcard-${tab}-${idx}`);
             if (card) {
                 card.classList.add('active');
                 card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
 
-            // Fly to
+            updateMarkerVisibility();
             const ll = mkr.getLngLat();
             map.flyTo({ center: [ll.lng, ll.lat], zoom: Math.max(map.getZoom(), 10), duration: 800 });
         }
+
+        map.on('moveend', updateMarkerVisibility);
+        window.addEventListener('resize', updateMarkerVisibility);
 
         function mapPadding() {
             // On desktop/tablet the floating panel covers the left edge —
             // pad fitBounds so beaches land in the visible map area.
             if (window.innerWidth <= 700) return 80;
-            const panelW = window.innerWidth <= 1024 ? 360 + 16 : 400 + 24;
+            const panelW = 368 + 12;
             return { top: 90, right: 80, bottom: 60, left: panelW + 40 };
         }
 
@@ -1190,21 +1242,25 @@
                 const band = b.temp_c != null ? getBand(b.temp_c) : null;
                 const meta = b.distance_km != null ? `${b.distance_km} km away`
                     : b.country ? b.country : '';
+                const detailUrl = `/location?lat=${encodeURIComponent(b.lat)}&lon=${encodeURIComponent(b.lon)}&name=${encodeURIComponent(b.name || 'Sea temperature')}&place=${encodeURIComponent(b.country || '')}`;
                 const chips = [
                     chipT != null && b.temp_c === chipT ? '<span class="chip chip-warmest">🔥 Warmest</span>' : '',
                     b.is_resort ? '<span class="chip chip-resort">Resort</span>' : '',
                     b.surface_label ? `<span class="chip">${b.surface_label}</span>` : '',
                     b.lifeguard ? '<span class="chip">Lifeguard</span>' : '',
                 ].filter(Boolean).join('');
-                return `<div class="beach-card" id="bcard-${tab}-${i}" onclick="setActive(${i}, '${tab}')">
+                return `<div class="beach-card" id="bcard-${tab}-${i}" onclick="setActive(${i}, '${tab}')" onmouseenter="setPreview(${i}, '${tab}', true)" onmouseleave="setPreview(${i}, '${tab}', false)">
             <div class="beach-num" style="border-color:${color};${b.temp_c != null ? `background:${color}18` : ''}">${i + 1}</div>
             <div class="beach-info">
                 <div class="beach-name">${b.name}</div>
                 ${chips ? `<div class="beach-chips">${chips}</div>` : ''}
                 <div class="beach-meta">${meta}${b.temp_c == null ? ' · <span class="no-sea">temperature unavailable right now</span>' : ''}</div>
-                ${band ? `<span class="beach-badge" style="background:${color}18;color:${color}">${band.label}</span>` : ''}
+                <div class="beach-row-footer">
+                    ${band ? `<span class="beach-badge">${band.label}</span>` : ''}
+                    <a class="beach-detail-link" href="${detailUrl}" onclick="event.stopPropagation()">Details →</a>
+                </div>
             </div>
-            <div class="beach-temp" style="color:${color}">${tempStr}<span style="font-size:11px">°</span></div>
+            <div class="beach-temp"><span class="temp-dot" style="background:${color}"></span>${tempStr}<span class="temp-degree">°</span></div>
         </div>`;
             }).join('');
 
@@ -1338,33 +1394,62 @@
         // ── Tab switching ─────────────────────────────────────────────────────────────
         let currentTab = 'discover';
 
-        // ── Bottom sheet drag / collapse (mobile) ────────────────────────────────────
+        // ── Bottom sheet states (mobile) ─────────────────────────────────────────────
         const sheetEl = document.querySelector('.sidebar');
         const grabEl = document.getElementById('sheet-grab');
-        let sheetCollapsed = false;
         const isPhone = () => window.innerWidth <= 700;
-        // visible when collapsed: grab strip + tab row
-        const sheetHeaderH = () => grabEl.offsetHeight + document.querySelector('.page-tabs').offsetHeight;
+        let sheetState = isPhone() ? 'peek' : 'expanded';
 
-        function collapseSheet() {
-            if (!isPhone()) return;
-            sheetCollapsed = true;
-            sheetEl.style.transform = `translateY(calc(100% - ${sheetHeaderH()}px))`;
+        function sheetHeaderH() {
+            return grabEl.offsetHeight + document.querySelector('.page-tabs').offsetHeight;
         }
 
-        function expandSheet() {
-            sheetCollapsed = false;
-            sheetEl.style.transform = '';
+        function sheetPeekVisibleH() {
+            // Keep enough room for search + heading + roughly two results while leaving
+            // the majority of a phone screen available to the map.
+            return Math.min(Math.max(window.innerHeight * 0.34, 255), 315);
+        }
+
+        function sheetOffsetFor(state) {
+            if (!isPhone()) return 0;
+            const height = sheetEl.offsetHeight;
+            if (state === 'collapsed') return Math.max(0, height - sheetHeaderH());
+            if (state === 'peek') return Math.max(0, height - sheetPeekVisibleH());
+            return 0;
+        }
+
+        function setSheetState(state, animate = true) {
+            if (!isPhone()) {
+                sheetState = 'expanded';
+                sheetEl.dataset.sheetState = 'expanded';
+                sheetEl.style.transform = '';
+                return;
+            }
+            sheetState = state;
+            sheetEl.dataset.sheetState = state;
+            sheetEl.classList.toggle('dragging', !animate);
+            sheetEl.style.transform = `translateY(${sheetOffsetFor(state)}px)`;
+            if (!animate) requestAnimationFrame(() => sheetEl.classList.remove('dragging'));
+        }
+
+        function ensureSheetVisible(minimum = 'peek') {
+            if (!isPhone()) return;
+            if (sheetState === 'collapsed') setSheetState(minimum);
         }
 
         (function initSheetGestures() {
             let startY = 0, startOffset = 0, dragging = false, moved = false;
 
+            const syncInitialState = () => {
+                if (isPhone()) setSheetState(sheetState, false);
+            };
+            requestAnimationFrame(syncInitialState);
+
             grabEl.addEventListener('touchstart', e => {
                 if (!isPhone()) return;
                 dragging = true; moved = false;
                 startY = e.touches[0].clientY;
-                startOffset = sheetCollapsed ? sheetEl.offsetHeight - sheetHeaderH() : 0;
+                startOffset = sheetOffsetFor(sheetState);
                 sheetEl.classList.add('dragging');
             }, { passive: true });
 
@@ -1372,7 +1457,7 @@
                 if (!dragging) return;
                 const dy = e.touches[0].clientY - startY;
                 if (Math.abs(dy) > 6) moved = true;
-                const max = sheetEl.offsetHeight - sheetHeaderH();
+                const max = sheetOffsetFor('collapsed');
                 const off = Math.min(Math.max(startOffset + dy, 0), max);
                 sheetEl.style.transform = `translateY(${off}px)`;
             }, { passive: true });
@@ -1381,29 +1466,51 @@
                 if (!dragging) return;
                 dragging = false;
                 sheetEl.classList.remove('dragging');
-                if (!moved) {                              // treat as a tap → toggle
-                    sheetCollapsed ? expandSheet() : collapseSheet();
+                const dy = e.changedTouches[0].clientY - startY;
+
+                if (!moved) {
+                    setSheetState(sheetState === 'expanded' ? 'peek' : 'expanded');
                     return;
                 }
-                const dy = e.changedTouches[0].clientY - startY;
-                if (Math.abs(dy) < 40) {                   // small drag → snap back
-                    sheetCollapsed ? collapseSheet() : expandSheet();
-                } else {
-                    dy > 0 ? collapseSheet() : expandSheet();
+
+                // Strong directional swipes move one state; smaller drags snap to the
+                // nearest of expanded / peek / collapsed.
+                if (Math.abs(dy) > 70) {
+                    if (dy < 0) {
+                        setSheetState(sheetState === 'collapsed' ? 'peek' : 'expanded');
+                    } else {
+                        setSheetState(sheetState === 'expanded' ? 'peek' : 'collapsed');
+                    }
+                    return;
                 }
+
+                const current = parseFloat((sheetEl.style.transform.match(/translateY\(([-\d.]+)px\)/) || [0, sheetOffsetFor(sheetState)])[1]);
+                const states = ['expanded', 'peek', 'collapsed'];
+                const nearest = states.reduce((best, state) =>
+                    Math.abs(sheetOffsetFor(state) - current) < Math.abs(sheetOffsetFor(best) - current) ? state : best
+                , 'peek');
+                setSheetState(nearest);
             });
 
-            // desktop/no-touch fallback: click toggles
             grabEl.addEventListener('click', () => {
-                if (!isPhone()) return;
-                if (!('ontouchstart' in window)) {
-                    sheetCollapsed ? expandSheet() : collapseSheet();
-                }
+                if (!isPhone() || 'ontouchstart' in window) return;
+                setSheetState(sheetState === 'expanded' ? 'peek' : 'expanded');
             });
 
-            // leaving phone width: clear any transform so tablet/desktop is unaffected
+            // Search is a focused task: give it the full sheet on phones.
+            document.querySelectorAll('.search-input').forEach(input => {
+                input.addEventListener('focus', () => {
+                    if (isPhone()) setSheetState('expanded');
+                });
+            });
+
             window.addEventListener('resize', () => {
-                if (!isPhone()) { sheetEl.style.transform = ''; sheetCollapsed = false; }
+                if (!isPhone()) {
+                    setSheetState('expanded', false);
+                } else {
+                    if (sheetState === 'expanded') sheetState = 'peek';
+                    setSheetState(sheetState, false);
+                }
             });
         })();
 
@@ -1413,7 +1520,7 @@
 
         function switchTab(tab) {
             userInteracted = true;
-            if (sheetCollapsed) expandSheet();             // tapping a tab always reopens
+            ensureSheetVisible('peek');                 // tapping a tab always reveals useful content
             currentTab = tab;
             document.querySelectorAll('.page-tab').forEach((t, i) => {
                 const tabs = ['discover', 'nearme', 'warmest'];

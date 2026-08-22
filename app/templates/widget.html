@@ -312,11 +312,10 @@
 
     <script>
         const BANDS = [
-            { label: 'Cold', emoji: '🥶', min: -99, max: 17, color: '#2563eb' },
-            { label: 'Brave', emoji: '🤿', min: 17, max: 20, color: '#0ea5e9' },
-            { label: 'Nice', emoji: '😊', min: 20, max: 23, color: '#22c55e' },
-            { label: 'Perfect', emoji: '🏊', min: 23, max: 26, color: '#f59e0b' },
-            { label: 'Very Warm', emoji: '🔥', min: 26, max: 999, color: '#ef4444' },
+            { label: 'Cold', min: -99, max: 16, color: '#2563eb' },
+            { label: 'Cool', min: 16, max: 20, color: '#0ea5e9' },
+            { label: 'Comfortable', min: 20, max: 25, color: '#22a866' },
+            { label: 'Warm', min: 25, max: 999, color: '#d97706' },
         ];
 
         function getBand(t) {
@@ -326,26 +325,17 @@
         // Values passed from server
         const LAT = {{ lat | tojson }};
         const LON = {{ lon | tojson }};
-        const SLUG = {{ slug | tojson }};
-
-        // If we have a slug, link to beach page; otherwise link to map
-        if (SLUG) {
-            document.getElementById('widget-map-link').href = `https://swimtemp.com/beach/${SLUG}`;
-            document.getElementById('widget-map-link').textContent = 'Full details →';
-        }
+        const detailUrl = `/location?lat=${encodeURIComponent(LAT)}&lon=${encodeURIComponent(LON)}&name=${encodeURIComponent({{ name | tojson }})}`;
+        document.getElementById('widget-map-link').href = detailUrl;
+        document.getElementById('widget-map-link').textContent = 'Full details →';
 
         async function loadTemp() {
             try {
-                // Use slug endpoint if available, otherwise use point API
-                const url = SLUG
-                    ? `/api/beach/${SLUG}`
-                    : `/api/point?lat=${LAT}&lon=${LON}&radius_km=25`;
-
-                const res = await fetch(url);
+                const res = await fetch(`/api/point?lat=${LAT}&lon=${LON}&radius_km=25`);
                 if (!res.ok) throw new Error();
                 const data = await res.json();
 
-                const temp = SLUG ? data.temp_c : data.mean_c;
+                const temp = data.mean_c;
                 const date = data.date;
 
                 if (temp === null || temp === undefined) {

@@ -1,1440 +1,183 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <script async defer src="https://widget.getyourguide.com/dist/pa.umd.production.min.js"
-        data-gyg-partner-id="XWCA45N"></script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3Q3NYKPGQ"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-
-        gtag('config', 'G-D3Q3NYKPGQ');
-    </script>
-    <meta charset="UTF-8">
-    <title>{{ beach.name }} Water Temperature: Best Month to Swim in {{ beach.city }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Sea temperature at {{ beach.name }}, {{ beach.city }} today: updated daily from satellite data. Monthly averages, best time to swim, and local activities.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="/static/shared-tokens.css">
-    <link rel="stylesheet" href="/static/redesign.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&family=DM+Mono:wght@300;400&display=swap"
-        rel="stylesheet">
-    <style>
-        /* Page-specific aliases — see /static/shared-tokens.css */
-        :root {
-            --text: var(--on-dark);
-            --muted: var(--on-dark-2);
-            --soft: var(--on-dark-2);
-            --border: var(--border-dark);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'DM Mono', monospace;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-            opacity: 0.025;
-        }
-
-        nav {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 24px 8vw;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .nav-brand {
-            font-family: 'Fraunces', serif;
-            font-size: 16px;
-            font-weight: 300;
-            color: var(--text);
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 24px;
-        }
-
-        .nav-link {
-            font-family: 'Fraunces', serif;
-            font-weight: 300;
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--muted);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .nav-link:hover {
-            color: var(--text);
-        }
-
-        .page {
-            position: relative;
-            z-index: 1;
-            max-width: 860px;
-            margin: 0 auto;
-            padding: 64px 8vw 120px;
-        }
-
-        .breadcrumb {
-            font-size: 11px;
-            color: var(--muted);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-bottom: 32px;
-        }
-
-        .breadcrumb a {
-            color: var(--muted);
-            text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-            color: var(--text);
-        }
-
-        .breadcrumb span {
-            margin: 0 8px;
-        }
-
-        /* ── Hero ── */
-        .hero {
-            margin-bottom: 48px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.1s;
-        }
-
-        .hero-eyebrow {
-            font-size: 11px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 12px;
-        }
-
-        .hero-title {
-            font-family: 'Fraunces', serif;
-            font-size: clamp(36px, 5vw, 60px);
-            font-weight: 700;
-            letter-spacing: -2px;
-            line-height: 1.0;
-            color: var(--text);
-            margin-bottom: 6px;
-        }
-
-        .hero-location {
-            font-size: 13px;
-            color: var(--muted);
-            letter-spacing: 0.5px;
-            margin-bottom: 36px;
-        }
-
-        .temp-block {
-            display: flex;
-            align-items: center;
-            gap: 32px;
-            flex-wrap: wrap;
-        }
-
-        .temp-main {
-            display: flex;
-            align-items: baseline;
-            gap: 4px;
-        }
-
-        .temp-value {
-            font-family: 'Fraunces', serif;
-            font-size: 96px;
-            font-weight: 300;
-            letter-spacing: -6px;
-            line-height: 1;
-            color: var(--text);
-            transition: color 0.5s;
-        }
-
-        .temp-unit {
-            font-size: 22px;
-            font-weight: 300;
-            color: var(--muted);
-            margin-bottom: 8px;
-        }
-
-        .temp-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 20px;
-            border-radius: 100px;
-            font-family: 'Fraunces', serif;
-            font-style: italic;
-            font-size: 18px;
-            font-weight: 300;
-            margin-bottom: 12px;
-            background: rgba(56, 189, 248, 0.12);
-            color: var(--accent);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            transition: all 0.5s;
-        }
-
-        .temp-date {
-            font-size: 11px;
-            color: var(--muted);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-
-        /* ── Monthly chart ── */
-        .chart-section {
-            margin-bottom: 40px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.3s;
-        }
-
-        .section-label {
-            font-size: 10px;
-            letter-spacing: 3.5px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .section-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        .chart-container {
-            background: var(--border-dark);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 28px 24px 20px;
-            position: relative;
-        }
-
-        .chart-canvas-wrap {
-            position: relative;
-            height: 140px;
-            margin-bottom: 12px;
-        }
-
-        canvas#monthly-chart {
-            width: 100%;
-            height: 140px;
-        }
-
-        .chart-months {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 0;
-        }
-
-        .chart-month {
-            text-align: center;
-            font-size: 10px;
-            color: var(--muted);
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            padding-top: 6px;
-        }
-
-        .chart-month.current {
-            color: var(--accent);
-            font-weight: 500;
-        }
-
-        /* ── Info grid ── */
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 16px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.5s;
-        }
-
-        .info-card {
-            background: var(--border-dark);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-        }
-
-        .info-card-label {
-            font-size: 10px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 8px;
-        }
-
-        .info-card-value {
-            font-family: 'Fraunces', serif;
-            font-size: 24px;
-            font-weight: 300;
-            color: var(--text);
-            letter-spacing: -0.5px;
-        }
-
-        .info-card-sub {
-            font-size: 11px;
-            color: var(--muted);
-            margin-top: 4px;
-            letter-spacing: 0.5px;
-        }
-
-        /* ── GYG Native Affiliate Card ── */
-        .gyg-card-container {
-            margin-bottom: 40px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.6s;
-        }
-
-        .gyg-affiliate-card {
-            background: var(--border-dark);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
-            flex-wrap: wrap;
-            transition: border-color 0.25s, background 0.25s;
-        }
-
-        .gyg-affiliate-card:hover {
-            border-color: rgba(56, 189, 248, 0.3);
-            background: var(--border-dark);
-        }
-
-        .gyg-card-content {
-            flex: 1;
-            min-width: 260px;
-        }
-
-        .gyg-card-title {
-            font-family: 'Fraunces', serif;
-            font-size: 20px;
-            font-weight: 300;
-            color: var(--text);
-            margin-bottom: 6px;
-        }
-
-        .gyg-card-desc {
-            font-size: 12px;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        .gyg-card-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 24px;
-            background: transparent;
-            color: var(--accent);
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            border-radius: 100px;
-            text-decoration: none;
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition: all 0.25s;
-            white-space: nowrap;
-        }
-
-        .gyg-card-btn:hover {
-            background: var(--accent);
-            color: var(--bg);
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        .gyg-card-btn svg {
-            transition: transform 0.25s;
-        }
-
-        .gyg-card-btn:hover svg {
-            transform: translateX(4px);
-        }
-
-
-        /* ── Embed CTA ── */
-        .embed-cta {
-            margin-bottom: 24px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.72s;
-        }
-
-        .embed-cta-inner {
-            background: rgba(56, 189, 248, 0.05);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 16px;
-            padding: 20px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            flex-wrap: wrap;
-            transition: all 0.2s;
-        }
-
-        .embed-cta-inner:hover {
-            background: rgba(56, 189, 248, 0.09);
-            border-color: rgba(56, 189, 248, 0.35);
-        }
-
-        .embed-cta-text {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-
-        .embed-cta-icon {
-            font-size: 22px;
-            flex-shrink: 0;
-        }
-
-        .embed-cta-copy {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .embed-cta-title {
-            font-family: 'Fraunces', serif;
-            font-size: 16px;
-            font-weight: 300;
-            color: var(--text);
-            letter-spacing: -0.2px;
-        }
-
-        .embed-cta-desc {
-            font-size: 11px;
-            color: var(--muted);
-            letter-spacing: 0.3px;
-            line-height: 1.5;
-        }
-
-        .embed-cta-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            background: var(--accent);
-            color: var(--bg);
-            border-radius: 100px;
-            text-decoration: none;
-            font-size: 10px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition: all 0.25s;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .embed-cta-btn:hover {
-            background: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        /* ── CTA ── */
-        .cta-section {
-            padding: 32px;
-            border-radius: 20px;
-            background: var(--border-dark);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 20px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.7s;
-        }
-
-        .cta-text {
-            font-family: 'Fraunces', serif;
-            font-size: 20px;
-            font-weight: 300;
-            font-style: italic;
-            color: var(--soft);
-        }
-
-        .cta-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 24px;
-            background: var(--accent);
-            color: var(--bg);
-            border-radius: 100px;
-            text-decoration: none;
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition: all 0.25s;
-            white-space: nowrap;
-        }
-
-        .cta-btn:hover {
-            background: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        .cta-btn svg {
-            transition: transform 0.25s;
-        }
-
-        .cta-btn:hover svg {
-            transform: translateX(4px);
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-            display: inline-block;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(16px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 640px) {
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .temp-value {
-                font-size: 72px;
-            }
-
-            .cta-section,
-            .gyg-affiliate-card {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .gyg-card-btn {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .chart-month {
-                font-size: 8px;
-            }
-        }
-
-        /* ── Accessibility ── */
-        .skip-link {
-            position: absolute;
-            top: -100%;
-            left: 1rem;
-            z-index: 1000;
-            padding: 8px 16px;
-            background: var(--accent);
-            color: var(--bg);
-            font-size: 13px;
-            font-weight: 500;
-            border-radius: 0 0 8px 8px;
-            text-decoration: none;
-            transition: top 0.2s;
-        }
-
-        .skip-link:focus {
-            top: 0;
-        }
-
-        :focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 3px;
-            border-radius: 4px;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-
-            *,
-            *::before,
-            *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        /* ── Site Footer ── */
-        .site-footer {
-            position: relative;
-            z-index: 1;
-            border-top: 1px solid var(--border);
-            padding: 48px 8vw 32px;
-            margin-top: 80px;
-        }
-
-        .footer-inner {
-            max-width: 860px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            gap: 48px;
-            flex-wrap: wrap;
-            margin-bottom: 40px;
-        }
-
-        .footer-brand {
-            max-width: 200px;
-        }
-
-        .footer-logo {
-            font-family: 'Fraunces', serif;
-            font-size: 18px;
-            font-weight: 300;
-            color: var(--text);
-            text-decoration: none;
-            display: block;
-            margin-bottom: 12px;
-        }
-
-        .footer-tagline {
-            font-size: 11px;
-            color: var(--muted);
-            line-height: 1.8;
-            letter-spacing: 0.3px;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 48px;
-            flex-wrap: wrap;
-        }
-
-        .footer-col {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .footer-col-label {
-            font-size: 9px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 4px;
-        }
-
-        .footer-col a {
-            font-size: 12px;
-            color: var(--soft);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .footer-col a:hover {
-            color: var(--text);
-        }
-
-        .footer-bottom {
-            max-width: 860px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border-dark);
-            font-size: 11px;
-            color: var(--muted);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        @media (max-width: 640px) {
-            .footer-inner {
-                flex-direction: column;
-                gap: 32px;
-            }
-
-            .footer-links {
-                gap: 32px;
-            }
-
-            .footer-bottom {
-                flex-direction: column;
-            }
-        }
-
-
-        /* ── Wave conditions card ── */
-        .wave-card {
-            margin-bottom: 16px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.45s;
-        }
-
-        .wave-card-inner {
-            background: var(--border-dark);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px 24px;
-        }
-
-        .wave-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 12px;
-        }
-
-        .wave-stat-icon {
-            font-size: 16px;
-            margin-bottom: 4px;
-        }
-
-        .wave-stat-value {
-            font-family: 'Fraunces', serif;
-            font-size: 22px;
-            font-weight: 300;
-            color: var(--text);
-            letter-spacing: -0.5px;
-        }
-
-        .wave-stat-label {
-            font-size: 10px;
-            color: var(--muted);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .wave-stat-sub {
-            font-size: 10px;
-            color: var(--muted);
-            letter-spacing: 0.3px;
-        }
-
-        .wave-state-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            border-radius: 100px;
-            font-size: 10px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        @media (max-width: 640px) {
-            .wave-stats {
-                gap: 10px;
-            }
-
-            .wave-stat-value {
-                font-size: 18px;
-            }
-        }
-
-        /* ── SEO text section ── */
-        .seo-section {
-            margin-bottom: 40px;
-            opacity: 0;
-            animation: fadeUp 0.7s ease forwards 0.55s;
-        }
-
-        .seo-intro {
-            font-size: 13px;
-            line-height: 2;
-            color: var(--soft);
-            letter-spacing: 0.2px;
-            margin-bottom: 24px;
-        }
-
-        .seo-intro strong {
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        .seo-months-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-bottom: 24px;
-        }
-
-        .seo-month-item {
-            background: var(--border-dark);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 12px;
-            transition: background 0.2s;
-        }
-
-        .seo-month-item:hover {
-            background: var(--border-dark);
-        }
-
-        .seo-month-current {
-            border-color: rgba(56, 189, 248, 0.5) !important;
-            background: rgba(56, 189, 248, 0.08) !important;
-            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3);
-        }
-
-        .seo-month-current .seo-month-name {
-            color: var(--accent) !important;
-            font-weight: 500;
-        }
-
-        .seo-month-name {
-            font-size: 9px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 4px;
-        }
-
-        .seo-month-temp {
-            font-family: 'Fraunces', serif;
-            font-size: 18px;
-            font-weight: 300;
-            letter-spacing: -0.5px;
-        }
-
-        .seo-month-band {
-            font-size: 9px;
-            color: var(--muted);
-            margin-top: 2px;
-        }
-
-        .seo-faq {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .seo-faq-item {
-            background: var(--border-dark);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 18px 20px;
-        }
-
-        .seo-faq-q {
-            font-size: 13px;
-            color: var(--text);
-            font-weight: 500;
-            margin-bottom: 8px;
-            letter-spacing: 0.2px;
-        }
-
-        .seo-faq-a {
-            font-size: 12px;
-            color: var(--muted);
-            line-height: 1.9;
-            letter-spacing: 0.2px;
-        }
-
-        @media (max-width: 640px) {
-            .seo-months-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>{{ name }} sea temperature — SwimTemp</title>
+  <meta name="description" content="Current sea temperature, ocean conditions, and recent temperature history for {{ name }}.">
+  <link rel="stylesheet" href="/static/redesign.css">
 </head>
+<body class="location-page">
+  <header class="location-nav">
+    <a class="location-brand" href="/">SwimTemp</a>
+    <a class="location-back" href="/">← Explore map</a>
+  </header>
 
-<body>
-    <a href="#main-content" class="skip-link">Skip to main content</a>
+  <main class="location-shell" data-lat="{{ lat }}" data-lon="{{ lon }}">
+    <section class="location-hero">
+      <div class="location-kicker">Sea temperature</div>
+      <h1>{{ name }}</h1>
+      {% if place %}<p class="location-place">{{ place }}</p>{% endif %}
 
-    <nav aria-label="Main navigation">
-        <a href="/" class="nav-brand">SwimTemp</a>
-        <div class="nav-links">
-            <a href="/" class="nav-link">Explore</a>
-            <a href="/about" class="nav-link">About</a>
+      <div class="location-reading" aria-live="polite">
+        <div class="location-temp" id="location-temp"><span class="location-skeleton">--.-</span><span>°C</span></div>
+        <div class="location-band" id="location-band">
+          <span class="location-band-dot"></span>
+          <span>Loading current observation…</span>
         </div>
-    </nav>
+      </div>
 
-    <main class="page" id="main-content">
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-            <a href="/">Explore</a>
-            <span aria-hidden="true">›</span>
-            {{ beach.city }}, {{ beach.country }}
-        </nav>
+      <div class="location-status" id="location-status">
+        <span class="status-dot"></span>
+        <span>Checking latest satellite observation</span>
+      </div>
+    </section>
 
-        <div class="hero">
-            <div class="hero-eyebrow" aria-hidden="true">Current sea surface temperature</div>
-            <h1 class="hero-title">{{ beach.name }}</h1>
-            <p class="hero-location">{{ beach.city }}, {{ beach.country }}</p>
-
-            <div class="temp-block" aria-live="polite" aria-atomic="true">
-                <div class="temp-main">
-                    <span class="temp-value" id="temp-value">
-                        <span class="spinner" role="status" aria-label="Loading temperature"></span>
-                    </span>
-                    <span class="temp-unit" id="temp-unit"></span>
-                </div>
-                <div>
-                    <div class="temp-badge" id="temp-badge">Checking current reading…</div>
-                    <div class="temp-date" id="temp-date">Checking latest observation…</div>
-                    <div class="data-note"><span class="data-note-dot"></span><span>Copernicus satellite observation</span></div>
-                </div>
-            </div>
+    <section class="location-section" aria-labelledby="conditions-title">
+      <div class="location-section-head">
+        <div>
+          <div class="location-eyebrow">Right now</div>
+          <h2 id="conditions-title">Ocean conditions</h2>
         </div>
-
-        <section class="chart-section" aria-labelledby="chart-heading">
-            <div class="section-label" id="chart-heading">Average sea temperature by month</div>
-            <div class="chart-container">
-                <div class="chart-canvas-wrap">
-                    <canvas id="monthly-chart" role="img"
-                        aria-label="Monthly average sea temperature chart for {{ beach.name }}. Best month shown on chart.">
-                    </canvas>
-                </div>
-                <div class="chart-months" aria-hidden="true">
-                    {% set months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
-                    {% for m in months %}
-                    <div class="chart-month {% if loop.index == current_month %}current{% endif %}">{{ m }}</div>
-                    {% endfor %}
-                </div>
-            </div>
-        </section>
-
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="info-card-label">Location</div>
-                <div class="info-card-value">{{ beach.city }}</div>
-                <div class="info-card-sub">{{ beach.country }}</div>
-            </div>
-            <div class="info-card">
-                <div class="info-card-label">Best month</div>
-                <div class="info-card-value" id="best-month">—</div>
-                <div class="info-card-sub" id="best-temp">—</div>
-            </div>
+      </div>
+      <div class="condition-grid" id="condition-grid">
+        <div class="condition-item">
+          <span class="condition-label">Waves</span>
+          <div class="condition-value-wrap"><strong id="wave-height">Loading</strong><small id="wave-period"></small></div>
         </div>
-
-
-        <!-- Wave conditions from Open-Meteo -->
-        <div class="wave-card" id="wave-card" style="display:none" aria-label="Current ocean conditions">
-            <div class="wave-card-inner">
-                <div class="section-label">Current ocean conditions</div>
-                <div class="wave-stats">
-                    <div class="wave-stat">
-                        <div class="wave-stat-icon">🌊</div>
-                        <div class="wave-stat-value" id="wave-height">—</div>
-                        <div class="wave-stat-label">Wave height</div>
-                        <div class="wave-stat-sub" id="wave-period"></div>
-                    </div>
-                    <div class="wave-stat">
-                        <div class="wave-stat-icon">🌬</div>
-                        <div class="wave-stat-value" id="swell-height">—</div>
-                        <div class="wave-stat-label">Swell</div>
-                        <div class="wave-stat-sub" id="swell-period"></div>
-                    </div>
-                    <div class="wave-stat">
-                        <div class="wave-stat-icon">💨</div>
-                        <div class="wave-stat-value" id="current-speed">—</div>
-                        <div class="wave-stat-label">Current</div>
-                        <div class="wave-stat-sub" id="current-dir"></div>
-                    </div>
-                </div>
-                <div class="wave-state-badge" id="wave-state-badge"></div>
-            </div>
+        <div class="condition-item">
+          <span class="condition-label">Swell</span>
+          <div class="condition-value-wrap"><strong id="swell-height">Loading</strong><small id="swell-period"></small></div>
         </div>
-
-        <!-- SEO: Static text for Google indexing -->
-        <section class="seo-section" aria-labelledby="seo-heading">
-            <div class="section-label" id="seo-heading">Sea temperature guide — {{ beach.name }}</div>
-
-            <p class="seo-intro">
-                The sea temperature at <strong>{{ beach.name }}</strong> in <strong>{{ current_month_name }}</strong>
-                {% if monthly_avg and current_month %}
-                {% set current_temp = monthly_avg[current_month - 1] %}
-                {% if current_temp %}
-                is typically around <strong>{{ current_temp }}°C</strong>.
-                {% if current_temp >= 26 %} The water is very warm — excellent for swimming, snorkeling and water
-                sports.
-                {% elif current_temp >= 23 %} The water temperature is perfect for swimming.
-                {% elif current_temp >= 20 %} The water is pleasant for most swimmers.
-                {% elif current_temp >= 17 %} The water is cool — a wetsuit is recommended for longer swims.
-                {% else %} The water is cold — a wetsuit is strongly recommended.{% endif %}
-                {% endif %}
-                {% endif %}
-            </p>
-
-            {% if monthly_avg %}
-            <div class="seo-months-grid">
-                {% set month_short = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
-                {% for temp in monthly_avg %}
-                {% if temp %}
-                <div class="seo-month-item {% if loop.index == current_month %}seo-month-current{% endif %}">
-                    <div class="seo-month-name">{{ month_short[loop.index0] }}</div>
-                    <div class="seo-month-temp" style="color:
-                        {%- if temp >= 26 %}#ef4444
-                        {%- elif temp >= 23 %}#f59e0b
-                        {%- elif temp >= 20 %}#22c55e
-                        {%- elif temp >= 17 %}#0ea5e9
-                        {%- else %}#2563eb{%- endif %}">{{ temp }}°C</div>
-                    <div class="seo-month-band">
-                        {%- if temp >= 26 %}Very Warm
-                        {%- elif temp >= 23 %}Perfect
-                        {%- elif temp >= 20 %}Nice
-                        {%- elif temp >= 17 %}Brave
-                        {%- else %}Cold{%- endif %}
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-            {% endif %}
-
-            <div class="seo-faq">
-                <div class="seo-faq-item">
-                    <div class="seo-faq-q">When is the best time to swim at {{ beach.name }}?</div>
-                    <div class="seo-faq-a">
-                        {% set valid_temps = monthly_avg | select('ne', none) | list %}
-                        {% if valid_temps %}
-                        {% set max_temp = valid_temps | max %}
-                        {% set month_names =
-                        ['January','February','March','April','May','June','July','August','September','October','November','December']
-                        %}
-                        The warmest month at {{ beach.name }} is {{ month_names[monthly_avg.index(max_temp)] }},
-                        with an average sea temperature of {{ max_temp }}°C.
-                        {% if max_temp >= 23 %}This is ideal for swimming and water sports.
-                        {% elif max_temp >= 20 %}The water is comfortable for most swimmers.
-                        {% else %}A wetsuit is recommended for extended swims.{% endif %}
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="seo-faq-item">
-                    <div class="seo-faq-q">Is the sea warm enough to swim at {{ beach.name }} in {{ current_month_name
-                        }}?</div>
-                    <div class="seo-faq-a">
-                        {% if monthly_avg and current_month %}
-                        {% set current_temp = monthly_avg[current_month - 1] %}
-                        {% if current_temp %}
-                        The average sea temperature at {{ beach.name }} in {{ current_month_name }} is {{ current_temp
-                        }}°C.
-                        {% if current_temp >= 26 %}The water is very warm — perfect for swimming, snorkeling and water
-                        sports.
-                        {% elif current_temp >= 23 %}The water temperature is perfect for swimming.
-                        {% elif current_temp >= 20 %}The water is pleasant for most swimmers.
-                        {% elif current_temp >= 17 %}The water is cool — a wetsuit is recommended for longer swims.
-                        {% else %}The water is cold — a wetsuit is strongly recommended.{% endif %}
-                        {% endif %}
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="seo-faq-item">
-                    <div class="seo-faq-q">What is the sea temperature at {{ beach.name }} today?</div>
-                    <div class="seo-faq-a">
-                        The current sea temperature at {{ beach.name }}, {{ beach.city }} is updated daily
-                        using satellite observations from the Copernicus Marine Service.
-                        Check the live reading at the top of this page for today's exact temperature.
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="gyg-card-container" aria-label="Local Experiences">
-            <div class="gyg-affiliate-card">
-                <div class="gyg-card-content">
-                    <h2 class="gyg-card-title">Heading out onto the water?</h2>
-                    <p class="gyg-card-desc">Explore boat trips, surfing guides, snorkeling tours, and coastal
-                        excursions around {{ beach.city }}.</p>
-                </div>
-                <a href="{{ gyg_link }}" class="gyg-card-btn" target="_blank" rel="noopener noreferrer">
-                    Explore Activities
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false">
-                        <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                            stroke-linejoin="round" />
-                    </svg>
-                </a>
-            </div>
-        </section>
-
-        <!-- Embed widget CTA -->
-        <div class="embed-cta">
-            <div class="embed-cta-inner">
-                <div class="embed-cta-text">
-                    <div class="embed-cta-icon">🌊</div>
-                    <div class="embed-cta-copy">
-                        <div class="embed-cta-title">Add this beach to your website</div>
-                        <div class="embed-cta-desc">Free embeddable widget — sea temperature &amp; wave conditions. One
-                            line of code.</div>
-                    </div>
-                </div>
-                <a href="/embed?lat={{ beach.lat }}&lon={{ beach.lon }}&name={{ beach.name | urlencode }}"
-                    class="embed-cta-btn">
-                    Get widget
-                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                        <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                            stroke-linejoin="round" />
-                    </svg>
-                </a>
-            </div>
+        <div class="condition-item">
+          <span class="condition-label">Current</span>
+          <div class="condition-value-wrap"><strong id="current-speed">Loading</strong><small id="current-dir"></small></div>
         </div>
+      </div>
+      <p class="condition-note" id="condition-note">Ocean-condition data is loaded separately from the temperature observation.</p>
+    </section>
 
-        <div class="cta-section">
-            <span class="cta-text">See the full ocean picture.</span>
-            <a href="/map" class="cta-btn">
-                Open on Map
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" focusable="false">
-                    <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                </svg>
-            </a>
+    <section class="location-section" aria-labelledby="history-title">
+      <div class="location-section-head history-head">
+        <div>
+          <div class="location-eyebrow">Context</div>
+          <h2 id="history-title">Temperature history</h2>
         </div>
-    </main>
+        <span class="location-section-meta">Past year + 7-day outlook</span>
+      </div>
+      <p class="history-intro">Observed temperatures are shown as a solid line. The short outlook after today is dashed.</p>
+      <div class="history-chart" id="history-chart"></div>
+    </section>
 
-    <script>
-        const BANDS = [
-            { id: 'cold', label: 'Cold', emoji: '🥶', min: -99, max: 17, color: '#2563eb' },
-            { id: 'brave', label: 'Brave', emoji: '🤿', min: 17, max: 20, color: '#0ea5e9' },
-            { id: 'nice', label: 'Nice', emoji: '😊', min: 20, max: 23, color: '#22c55e' },
-            { id: 'perfect', label: 'Perfect', emoji: '🏊', min: 23, max: 26, color: '#f59e0b' },
-            { id: 'very_warm', label: 'Very Warm', emoji: '🔥', min: 26, max: 999, color: '#ef4444' },
-        ];
+    <section class="location-section location-source" aria-labelledby="source-title">
+      <div>
+        <div class="location-eyebrow">Data & reliability</div>
+        <h2 id="source-title">What this reading means</h2>
+      </div>
+      <p>SwimTemp reports sea-surface temperature near this coordinate. Satellite observations can differ from the water you feel at the shoreline because of tides, depth, wind, currents, and the distance to the nearest valid ocean grid point.</p>
+      <div class="source-row">
+        <span>Temperature</span><strong>Copernicus Marine</strong>
+      </div>
+      <div class="source-row">
+        <span>Conditions & outlook</span><strong>Open-Meteo Marine</strong>
+      </div>
+      <div class="source-row">
+        <span>Coordinates</span><strong>{{ '%.4f'|format(lat) }}, {{ '%.4f'|format(lon) }}</strong>
+      </div>
+    </section>
+  </main>
 
-        function getBand(t) {
-            return BANDS.find(b => t >= b.min && t < b.max) || BANDS[BANDS.length - 1];
+  <script type="module">
+    import { SSTHistoryChart } from '/static/sst-history-chart.js';
+
+    const root = document.querySelector('.location-shell');
+    const lat = Number(root.dataset.lat);
+    const lon = Number(root.dataset.lon);
+
+    function band(temp) {
+      if (temp < 16) return { label: 'Cold water', color: '#2563eb', note: 'Plan for limited exposure.' };
+      if (temp < 20) return { label: 'Cool for swimming', color: '#0ea5e9', note: '' };
+      if (temp < 25) return { label: 'Comfortable for most swimmers', color: '#22a866', note: '' };
+      return { label: 'Warm for swimming', color: '#d97706', note: '' };
+    }
+
+    function formatObservationDate(value) {
+      if (!value) return null;
+      const date = new Date(`${value}T00:00:00Z`);
+      if (Number.isNaN(date.getTime())) return value;
+      return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(date);
+    }
+
+    function formatDateTime(value) {
+      if (!value) return null;
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value.replace('T', ' ');
+      return new Intl.DateTimeFormat('en', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      }).format(date);
+    }
+
+    function compass(degrees) {
+      if (degrees == null || Number.isNaN(Number(degrees))) return '';
+      const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+      const normalized = ((Number(degrees) % 360) + 360) % 360;
+      return dirs[Math.round(normalized / 45) % 8];
+    }
+
+    async function loadTemperature() {
+      const tempEl = document.getElementById('location-temp');
+      const bandEl = document.getElementById('location-band');
+      const statusEl = document.getElementById('location-status');
+      try {
+        const res = await fetch(`/api/point?lat=${lat}&lon=${lon}&radius_km=25`);
+        if (!res.ok) throw new Error('unavailable');
+        const data = await res.json();
+        if (data.status !== 'ok' || data.mean_c == null) throw new Error('unavailable');
+        const b = band(data.mean_c);
+        tempEl.innerHTML = `${data.mean_c.toFixed(1)}<span>°C</span>`;
+        bandEl.innerHTML = `<span class="location-band-dot" style="background:${b.color}"></span><span>${b.label}${b.note ? ` · ${b.note}` : ''}</span>`;
+        const observed = formatObservationDate(data.date);
+        statusEl.innerHTML = `<span class="status-dot" style="background:${b.color}"></span><span>${observed ? `Observed ${observed}` : 'Latest available observation'} · Satellite sea-surface temperature</span>`;
+      } catch (_) {
+        tempEl.innerHTML = `<span class="location-unavailable">Unavailable</span>`;
+        bandEl.innerHTML = '<span class="location-band-dot location-band-dot-muted"></span><span>Current temperature could not be loaded</span>';
+        statusEl.innerHTML = '<span class="status-dot status-dot-muted"></span><span>Try again shortly; historical context may still be available.</span>';
+      }
+    }
+
+    async function loadConditions() {
+      const note = document.getElementById('condition-note');
+      try {
+        const url = new URL('https://marine-api.open-meteo.com/v1/marine');
+        url.searchParams.set('latitude', lat);
+        url.searchParams.set('longitude', lon);
+        url.searchParams.set('current', 'wave_height,wave_period,swell_wave_height,swell_wave_period,ocean_current_velocity,ocean_current_direction');
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('unavailable');
+        const c = (await res.json()).current || {};
+        const set = (id, value, suffix='') => document.getElementById(id).textContent = value == null ? 'Unavailable' : `${value}${suffix}`;
+        set('wave-height', c.wave_height?.toFixed(1), ' m');
+        set('swell-height', c.swell_wave_height?.toFixed(1), ' m');
+        set('current-speed', c.ocean_current_velocity?.toFixed(2), ' km/h');
+        document.getElementById('wave-period').textContent = c.wave_period ? `${c.wave_period.toFixed(0)} sec period` : '';
+        document.getElementById('swell-period').textContent = c.swell_wave_period ? `${c.swell_wave_period.toFixed(0)} sec period` : '';
+        if (c.ocean_current_direction != null) {
+          const deg = Math.round(c.ocean_current_direction);
+          document.getElementById('current-dir').textContent = `${compass(deg)} · ${deg}°`;
+        } else {
+          document.getElementById('current-dir').textContent = '';
         }
+        const updated = formatDateTime(c.time);
+        note.textContent = updated ? `Conditions updated ${updated}` : 'Latest available marine conditions.';
+      } catch (_) {
+        ['wave-height','swell-height','current-speed'].forEach(id => document.getElementById(id).textContent = 'Unavailable');
+        note.textContent = 'Ocean conditions are temporarily unavailable.';
+      }
+    }
 
-        function bandColor(t) {
-            return getBand(t).color;
-        }
-
-        // Monthly averages passed from server
-        const MONTHLY_AVG = {{ monthly_avg | tojson }};
-        const CURRENT_MONTH = new Date().getMonth(); // 0-indexed
-
-        // ── Draw line chart ───────────────────────────────────────────────────────────
-        function drawChart(currentTemp) {
-            const canvas = document.getElementById('monthly-chart');
-            const ctx = canvas.getContext('2d');
-            const dpr = window.devicePixelRatio || 1;
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width * dpr;
-            canvas.height = 140 * dpr;
-            canvas.style.width = rect.width + 'px';
-            canvas.style.height = '140px';
-            ctx.scale(dpr, dpr);
-
-            const W = rect.width;
-            const H = 140;
-            const PAD = { top: 16, right: 16, bottom: 8, left: 32 };
-
-            const validTemps = MONTHLY_AVG.filter(t => t !== null);
-            if (validTemps.length === 0) return;
-
-            const minT = Math.min(...validTemps) - 2;
-            const maxT = Math.max(...validTemps) + 2;
-
-            function xPos(i) {
-                return PAD.left + (i / 11) * (W - PAD.left - PAD.right);
-            }
-
-            function yPos(t) {
-                return PAD.top + (1 - (t - minT) / (maxT - minT)) * (H - PAD.top - PAD.bottom);
-            }
-
-            // Draw subtle grid lines
-            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= 4; i++) {
-                const y = PAD.top + (i / 4) * (H - PAD.top - PAD.bottom);
-                ctx.beginPath();
-                ctx.moveTo(PAD.left, y);
-                ctx.lineTo(W - PAD.right, y);
-                ctx.stroke();
-            }
-
-            // Build points
-            const points = MONTHLY_AVG.map((t, i) => ({
-                x: xPos(i), y: t !== null ? yPos(t) : null, t
-            }));
-
-            // Draw filled area under line
-            ctx.beginPath();
-            let started = false;
-            points.forEach((p, i) => {
-                if (p.y === null) return;
-                if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                else ctx.lineTo(p.x, p.y);
-            });
-            // Close path at bottom
-            const lastValid = [...points].reverse().find(p => p.y !== null);
-            const firstValid = points.find(p => p.y !== null);
-            if (lastValid && firstValid) {
-                ctx.lineTo(lastValid.x, H - PAD.bottom);
-                ctx.lineTo(firstValid.x, H - PAD.bottom);
-                ctx.closePath();
-                const grad = ctx.createLinearGradient(0, PAD.top, 0, H);
-                grad.addColorStop(0, 'rgba(56,189,248,0.15)');
-                grad.addColorStop(1, 'rgba(56,189,248,0.01)');
-                ctx.fillStyle = grad;
-                ctx.fill();
-            }
-
-            // Draw colored line segments
-            for (let i = 0; i < points.length - 1; i++) {
-                const p1 = points[i];
-                const p2 = points[i + 1];
-                if (p1.y === null || p2.y === null) continue;
-
-                const midT = ((p1.t || 0) + (p2.t || 0)) / 2;
-                ctx.beginPath();
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.strokeStyle = bandColor(midT);
-                ctx.lineWidth = 2.5;
-                ctx.lineCap = 'round';
-                ctx.stroke();
-            }
-
-            // Draw dots for each month
-            points.forEach((p, i) => {
-                if (p.y === null) return;
-                const isCurrent = i === CURRENT_MONTH;
-
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, isCurrent ? 5 : 3, 0, Math.PI * 2);
-                ctx.fillStyle = bandColor(p.t);
-                ctx.fill();
-
-                if (isCurrent) {
-                    // Outer ring for current month
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-                    ctx.strokeStyle = bandColor(p.t);
-                    ctx.lineWidth = 1.5;
-                    ctx.globalAlpha = 0.4;
-                    ctx.stroke();
-                    ctx.globalAlpha = 1;
-
-                    // Temperature label above current month dot
-                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-                    ctx.font = '500 10px DM Mono, monospace';
-                    ctx.textAlign = 'center';
-                    const label = currentTemp ? `${currentTemp.toFixed(1)}°` : `${p.t}°`;
-                    ctx.fillText(label, p.x, p.y - 14);
-                }
-            });
-
-            // Y-axis labels
-            ctx.fillStyle = 'rgba(255,255,255,0.2)';
-            ctx.font = '9px DM Mono, monospace';
-            ctx.textAlign = 'right';
-            ctx.fillText(`${Math.round(maxT)}°`, PAD.left - 4, PAD.top + 4);
-            ctx.fillText(`${Math.round(minT)}°`, PAD.left - 4, H - PAD.bottom);
-        }
-
-        // ── Load current temperature ──────────────────────────────────────────────────
-        // ── Wave conditions ───────────────────────────────────────────────────────────
-        // Beach coordinates passed from server
-        const BEACH_LAT = {{ beach.lat | tojson }};
-        const BEACH_LON = {{ beach.lon | tojson }};
-
-        async function loadWaveConditions() {
-            try {
-                const lat = BEACH_LAT;
-                const lon = BEACH_LON;
-                const res = await fetch(
-                    `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=wave_height,wave_period,swell_wave_height,swell_wave_period,ocean_current_velocity,ocean_current_direction`
-                );
-                if (!res.ok) return;
-                const data = await res.json();
-                const c = data.current;
-                if (!c || (c.wave_height === null && c.swell_wave_height === null)) return;
-
-                document.getElementById('wave-card').style.display = 'block';
-
-                if (c.wave_height !== null) {
-                    document.getElementById('wave-height').textContent = c.wave_height.toFixed(1) + 'm';
-                    if (c.wave_period) document.getElementById('wave-period').textContent = c.wave_period.toFixed(0) + 's period';
-                }
-                if (c.swell_wave_height !== null) {
-                    document.getElementById('swell-height').textContent = c.swell_wave_height.toFixed(1) + 'm';
-                    if (c.swell_wave_period) document.getElementById('swell-period').textContent = c.swell_wave_period.toFixed(0) + 's period';
-                }
-                if (c.ocean_current_velocity !== null) {
-                    document.getElementById('current-speed').textContent = (c.ocean_current_velocity * 1.944).toFixed(1) + ' kn';
-                    if (c.ocean_current_direction !== null) {
-                        const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-                        document.getElementById('current-dir').textContent = dirs[Math.round(c.ocean_current_direction / 45) % 8];
-                    }
-                }
-
-                const wh = c.wave_height || 0;
-                const badge = document.getElementById('wave-state-badge');
-                let label, color;
-                if (wh >= 2.0) { label = '🏄 Good surf conditions'; color = '#3b82f6'; }
-                else if (wh >= 1.0) { label = '🌊 Moderate waves'; color = '#0ea5e9'; }
-                else if (wh >= 0.3) { label = '😊 Light waves — good for swimming'; color = '#22c55e'; }
-                else { label = '🏊 Calm — ideal for swimming'; color = '#22c55e'; }
-                badge.textContent = label;
-                badge.style.background = color + '18';
-                badge.style.color = color;
-                badge.style.border = `1px solid ${color}33`;
-
-            } catch (e) { /* silently fail */ }
-        }
-
-        async function loadTemp() {
-            try {
-                const res = await fetch('/api/beach/{{ beach.slug }}');
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-
-                if (data.temp_c === null) {
-                    document.getElementById('temp-value').textContent = 'Unavailable';
-                    document.getElementById('temp-unit').textContent = '';
-                    document.getElementById('temp-badge').textContent = 'Current reading unavailable';
-                    document.getElementById('temp-date').textContent = 'Historical averages are still available below.';
-                    drawChart(null);
-                    return;
-                }
-
-                const band = getBand(data.temp_c);
-
-                document.getElementById('temp-value').textContent = data.temp_c.toFixed(1);
-                document.getElementById('temp-unit').textContent = '°C';
-
-                const badge = document.getElementById('temp-badge');
-                badge.innerHTML = `<span aria-hidden="true">${band.emoji}</span> ${band.label}`;
-                badge.style.background = `${band.color}20`;
-                badge.style.color = band.color;
-                badge.style.borderColor = `${band.color}35`;
-
-                document.getElementById('temp-date').textContent = `Updated ${data.date}`;
-
-                drawChart(data.temp_c);
-
-            } catch {
-                document.getElementById('temp-value').textContent = 'Unavailable';
-                document.getElementById('temp-unit').textContent = '';
-                document.getElementById('temp-badge').textContent = 'Could not load current reading';
-                document.getElementById('temp-date').textContent = 'Try again later; historical averages remain available.';
-                drawChart(null);
-            }
-        }
-
-        // ── Best month ────────────────────────────────────────────────────────────────
-        if (MONTHLY_AVG.length === 12) {
-            const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December'];
-            const validTemps = MONTHLY_AVG.filter(t => t !== null);
-            if (validTemps.length > 0) {
-                const maxTemp = Math.max(...validTemps);
-                const bestIdx = MONTHLY_AVG.indexOf(maxTemp);
-                document.getElementById('best-month').textContent = MONTH_NAMES[bestIdx];
-                document.getElementById('best-temp').textContent = `avg ${maxTemp}°C`;
-            } else {
-                document.getElementById('best-month').textContent = 'Unavailable';
-                document.getElementById('best-temp').textContent = 'No historical data';
-            }
-        }
-
-        loadTemp();
-        loadWaveConditions();
-        window.addEventListener('resize', () => drawChart(null));
-    </script>
-
-    <footer class="site-footer">
-        <div class="footer-inner">
-            <div class="footer-brand">
-                <a href="/" class="footer-logo">SwimTemp</a>
-                <p class="footer-tagline">Satellite sea temperature &amp; live ocean conditions for swimmers &amp;
-                    travelers.</p>
-            </div>
-            <div class="footer-links">
-                <div class="footer-col">
-                    <div class="footer-col-label">Explore</div>
-                    <a href="/map">Map</a>
-                    <a href="/beaches">Beaches</a>
-                    <a href="/about">About</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Data</div>
-                    <a href="https://marine.copernicus.eu" target="_blank" rel="noopener">Copernicus Marine</a>
-                    <a href="https://www.ncei.noaa.gov/products/world-ocean-atlas" target="_blank" rel="noopener">NOAA
-                        WOA23</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Tools</div>
-                    <a href="/embed">Embed Widget</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Legal</div>
-                    <a href="/privacy">Privacy Policy</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Contact</div>
-                    <a href="mailto:hello@swimtemp.com">hello@swimtemp.com</a>
-                </div>
-                <div class="footer-col">
-                    <div class="footer-col-label">Follow</div>
-                    <a href="https://www.instagram.com/swimtemp/" target="_blank" rel="noopener">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                            style="vertical-align:middle;margin-right:6px">
-                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                        </svg>Instagram
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <span>© 2026 SwimTemp</span>
-            <span>Sea surface temperature updated daily</span>
-        </div>
-    </footer>
+    loadTemperature();
+    loadConditions();
+    new SSTHistoryChart(document.getElementById('history-chart')).load(lat, lon);
+  </script>
 </body>
-
 </html>

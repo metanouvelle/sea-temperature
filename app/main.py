@@ -12,11 +12,10 @@ from xml.sax.saxutils import escape
 
 from dotenv import load_dotenv
 from fastapi import Cookie, FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.content.beaches import BEACH_MONTHLY_AVG, BEACHES, BEACHES_BY_SLUG, get_gyg_url
 from app.database import init_db
 from app.logger import get_logger
 from app.middleware import TimingMiddleware
@@ -30,7 +29,6 @@ from app.services.sst_cache import (
     tile_id_for,
 )
 from app.routes_beach_search import router as beach_search_router
-from app.routes_seo import router as seo_router
 
 load_dotenv()
 
@@ -190,9 +188,9 @@ def landing(request: Request):
     return templates.TemplateResponse(request, "explore.html")
 
 
-@app.get("/map", response_class=HTMLResponse)
-def map_page(request: Request):
-    return templates.TemplateResponse(request, "sea-temp-map.html")
+@app.get("/map")
+def map_page():
+    return RedirectResponse(url="/", status_code=308)
 
 
 @app.get("/about", response_class=HTMLResponse)
@@ -200,26 +198,27 @@ def about(request: Request):
     return templates.TemplateResponse(request, "about.html")
 
 
-@app.get("/beaches", response_class=HTMLResponse)
-def beaches_page(request: Request):
-    return templates.TemplateResponse(request, "beaches.html")
+@app.get("/beaches")
+def beaches_page():
+    return RedirectResponse(url="/", status_code=308)
 
 
-@app.get("/beach/{slug}", response_class=HTMLResponse)
-def beach_page(request: Request, slug: str):
-    beach = BEACHES_BY_SLUG.get(slug)
-    if not beach:
-        raise HTTPException(status_code=404)
-    now = datetime.now()
+@app.get("/location", response_class=HTMLResponse)
+def location_page(
+    request: Request,
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    name: str = Query("Sea temperature"),
+    place: str = Query(""),
+):
     return templates.TemplateResponse(
+        request,
         "beach.html",
         {
-            "request": request,
-            "beach": beach,
-            "monthly_avg": BEACH_MONTHLY_AVG.get(slug, []),
-            "current_month": now.month,
-            "current_month_name": now.strftime("%B"),
-            "gyg_link": get_gyg_url(slug),
+            "name": name.strip()[:120] or "Sea temperature",
+            "place": place.strip()[:160],
+            "lat": lat,
+            "lon": lon,
         },
     )
 
@@ -281,41 +280,6 @@ def get_grid(bbox: str, zoom: float = Query(8.0)):
     }
 
 
-@app.get("/api/beaches")
-def api_beaches():
-    """Return all beaches with current SST temperature, sorted warmest first."""
-    date = get_latest_available_date()
-
-    def fetch(beach):
-        try:
-            result = point_temperature(date, beach["lat"], beach["lon"], radius_km=25)
-            temp = result["mean_c"] if result and result.get("status") == "ok" else None
-        except Exception:
-            temp = None
-        return {**beach, "temp_c": temp, "date": date}
-
-    with ThreadPoolExecutor(max_workers=12) as pool:
-        futures = [pool.submit(fetch, b) for b in BEACHES]
-        results = [f.result() for f in as_completed(futures)]
-
-    results.sort(
-        key=lambda x: x["temp_c"] if x["temp_c"] is not None else -99, reverse=True
-    )
-    return {"beaches": results, "date": date}
-
-
-@app.get("/api/beach/{slug}")
-def api_beach(slug: str):
-    """Return temperature for a single beach."""
-    beach = BEACHES_BY_SLUG.get(slug)
-    if not beach:
-        raise HTTPException(status_code=404)
-    date = get_latest_available_date()
-    result = point_temperature(date, beach["lat"], beach["lon"], radius_km=25)
-    temp = result["mean_c"] if result and result.get("status") == "ok" else None
-    return {**beach, "temp_c": temp, "date": date}
-
-
 @app.get("/api/status")
 def api_status():
     """Health + prewarm status endpoint."""
@@ -358,42 +322,23 @@ Sitemap: {SITE_URL}/sitemap.xml
 
 @app.get("/sitemap.xml")
 def sitemap_xml():
-    static_pages = [
+    urls = [
         {"loc": f"{SITE_URL}/", "priority": "1.0"},
-        {"loc": f"{SITE_URL}/beaches", "priority": "0.9"},
-        {"loc": f"{SITE_URL}/map", "priority": "0.7"},
         {"loc": f"{SITE_URL}/about", "priority": "0.6"},
         {"loc": f"{SITE_URL}/privacy", "priority": "0.3"},
+        {"loc": f"{SITE_URL}/embed", "priority": "0.4"},
     ]
-
-    beach_pages = [
-        {
-            "loc": f"{SITE_URL}/beach/{beach['slug']}",
-            "priority": "0.8",
-        }
-        for beach in BEACHES
-    ]
-
-    urls = static_pages + beach_pages
-
     xml_parts = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     ]
-
     for url in urls:
-        xml_parts.append(f"""  <url>
-    <loc>{escape(url["loc"])}</loc>
-    <changefreq>daily</changefreq>
-    <priority>{url["priority"]}</priority>
-  </url>""")
-
+        xml_parts.append(
+            f'  <url>\n    <loc>{escape(url["loc"])}</loc>\n'
+            f'    <changefreq>daily</changefreq>\n    <priority>{url["priority"]}</priority>\n  </url>'
+        )
     xml_parts.append("</urlset>")
-
-    return Response(
-        content="\n".join(xml_parts),
-        media_type="application/xml",
-    )
+    return Response(content="\n".join(xml_parts), media_type="application/xml")
 
 
 @app.get("/privacy", response_class=HTMLResponse)
@@ -404,23 +349,6 @@ def privacy(request: Request):
 @app.get("/embed", response_class=HTMLResponse)
 def embed_page(request: Request):
     return templates.TemplateResponse(request, "embed.html")
-
-
-@app.get("/widget/{slug}", response_class=HTMLResponse)
-def widget_slug(request: Request, slug: str):
-    beach = BEACHES_BY_SLUG.get(slug)
-    if not beach:
-        raise HTTPException(status_code=404)
-    return templates.TemplateResponse(
-        "widget.html",
-        {
-            "request": request,
-            "name": beach["name"],
-            "lat": beach["lat"],
-            "lon": beach["lon"],
-            "slug": slug,
-        },
-    )
 
 
 @app.get("/widget", response_class=HTMLResponse)
@@ -711,7 +639,7 @@ async def delete_saved_point(point_id: str, request: Request):
 @app.get("/api/warmest")
 def api_warmest(
     region: str = Query("all"),
-    limit: int = Query(20, ge=1, le=50),
+    limit: int = Query(20, ge=1, le=20),
 ):
     """
     Return warmest beaches for a region from the warmest_beaches table.
@@ -805,7 +733,6 @@ def admin_update_warmest(authorization: str = Header(None)):
     }
 
 
-app.include_router(seo_router)
 
 app.include_router(beach_search_router)
 
